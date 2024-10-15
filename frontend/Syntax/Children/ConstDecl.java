@@ -5,19 +5,17 @@ import frontend.Syntax.Syntax;
 
 public class ConstDecl {
     static void ConstDeclAnalysis() {
-        Token token = Tools.getToken(CompUnit.count);
+        Token token = Tools.GetNowTK();
 
         if (token.tk.equals("CONSTTK")) {
             CompUnit.count++;
             BType.BTypeAnalysis();
             ConstDef.ConstDefAnalysis();
 
-            while (Tools.getToken(CompUnit.count + 1).tk.equals("COMMA")) { // "," 多个参数
+            while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
                 CompUnit.count += 2;
                 ConstDef.ConstDefAnalysis();
             }
-        } else {
-
         }
 
         Tools.WriteLine(Syntax.NodeType.ConstDecl);

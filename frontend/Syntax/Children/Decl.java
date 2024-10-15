@@ -5,7 +5,7 @@ import frontend.Syntax.Syntax;
 
 public class Decl {
     static void DeclAnalysis() {
-        Token token = Tools.getToken(CompUnit.count);
+        Token token = Tools.GetNowTK();
 
         if (token.tk.equals("CONSTTK")) {
             ConstDecl.ConstDeclAnalysis();

@@ -13,13 +13,18 @@ public class CompUnit {
 
     public static void CompUnitAnalysis() {
         while (count < size) {
-            Token token = Tools.getToken(count);
+            Token token = Tools.GetNowTK();
 
-            if (token.tk.equals("CONSTTK")) {
-                Decl.DeclAnalysis();
-            } else if (token.tk.equals("INTTK") && Tools.getToken(count + 1).tk.equals("MAINTK")
-                    && Tools.getToken(count + 2).tk.equals("LPARENT") && Tools.getToken(count + 3).tk.equals("RPARENT")) {
+            if (token.tk.equals("INTTK") && Tools.GetCountTK(count + 1).tk.equals("MAINTK")
+                    && Tools.GetCountTK(count + 2).tk.equals("LPARENT")
+                    && Tools.GetCountTK(count + 3).tk.equals("RPARENT")) {
                 MainFuncDef.MainFuncDefAnalysis();
+                break;
+            } else if ((Tools.GetNowTK().tk.equals("INTTK") || Tools.GetNowTK().tk.equals("CHARTK"))
+                    && Tools.GetCountTK(CompUnit.count + 2).tk.equals("LPARENT")) {
+                FuncDef.FuncDefAnalysis();
+            } else {
+                Decl.DeclAnalysis();
             }
         }
 

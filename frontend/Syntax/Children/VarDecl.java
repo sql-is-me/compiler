@@ -8,7 +8,7 @@ public class VarDecl {
         BType.BTypeAnalysis();
         VarDef.VarDefAnalysis();
 
-        while (Tools.getToken(CompUnit.count + 1).tk.equals("COMMA")) { // "," 多个参数
+        while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count += 2;
             VarDef.VarDefAnalysis();
         }

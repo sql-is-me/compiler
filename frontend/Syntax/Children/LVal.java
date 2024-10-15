@@ -5,14 +5,10 @@ import frontend.Syntax.Syntax;
 
 public class LVal {
     static void LValAnalysis() {
-        Token token = UnaryExp.tokenArr.get(UnaryExp.count);
-        if (token.tk.equals("IDENFR")) {
-            UnaryExp.count++;
-            token = UnaryExp.tokenArr.get(UnaryExp.count);
-            if (token.tk.equals("LBRACK")) {
-                UnaryExp.count++;
-                Exp.ExpAnalysis();
-            }
+        Token token = Tools.GetNextTK();
+        if (token.tk.equals("LBRACK")) {
+            Exp.ExpAnalysis();
+            CompUnit.count++; // ]
             Tools.WriteLine(Syntax.NodeType.LVal);
         }
     }

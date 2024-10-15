@@ -4,21 +4,22 @@ import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 import frontend.Syntax.Syntax.NodeType;
 
-import java.util.List;
-import java.util.ArrayList;
-
 public class Tools {
-    public static Token getToken(int count) {
+    public static Token GetCountTK(int count) {
         return CompUnit.words.get(count);
     }
 
-    public static Token FindNextTk(int count) { // 找到下一个TK
-        count++;
-        return CompUnit.words.get(count);
+    public static Token GetNowTK() {
+        return CompUnit.words.get(CompUnit.count);
     }
 
-    public static Token LookNextTk(int count) { // 看下一个TK
-        return CompUnit.words.get(count + 1);
+    public static Token GetNextTK() { // 找到下一个TK
+        CompUnit.count++;
+        return CompUnit.words.get(CompUnit.count);
+    }
+
+    public static Token LookNextTK() { // 看下一个TK
+        return CompUnit.words.get(CompUnit.count + 1);
     }
 
     public static void WriteLine(Token token) { // 写

@@ -3,22 +3,21 @@ package frontend.Syntax.Children;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
-public class ConstInitVal {
-    // ConstInitVal → ConstExp | '{' [ ConstExp { ',' ConstExp } ] '}' | StringConst
-    static void ConstInitValAnalysis() {
+public class InitVal {
+    static void InitValAnalysis() {
         Token token = Tools.GetNowTK();
         if (token.tk.equals("STRCON")) {
         } else if (token.tk.equals("LBRACE")) { // {
             if (!Tools.LookNextTK().tk.equals("RBRACE")) { // }
-                ConstExp.ConstExpAnalysis();
+                Exp.ExpAnalysis();
                 while (!Tools.GetNowTK().tk.equals("COMMA")) { // ,
-                    ConstExp.ConstExpAnalysis();
+                    Exp.ExpAnalysis();
                 }
-                ConstExp.ConstExpAnalysis();
+                Exp.ExpAnalysis();
             }
         } else {
             CompUnit.count--;
-            ConstExp.ConstExpAnalysis();
+            Exp.ExpAnalysis();
         }
 
         Tools.WriteLine(Syntax.NodeType.ConstInitVal);

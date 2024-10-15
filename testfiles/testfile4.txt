@@ -1,0 +1,106 @@
+int main()
+{
+    printf("22182106\n");
+
+    int a = 1;
+
+    {
+    }
+
+    {
+        int a;
+        int b = -1;
+        a = 2;
+        a = +1;
+        a = -1;
+        if (!b)
+        {
+            a = 0;
+        }
+        a = (0 + 1 + b);
+        ;
+
+        printf("%d\n", a); // 0
+    }
+
+    printf("%d\n", a); // 1
+
+    int i;
+    for (i = 1; i < 10; i = i + 1)
+    {
+        if (i == 1)
+        {
+            continue;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    a = 100;
+    if (a == 100)
+    {
+        for (; a > 90; a = a - 1)
+        {
+        }
+        printf("%d\n", a); // 90
+        for (; a > 80; a = a - 1)
+        {
+        }
+        printf("%d\n", a); // 80
+        for (; a < 90; a = a + 1)
+        {
+        }
+        printf("%d\n", a); // 90
+
+        int b;
+        for (b = 1;; b = b + 1)
+        {
+            if (b == 2)
+            {
+                break;
+            }
+        }
+        for (b = 2; b > 0;)
+        {
+            b = b - 1;
+        }
+        for (b = 0;;)
+        {
+            b = b + 1;
+            if (b > 0)
+            {
+                printf("%d\n", b); // 1
+                break;
+            }
+        }
+        for (; a < 95;)
+        {
+            a = a + 1;
+        }
+        printf("%d\n", a); // 95
+        for (;; a = a + 1)
+        {
+            if (a == 100)
+            {
+                printf("%d\n", a); // 100
+                break;
+            }
+        }
+
+        a = 0;
+
+        for (;;)
+        {
+            a = a + 1;
+            if (a == 1)
+            {
+                printf("%d\n", a); // 1
+                break;
+            }
+        }
+    }
+
+    return 0;
+}

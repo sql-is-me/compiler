@@ -1,0 +1,44 @@
+int global_arr1[5] = {1, 2, 3, 4, 5};
+char global_arr2[3] = {'a', 'b', 'c'};
+const int global_con_arr1[3] = {3, 2, 1};
+const char global_con_arr2[4] = {'x', 'y', 'z'};
+const char global_con_str[4] = "abc";
+
+void func1(int arr[], int pos, int val)
+{
+    arr[pos] = val;
+}
+
+void func2(char arr[], int pos, char val)
+{
+    arr[pos] = val;
+}
+
+int main()
+{
+    printf("22182106\n");
+
+    int arr1[3] = {1, 2, 3};
+    char arr2[4] = {'x', 'y', 'z'};
+    char str[4] = "abc";
+
+    printf("%d ", arr1[0]); // 1 2 3
+    printf("%d ", arr1[1]);
+    printf("%d\n", arr1[2]);
+
+    int ans;
+    ans = global_arr1[0] + global_arr1[1] + global_arr1[2];
+    printf("%d\n", ans); // 6
+
+    func1(arr1, 1, 0);
+    printf("%d\n", arr1[1]); // 0
+
+    func2(arr2, 1, 'o');
+    printf("%c\n", arr2[1]); // o
+
+    printf("%c ", arr2[0]); // x o z
+    printf("%c ", arr2[1]);
+    printf("%c\n", arr2[2]);
+
+    return 0;
+}

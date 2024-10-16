@@ -1,24 +1,23 @@
 package frontend.Syntax.Children;
 
+import frontend.Lexer.Lexer.Token;
+
 public class LAndExp {
     static void LAndExpAnalysis(int expsize) {
         int count = CompUnit.count + 1;
-        int size = 0;
-        while (Tools.GetCountTK(count).tk.equals("AND") || Tools.GetCountTK(count).tk.equals("EQL")
-                || Tools.GetCountTK(count).tk.equals("NEQ") || Tools.GetCountTK(count).tk.equals("LSS")
-                || Tools.GetCountTK(count).tk.equals("LEQ") || Tools.GetCountTK(count).tk.equals("GRE")
-                || Tools.GetCountTK(count).tk.equals("GEQ")) {// && == != < <= > >=
+        int size = 1;
 
-            if (!Tools.GetCountTK(count).tk.equals("AND")) {
+        for (int i = 1; i < expsize; i += 2, count += 2) {
+            Token token = Tools.GetCountTK(count);
+            if (!token.tk.equals("AND")) {
                 size += 2;
-            } else if (Tools.GetCountTK(count).tk.equals("AND")) {
-                // MulExp.MulExpAnalysis(size);
+
+            } else if (token.tk.equals("AND")) {
+                EqExp.EqExpAnalysis(size);
                 CompUnit.count++;
                 size = 1;
             }
-            count += 2;
         }
         EqExp.EqExpAnalysis(size);
     }
-
 }

@@ -1,7 +1,5 @@
 package frontend.Syntax.Children;
 
-import javax.tools.Tool;
-
 import frontend.Lexer.Lexer.Token;
 
 public class Stmt {
@@ -31,6 +29,20 @@ public class Stmt {
                 }
             }
         } else if (token.tk.equals("FORTK")) {
+            CompUnit.count++; // (
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
+                ForStmt.ForStmtAnalysis();
+            }
+            CompUnit.count++; // ;
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
+                Cond.CondAnalysis();
+            }
+            CompUnit.count++; // ;
+            if (!Tools.LookNextTK().tk.equals("RPARENT")) {
+                ForStmt.ForStmtAnalysis();
+            }
+            CompUnit.count++; // )
+            Stmt.StmtAnalysis();
 
         } else if (token.tk.equals("BREAKTK") || token.tk.equals("CONTINUETK")) {
             if (!Tools.LookNextTK().tk.equals("SEMICN")) {
@@ -40,8 +52,7 @@ public class Stmt {
             if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTTK")
                     || Tools.LookNextTK().tk.equals("CHARTK") || Tools.LookNextTK().tk.equals("IDENFR")
                     || Tools.LookNextTK().tk.equals("IDENFR") || Tools.LookNextTK().tk.equals("PLUS")
-                    || Tools.LookNextTK().tk.equals("MINU")
-                    || Tools.LookNextTK().tk.equals("NOT")) {
+                    || Tools.LookNextTK().tk.equals("MINU") || Tools.LookNextTK().tk.equals("NOT")) {
                 Exp.ExpAnalysis();
             } else {
                 if (!Tools.GetNextTK().tk.equals("SEMICN")) {

@@ -1,7 +1,5 @@
 package frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
-
 public class MainFuncDef {
     static void MainFuncDefAnalysis() {
         if (Tools.GetNowTK().tk.equals("INTTK")) { // int

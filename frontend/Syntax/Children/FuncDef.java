@@ -4,9 +4,11 @@ public class FuncDef {
     static void FuncDefAnalysis() {
         if ((Tools.GetNowTK().tk.equals("INTTK") || Tools.GetNowTK().tk.equals("CHARTK"))) {
             if (Tools.GetNextTK().tk.equals("IDENFR")) {
-                if (Tools.GetNextTK().tk.equals("LPARENT")) {
-                    if (!Tools.LookNextTK().tk.equals("RPARENT")) {
-                        //
+                if (Tools.GetNextTK().tk.equals("LPARENT")) { // (
+                    if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
+                        FuncFParams.FuncFParamsAnalysis();
+                    } else {
+                        CompUnit.count++;
                     }
                     CompUnit.count += 2; // ) {
                     Block.BlockAnalysis();

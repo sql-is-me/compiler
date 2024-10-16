@@ -1,6 +1,5 @@
 package frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class VarDecl {

@@ -3,8 +3,6 @@ package frontend.Syntax;
 import java.util.List;
 import java.util.ArrayList;
 
-import frontend.Lexer.Lexer;
-import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Children.CompUnit;
 
 public class Syntax {

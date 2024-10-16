@@ -1,5 +1,7 @@
 package frontend.Syntax.Children;
 
+import frontend.Lexer.Lexer.Token;
+
 public class AddExp {
     static void AddExpAnalysis() {
         int count = CompUnit.count + 2;
@@ -17,6 +19,26 @@ public class AddExp {
                 size = 1;
             }
             count += 2;
+        }
+        MulExp.MulExpAnalysis(size);
+    }
+
+    static void AddExpAnalysis(int expsize) {
+        int count = CompUnit.count + 2;
+        int size = 1;
+
+        for (int i = 1; i < expsize; i += 2, count += 2) {
+            Token token = Tools.GetCountTK(count);
+            if (!token.tk.equals("PLUS")
+                    && !token.tk.equals("MINU")) {
+                size += 2;
+
+            } else if (token.tk.equals("PLUS")
+                    || token.tk.equals("MINU")) {
+                MulExp.MulExpAnalysis(size);
+                CompUnit.count++;
+                size = 1;
+            }
         }
         MulExp.MulExpAnalysis(size);
     }

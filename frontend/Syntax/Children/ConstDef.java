@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
+import frontend.Lexer.Lexer.Token;
 
 public class ConstDef {
     static void ConstDefAnalysis() {
@@ -16,22 +17,16 @@ public class ConstDef {
 
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     CompUnit.count++;
-                    
+
                     if (Tools.GetNextTK().tk.equals("ASSIGN")) { // =
                         CompUnit.count++;
                         ConstInitVal.ConstInitValAnalysis();
                     }
                 } else {
-                    // error
+                    Token temp = Tools.GetNowTK();
+                    ErrorLog.makelog_error(temp.line, 'k');
                 }
             }
         }
-
-        // token = Tools.GetNextTK(CompUnit.count);
-        // if (!token.tk.equals("SEMICN")) {
-        // ErrorLog.makelog_error(token.line, 'i');
-        // CompUnit.count--;
-        // }
-
     }
 }

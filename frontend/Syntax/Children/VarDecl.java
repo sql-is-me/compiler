@@ -1,5 +1,7 @@
 package frontend.Syntax.Children;
 
+import frontend.ErrorLog;
+import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class VarDecl {
@@ -10,6 +12,12 @@ public class VarDecl {
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count++;
             VarDef.VarDefAnalysis();
+        }
+
+        if(!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;
+        {
+            Token token = Tools.GetNowTK();
+            ErrorLog.makelog_error(token.line, 'i');
         }
 
         Tools.WriteLine(Syntax.NodeType.VarDecl);

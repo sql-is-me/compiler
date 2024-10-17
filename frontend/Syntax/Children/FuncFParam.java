@@ -1,5 +1,8 @@
 package frontend.Syntax.Children;
 
+import frontend.ErrorLog;
+import frontend.Lexer.Lexer.Token;
+
 public class FuncFParam {
     static void FuncFParamAnalysis() {
         BType.BTypeAnalysis();
@@ -7,7 +10,8 @@ public class FuncFParam {
             if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++;
                 if (!Tools.LookNextTK().tk.equals("RBRACK")) { // ]
-                    // error
+                    Token temp = Tools.GetNowTK();
+                    ErrorLog.makelog_error(temp.line, 'k');
                 } else {
                     CompUnit.count++;
                 }

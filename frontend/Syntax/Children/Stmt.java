@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 
 public class Stmt {
@@ -11,12 +12,27 @@ public class Stmt {
                 CompUnit.count++; // =
                 if (!Tools.LookNextTK().tk.equals("GETINTTK") && !Tools.LookNextTK().tk.equals("GETCHARTK")) {
                     Exp.ExpAnalysis();
-                    CompUnit.count++; // ;
+                    if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                        Token tempToken = Tools.GetNowTK();
+                        ErrorLog.makelog_error(tempToken.line, 'i');
+                    } else {
+                        CompUnit.count++; // ;
+                    }
                 } else {
-                    CompUnit.count += 3; // get ( )
-                }
-                if (!Tools.LookNextTK().tk.equals("SEMICN")) {
-                    // error
+                    CompUnit.count += 2; // get (
+                    if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
+                        Token tempToken = Tools.GetNowTK();
+                        ErrorLog.makelog_error(tempToken.line, 'j');
+                    } else {
+                        CompUnit.count++; // )
+                    }
+
+                    if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                        Token tempToken = Tools.GetNowTK();
+                        ErrorLog.makelog_error(tempToken.line, 'i');
+                    } else {
+                        CompUnit.count++; // ;
+                    }
                 }
             }
         } else if (token.tk.equals("LBRACE")) {
@@ -27,7 +43,14 @@ public class Stmt {
             if (Tools.LookNextTK().tk.equals("LPARENT")) {
                 CompUnit.count++; // (
                 Cond.CondAnalysis();
-                CompUnit.count++; // )
+
+                if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
+                    Token tempToken = Tools.GetNowTK();
+                    ErrorLog.makelog_error(tempToken.line, 'j');
+                } else {
+                    CompUnit.count++; // )
+                }
+
                 Stmt.StmtAnalysis();
                 if (Tools.LookNextTK().tk.equals("ELSETK")) {
                     CompUnit.count++; // else
@@ -52,8 +75,11 @@ public class Stmt {
 
         } else if (token.tk.equals("BREAKTK") || token.tk.equals("CONTINUETK")) {
             CompUnit.count++; // break or continue
-            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
-                //
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                Token tempToken = Tools.GetNowTK();
+                ErrorLog.makelog_error(tempToken.line, 'i');
+            } else {
+                CompUnit.count++; // ;
             }
         } else if (token.tk.equals("RETURNTK")) {
             CompUnit.count++;
@@ -63,8 +89,9 @@ public class Stmt {
                     || Tools.LookNextTK().tk.equals("NOT")) {
                 Exp.ExpAnalysis();
             }
-            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
-                // error
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                Token tempToken = Tools.GetNowTK();
+                ErrorLog.makelog_error(tempToken.line, 'i');
             } else {
                 CompUnit.count++; // ;
             }
@@ -78,11 +105,20 @@ public class Stmt {
                         CompUnit.count++; // ,
                         Exp.ExpAnalysis();
                     }
-                    CompUnit.count++; // )
-                    if (!Tools.GetNextTK().tk.equals("SEMICN")) {
-                        // error
-                    }
                 }
+            }
+            if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
+                Token tempToken = Tools.GetNowTK();
+                ErrorLog.makelog_error(tempToken.line, 'j');
+            } else {
+                CompUnit.count++; // )
+            }
+
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                Token tempToken = Tools.GetNowTK();
+                ErrorLog.makelog_error(tempToken.line, 'i');
+            } else {
+                CompUnit.count++; // ;
             }
         } else {
             if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTCON")
@@ -91,8 +127,9 @@ public class Stmt {
                     || Tools.LookNextTK().tk.equals("NOT")) {
                 Exp.ExpAnalysis();
             }
-            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
-                // error
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                Token tempToken = Tools.GetNowTK();
+                ErrorLog.makelog_error(tempToken.line, 'i');
             } else {
                 CompUnit.count++; // ;
             }

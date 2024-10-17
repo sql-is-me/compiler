@@ -36,9 +36,8 @@ public class CompUnit {
 
         CompUnit.count--;
         if (Tools.LookNextTK().tk.equals("INTTK") && Tools.GetCountTK(count + 2).tk.equals("MAINTK")
-                && Tools.GetCountTK(count + 3).tk.equals("LPARENT")
-                && Tools.GetCountTK(count + 4).tk.equals("RPARENT")) {
-            CompUnit.count += 4;
+                && Tools.GetCountTK(count + 3).tk.equals("LPARENT")) {
+            CompUnit.count += 3; // (
             MainFuncDef.MainFuncDefAnalysis();
         }
 

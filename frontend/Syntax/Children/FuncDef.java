@@ -1,18 +1,19 @@
 package frontend.Syntax.Children;
 
+import frontend.ErrorLog;
+import frontend.Lexer.Lexer.Token;
+
 public class FuncDef {
     static void FuncDefAnalysis() {
-        if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
+        if (!Tools.LookNextTK().tk.equals("RPARENT") && !Tools.LookNextTK().tk.equals("LBRACE")) { // ) {
             FuncFParams.FuncFParamsAnalysis();
         }
-        CompUnit.count++; // )
+        if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺)
+            Token temp = Tools.GetNowTK();
+            ErrorLog.makelog_error(temp.line, 'j');
+        } else {
+            CompUnit.count++; // )
+        }
         Block.BlockAnalysis();
     }
-
-    // token = Tools.GetNextTK(CompUnit.count);
-    // if (!token.tk.equals("SEMICN")) {
-    // ErrorLog.makelog_error(token.line, 'i');
-    // CompUnit.count--;
-    // }
-
 }

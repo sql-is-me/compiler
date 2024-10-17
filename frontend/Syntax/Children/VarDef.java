@@ -19,9 +19,9 @@ public class VarDef {
 
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     CompUnit.count++;
-
                 } else {
-                    // error
+                    Token temp = Tools.GetNowTK();
+                    ErrorLog.makelog_error(temp.line, 'k');
                 }
 
                 if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
@@ -30,10 +30,5 @@ public class VarDef {
                 }
             }
         }
-
-        // if (!token.tk.equals("SEMICN")) {
-        // ErrorLog.makelog_error(token.line, 'i');
-        // CompUnit.count--;
-        // }
     }
 }

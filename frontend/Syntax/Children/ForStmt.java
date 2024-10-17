@@ -7,8 +7,5 @@ public class ForStmt {
             CompUnit.count++; // =
             Exp.ExpAnalysis();
         }
-        else{
-            // err
-        }
     }
 }

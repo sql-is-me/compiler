@@ -4,19 +4,14 @@ import frontend.Lexer.Lexer.Token;
 
 public class MulExp {
     static void MulExpAnalysis(int expsize) {
-        int count = CompUnit.count + 2;
 
-        for (int i = 1; i < expsize; i += 2, count += 2) {
+        for (int count = CompUnit.count + 2; count - CompUnit.count < expsize; count += 2) {
             Token token = Tools.GetCountTK(count);
-            if (!token.tk.equals("MULT")
-                    && !token.tk.equals("DIV")
-                    && !token.tk.equals("MOD")) {
-
-            } else if (token.tk.equals("MULT")
+            if (token.tk.equals("MULT")
                     || token.tk.equals("DIV")
                     || token.tk.equals("MOD")) {
                 UnaryExp.UnaryExpAnalysis();
-                CompUnit.count++;
+                CompUnit.count++; // 踩在* / % 上
             }
         }
         UnaryExp.UnaryExpAnalysis();

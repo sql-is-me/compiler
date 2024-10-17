@@ -4,22 +4,28 @@ import frontend.Lexer.Lexer.Token;
 
 public class Stmt {
     static void StmtAnalysis() {
-        Token token = Tools.GetNowTK();
+        Token token = Tools.LookNextTK();
         if (token.tk.equals("IDENFR")) {
             LVal.LValAnalysis();
-            token = Tools.GetNextTK();
-            if (token.tk.equals("ASSIGN")) {
+            if (Tools.LookNextTK().tk.equals("ASSIGN")) {
+                CompUnit.count++; // =
                 if (!Tools.LookNextTK().tk.equals("GETINTTK") && !Tools.LookNextTK().tk.equals("GETCHARTK")) {
                     Exp.ExpAnalysis();
-                    // ;
+                    CompUnit.count++; // ;
+                } else {
+                    CompUnit.count += 3; // get ( )
+                }
+                if (!Tools.LookNextTK().tk.equals("SEMICN")) {
+                    // error
                 }
             }
-        } else if (token.tk.equals("LBRACK")) {
-            Exp.ExpAnalysis();
         } else if (token.tk.equals("LBRACE")) {
-            LVal.LValAnalysis();
+            Block.BlockAnalysis();
         } else if (token.tk.equals("IFTK")) {
-            if (Tools.GetNextTK().tk.equals("LPARENT")) {
+            CompUnit.count++; // if
+
+            if (Tools.LookNextTK().tk.equals("LPARENT")) {
+                CompUnit.count++; // (
                 Cond.CondAnalysis();
                 CompUnit.count++; // )
                 Stmt.StmtAnalysis();
@@ -29,7 +35,7 @@ public class Stmt {
                 }
             }
         } else if (token.tk.equals("FORTK")) {
-            CompUnit.count++; // (
+            CompUnit.count++; // for
             if (!Tools.LookNextTK().tk.equals("SEMICN")) {
                 ForStmt.ForStmtAnalysis();
             }
@@ -45,37 +51,51 @@ public class Stmt {
             Stmt.StmtAnalysis();
 
         } else if (token.tk.equals("BREAKTK") || token.tk.equals("CONTINUETK")) {
+            CompUnit.count++; // break or continue
             if (!Tools.LookNextTK().tk.equals("SEMICN")) {
                 //
             }
         } else if (token.tk.equals("RETURNTK")) {
-            if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTTK")
-                    || Tools.LookNextTK().tk.equals("CHARTK") || Tools.LookNextTK().tk.equals("IDENFR")
-                    || Tools.LookNextTK().tk.equals("IDENFR") || Tools.LookNextTK().tk.equals("PLUS")
-                    || Tools.LookNextTK().tk.equals("MINU") || Tools.LookNextTK().tk.equals("NOT")) {
+            CompUnit.count++;
+            if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTCON")
+                    || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
+                    || Tools.LookNextTK().tk.equals("PLUS") || Tools.LookNextTK().tk.equals("MINU")
+                    || Tools.LookNextTK().tk.equals("NOT")) {
                 Exp.ExpAnalysis();
+            }
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
+                // error
             } else {
-                if (!Tools.GetNextTK().tk.equals("SEMICN")) {
-                    //
-                } else {
-                    CompUnit.count++; // ;
-                }
+                CompUnit.count++; // ;
             }
         } else if (token.tk.equals("PRINTFTK")) {
-            if (Tools.GetNextTK().tk.equals("LPARENT")) {
-                if (Tools.GetNextTK().tk.equals("STRCON")) {
-                    Exp.ExpAnalysis();
+            CompUnit.count++;
+            if (Tools.LookNextTK().tk.equals("LPARENT")) {
+                CompUnit.count++;
+                if (Tools.LookNextTK().tk.equals("STRCON")) {
+                    CompUnit.count++;
                     while (Tools.LookNextTK().tk.equals("COMMA")) {
-                        CompUnit.count++;
+                        CompUnit.count++; // ,
                         Exp.ExpAnalysis();
                     }
+                    CompUnit.count++; // )
                     if (!Tools.GetNextTK().tk.equals("SEMICN")) {
-                        //
+                        // error
                     }
                 }
-
+            }
+        } else {
+            if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTCON")
+                    || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
+                    || Tools.LookNextTK().tk.equals("PLUS") || Tools.LookNextTK().tk.equals("MINU")
+                    || Tools.LookNextTK().tk.equals("NOT")) {
+                Exp.ExpAnalysis();
+            }
+            if (!Tools.LookNextTK().tk.equals("SEMICN")) {
+                // error
+            } else {
+                CompUnit.count++; // ;
             }
         }
-
     }
 }

@@ -2,7 +2,7 @@ package frontend.Syntax.Children;
 
 public class FuncFParam {
     static void FuncFParamAnalysis() {
-        FuncType.FuncTypeAnalysis();
+        BType.BTypeAnalysis();
         if (Tools.GetNextTK().tk.equals("IDENFR")) {
             if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++;
@@ -13,6 +13,5 @@ public class FuncFParam {
                 }
             }
         }
-
     }
 }

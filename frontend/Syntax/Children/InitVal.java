@@ -1,22 +1,24 @@
 package frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class InitVal {
     static void InitValAnalysis() {
-        Token token = Tools.GetNowTK();
-        if (token.tk.equals("STRCON")) {
-        } else if (token.tk.equals("LBRACE")) { // {
+        if (Tools.LookNextTK().tk.equals("STRCON")) {
+            CompUnit.count++;
+        } else if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
+            CompUnit.count++;
             if (!Tools.LookNextTK().tk.equals("RBRACE")) { // }
                 Exp.ExpAnalysis();
-                while (!Tools.GetNowTK().tk.equals("COMMA")) { // ,
+                while (!Tools.LookNextTK().tk.equals("COMMA")) { // ,
+                    CompUnit.count++;
                     Exp.ExpAnalysis();
                 }
-                Exp.ExpAnalysis();
+                CompUnit.count++;
+            } else {
+                CompUnit.count++;
             }
         } else {
-            CompUnit.count--;
             Exp.ExpAnalysis();
         }
 

@@ -8,7 +8,7 @@ public class VarDecl {
         VarDef.VarDefAnalysis();
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
-            CompUnit.count += 2;
+            CompUnit.count++;
             VarDef.VarDefAnalysis();
         }
 

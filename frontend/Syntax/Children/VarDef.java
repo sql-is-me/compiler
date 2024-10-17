@@ -17,20 +17,18 @@ public class VarDef {
                 CompUnit.count++;
                 ConstExp.ConstExpAnalysis();
 
-                if (Tools.GetNextTK().tk.equals("RBRACK")) { // ]
+                if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
+                    CompUnit.count++;
 
-                    if (Tools.GetNextTK().tk.equals("ASSIGN")) { // =
-                        CompUnit.count++;
-                        InitVal.InitValAnalysis();
-                    }
                 } else {
                     // error
                 }
-            } else {
-                // wrong
+
+                if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
+                    CompUnit.count++;
+                    InitVal.InitValAnalysis();
+                }
             }
-        } else {
-            // erorr
         }
 
         // if (!token.tk.equals("SEMICN")) {

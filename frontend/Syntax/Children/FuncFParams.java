@@ -6,6 +6,5 @@ public class FuncFParams {
         while (Tools.LookNextTK().tk.equals("COMMA")) {
             FuncFParam.FuncFParamAnalysis();
         }
-
     }
 }

@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class LOrExp {
     static void LOrExpAnalysis() {
@@ -17,6 +18,8 @@ public class LOrExp {
                 size += 2;
             } else if (token.tk.equals("OR")) {
                 LAndExp.LAndExpAnalysis(size);
+
+                Tools.WriteLine(Syntax.NodeType.LOrExp, Tools.GetNowTK().id);
                 CompUnit.count++; // ||
                 size = 1;
             }
@@ -24,6 +27,6 @@ public class LOrExp {
             token = Tools.GetCountTK(count);
         }
         LAndExp.LAndExpAnalysis(size);
+        Tools.WriteLine(Syntax.NodeType.LOrExp, Tools.GetNowTK().id);
     }
-
 }

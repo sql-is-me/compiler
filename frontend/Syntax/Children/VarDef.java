@@ -6,10 +6,11 @@ import frontend.Syntax.Syntax;
 
 public class VarDef {
     static void VarDefAnalysis() {
-        Token token = Tools.GetNowTK();
+        Token token = Tools.LookNextTK();
 
         if (token.tk.equals("IDENFR")) {
-            token = Tools.GetNextTK();
+            CompUnit.count++;
+            token = Tools.LookNextTK();
 
             if (token.tk.equals("ASSIGN")) { // =
                 CompUnit.count++;

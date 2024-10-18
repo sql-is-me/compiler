@@ -4,7 +4,7 @@ import frontend.Lexer.Lexer.Token;
 
 public class Decl {
     static void DeclAnalysis() {
-        Token token = Tools.GetNextTK();
+        Token token = Tools.LookNextTK();
 
         if (token.tk.equals("CONSTTK")) {
             ConstDecl.ConstDeclAnalysis();

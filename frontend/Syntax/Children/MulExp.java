@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class MulExp {
     static void MulExpAnalysis(int expsize) {
@@ -11,9 +12,12 @@ public class MulExp {
                     || token.tk.equals("DIV")
                     || token.tk.equals("MOD")) {
                 UnaryExp.UnaryExpAnalysis();
+
+                Tools.WriteLine(Syntax.NodeType.MulExp, Tools.GetNowTK().id);
                 CompUnit.count++; // 踩在* / % 上
             }
         }
         UnaryExp.UnaryExpAnalysis();
+        Tools.WriteLine(Syntax.NodeType.MulExp, Tools.GetNowTK().id);
     }
 }

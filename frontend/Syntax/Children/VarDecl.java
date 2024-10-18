@@ -14,10 +14,12 @@ public class VarDecl {
             VarDef.VarDefAnalysis();
         }
 
-        if(!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;
+        if (!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;
         {
             Token token = Tools.GetNowTK();
             ErrorLog.makelog_error(token.line, 'i');
+        } else {
+            CompUnit.count++;
         }
 
         Tools.WriteLine(Syntax.NodeType.VarDecl, Tools.GetNowTK().id);

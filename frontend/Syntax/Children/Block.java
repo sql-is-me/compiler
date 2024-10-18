@@ -5,7 +5,9 @@ import frontend.Syntax.Syntax;
 public class Block {
     static void BlockAnalysis() {
         CompUnit.count++; // {
-        BlockItem.BlockItemAnalysis();
+        while (!Tools.LookNextTK().tk.equals("RBRACE")) { // }
+            BlockItem.BlockItemAnalysis();
+        }
         CompUnit.count++; // }
 
         Tools.WriteLine(Syntax.NodeType.Block, Tools.GetNowTK().id);

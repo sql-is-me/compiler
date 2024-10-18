@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class AddExp {
     static void AddExpAnalysis() {
@@ -15,12 +16,15 @@ public class AddExp {
             } else if (Tools.GetCountTK(count).tk.equals("PLUS")
                     || Tools.GetCountTK(count).tk.equals("MINU")) {
                 MulExp.MulExpAnalysis(size);
+
+                Tools.WriteLine(Syntax.NodeType.AddExp, Tools.GetNowTK().id);
                 CompUnit.count++; // 踩在+ - ;上
                 size = 1;
             }
             count += 2;
         }
         MulExp.MulExpAnalysis(size);
+        Tools.WriteLine(Syntax.NodeType.AddExp, Tools.GetNowTK().id);
     }
 
     static void AddExpAnalysis(int expsize) {
@@ -32,10 +36,13 @@ public class AddExp {
                 size += 2;
             } else if (token.tk.equals("PLUS") || token.tk.equals("MINU")) {
                 MulExp.MulExpAnalysis(size);
+
+                Tools.WriteLine(Syntax.NodeType.AddExp, Tools.GetNowTK().id);
                 CompUnit.count++; // + -
                 size = 1;
             }
         }
         MulExp.MulExpAnalysis(size);
+        Tools.WriteLine(Syntax.NodeType.AddExp, Tools.GetNowTK().id);
     }
 }

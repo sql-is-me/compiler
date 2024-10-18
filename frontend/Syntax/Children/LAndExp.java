@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class LAndExp {
     static void LAndExpAnalysis(int expsize) {
@@ -13,10 +14,13 @@ public class LAndExp {
 
             } else if (token.tk.equals("AND")) {
                 EqExp.EqExpAnalysis(size);
+
+                Tools.WriteLine(Syntax.NodeType.LAndExp, Tools.GetNowTK().id);
                 CompUnit.count++; // &&
                 size = 1;
             }
         }
         EqExp.EqExpAnalysis(size);
+        Tools.WriteLine(Syntax.NodeType.LAndExp, Tools.GetNowTK().id);
     }
 }

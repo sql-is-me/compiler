@@ -14,8 +14,8 @@ public class Compiler {
             Lexer lexer = new Lexer();
             lexer.lexer(filebr);
             
-            // Syntax syntax = new Syntax();
-            // syntax.SyntaxAnalysis();
+            Syntax syntax = new Syntax();
+            syntax.SyntaxAnalysis();
 
         } catch (FileNotFoundException fnfe) {
             System.err.println("file not found + " + fString);

@@ -2,6 +2,7 @@ package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class Stmt {
     static void StmtAnalysis() {
@@ -134,5 +135,7 @@ public class Stmt {
                 CompUnit.count++; // ;
             }
         }
+
+        Tools.WriteLine(Syntax.NodeType.Stmt, Tools.GetNowTK().id);
     }
 }

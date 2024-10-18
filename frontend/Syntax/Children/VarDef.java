@@ -2,6 +2,7 @@ package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class VarDef {
     static void VarDefAnalysis() {
@@ -30,5 +31,7 @@ public class VarDef {
                 }
             }
         }
+
+        Tools.WriteLine(Syntax.NodeType.VarDef, Tools.GetNowTK().id);
     }
 }

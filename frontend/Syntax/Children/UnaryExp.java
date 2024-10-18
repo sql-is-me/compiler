@@ -2,6 +2,7 @@ package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class UnaryExp {
     static void UnaryExpAnalysis() {
@@ -29,5 +30,7 @@ public class UnaryExp {
                 || token.tk.equals("CHRCON") || token.tk.equals("IDENFR")) { // (,number,character,ident
             PrimaryExp.PrimaryExpAnalysis();
         }
+
+        Tools.WriteLine(Syntax.NodeType.UnaryExp, Tools.GetNowTK().id);
     }
 }

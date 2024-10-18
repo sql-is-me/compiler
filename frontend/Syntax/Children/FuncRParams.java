@@ -1,5 +1,7 @@
 package frontend.Syntax.Children;
 
+import frontend.Syntax.Syntax;
+
 public class FuncRParams {
     static void FuncRParamsAnalysis() {
         Exp.ExpAnalysis();
@@ -7,6 +9,8 @@ public class FuncRParams {
             CompUnit.count++;
             Exp.ExpAnalysis();
         }
+
+        Tools.WriteLine(Syntax.NodeType.FuncRParams, Tools.GetNowTK().id);
     }
 
 }

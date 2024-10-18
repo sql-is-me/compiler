@@ -22,6 +22,6 @@ public class InitVal {
             Exp.ExpAnalysis();
         }
 
-        Tools.WriteLine(Syntax.NodeType.ConstInitVal);
+        Tools.WriteLine(Syntax.NodeType.InitVal, Tools.GetNowTK().id);
     }
 }

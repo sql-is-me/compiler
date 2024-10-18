@@ -20,6 +20,6 @@ public class VarDecl {
             ErrorLog.makelog_error(token.line, 'i');
         }
 
-        Tools.WriteLine(Syntax.NodeType.VarDecl);
+        Tools.WriteLine(Syntax.NodeType.VarDecl, Tools.GetNowTK().id);
     }
 }

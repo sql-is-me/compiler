@@ -16,6 +16,6 @@ public class LVal {
                 CompUnit.count++; // ]
             }
         }
-        Tools.WriteLine(Syntax.NodeType.LVal);
+        Tools.WriteLine(Syntax.NodeType.LVal, Tools.GetNowTK().id);
     }
 }

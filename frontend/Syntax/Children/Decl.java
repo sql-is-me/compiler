@@ -1,7 +1,6 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
 
 public class Decl {
     static void DeclAnalysis() {
@@ -13,6 +12,6 @@ public class Decl {
             VarDecl.VarDeclAnalysis();
         }
 
-        Tools.WriteLine(Syntax.NodeType.Decl);
+        // Tools.WriteLine(Syntax.NodeType.Decl, Tools.GetNowTK().id);
     }
 }

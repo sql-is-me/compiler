@@ -1,5 +1,7 @@
 package frontend.Syntax.Children;
 
+import frontend.Syntax.Syntax;
+
 public class ForStmt {
     static void ForStmtAnalysis() {
         LVal.LValAnalysis();
@@ -7,5 +9,7 @@ public class ForStmt {
             CompUnit.count++; // =
             Exp.ExpAnalysis();
         }
+
+        Tools.WriteLine(Syntax.NodeType.ForStmt, Tools.GetNowTK().id);
     }
 }

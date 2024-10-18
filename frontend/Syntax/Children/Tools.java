@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Node;
 import frontend.Syntax.Syntax;
 import frontend.Syntax.Syntax.NodeType;
 
@@ -22,15 +23,8 @@ public class Tools {
         return CompUnit.words.get(CompUnit.count + 1);
     }
 
-    public static void WriteLine(Token token) { // 写
-        Syntax.getParser().add(token.toString());
-    }
-
-    // public static void WriteLine(Node node) {
-    // Syntax.getParser().add(node.toString());
-    // }
-
-    public static void WriteLine(NodeType node) {
-        Syntax.getParser().add("<" + node.toString() + ">\n");
+    public static void WriteLine(NodeType type, int index) {
+        Node node = new Node(type, index);
+        Syntax.getNodes().add(node);
     }
 }

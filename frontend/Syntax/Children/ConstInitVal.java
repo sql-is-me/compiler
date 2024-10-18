@@ -18,6 +18,6 @@ public class ConstInitVal {
             ConstExp.ConstExpAnalysis();
         }
 
-        Tools.WriteLine(Syntax.NodeType.ConstInitVal);
+        Tools.WriteLine(Syntax.NodeType.ConstInitVal, Tools.GetNowTK().id);
     }
 }

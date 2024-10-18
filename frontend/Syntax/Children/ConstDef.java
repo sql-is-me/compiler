@@ -2,6 +2,7 @@ package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class ConstDef {
     static void ConstDefAnalysis() {
@@ -28,5 +29,7 @@ public class ConstDef {
                 }
             }
         }
+
+        Tools.WriteLine(Syntax.NodeType.ConstDef, Tools.GetNowTK().id);
     }
 }

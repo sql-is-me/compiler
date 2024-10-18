@@ -2,6 +2,7 @@ package frontend.Syntax.Children;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
+import frontend.Syntax.Syntax;
 
 public class PrimaryExp {
     static void PrimaryExpAnalysis() {
@@ -22,5 +23,7 @@ public class PrimaryExp {
         } else if (token.tk.equals("IDENFR")) {
             LVal.LValAnalysis();
         }
+
+        Tools.WriteLine(Syntax.NodeType.PrimaryExp, Tools.GetNowTK().id);
     }
 }

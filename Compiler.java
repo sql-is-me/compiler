@@ -1,3 +1,4 @@
+import frontend.ErrorLog;
 import frontend.Lexer.*;
 import frontend.Syntax.*;
 
@@ -13,9 +14,11 @@ public class Compiler {
         try (BufferedReader filebr = new BufferedReader(new FileReader(fString))) {
             Lexer lexer = new Lexer();
             lexer.lexer(filebr);
-            
+
             Syntax syntax = new Syntax();
             syntax.SyntaxAnalysis();
+
+            ErrorLog.WriteErrorLogs();
 
         } catch (FileNotFoundException fnfe) {
             System.err.println("file not found + " + fString);

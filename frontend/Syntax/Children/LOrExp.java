@@ -7,7 +7,12 @@ public class LOrExp {
     static void LOrExpAnalysis() {
         int count = CompUnit.count + 2;
         int size = 1;
+        if (Tools.LookNextTK().tk.equals("NOT")) { // jump "!"
+            size++;
+            count++;
+        }
         Token token = Tools.GetCountTK(count);
+
         while (token.tk.equals("AND") || token.tk.equals("OR") || token.tk.equals("EQL")
                 || token.tk.equals("NEQ") || token.tk.equals("LSS") || token.tk.equals("LEQ")
                 || token.tk.equals("GRE") || token.tk.equals("GEQ") || token.tk.equals("PLUS")
@@ -24,6 +29,12 @@ public class LOrExp {
                 size = 1;
             }
             count += 2;
+
+            if (Tools.GetCountTK(count - 1).tk.equals("NOT")) { // jump "!"
+                size++;
+                count++;
+            }
+
             token = Tools.GetCountTK(count);
         }
         LAndExp.LAndExpAnalysis(size);

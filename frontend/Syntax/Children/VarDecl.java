@@ -16,8 +16,8 @@ public class VarDecl {
 
         if (!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;
         {
-            Token token = Tools.GetNowTK();
-            ErrorLog.makelog_error(token.line, 'i');
+            Token temp = Tools.GetNowTK();
+            ErrorLog.makelog_error(temp.line, 'i');
         } else {
             CompUnit.count++;
         }

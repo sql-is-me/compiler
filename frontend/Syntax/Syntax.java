@@ -51,7 +51,9 @@ public class Syntax {
 
     private static void setParser(List<Token> Lexer) {
         for (Token token : Lexer) {
-            parser.add(token.toString());
+            if (token.status) {
+                parser.add(token.toString());
+            }
         }
     }
 

@@ -16,12 +16,12 @@ public class CompUnit {
             token = Tools.LookNextTK();
             if ((token.tk.equals("INTTK") || token.tk.equals("CHARTK")
                     || token.tk.equals("VOIDTK"))
-                    && Tools.GetCountTK(CompUnit.count + 1).tk.equals("IDENFR")
-                    && Tools.GetCountTK(CompUnit.count + 2).tk.equals("LPARENT")) { // Type ident (
+                    && Tools.GetCountTK(CompUnit.count + 2).tk.equals("IDENFR")
+                    && Tools.GetCountTK(CompUnit.count + 3).tk.equals("LPARENT")) { // Type ident (
 
                 FuncDef.FuncDefAnalysis();
             } else if ((token.tk.equals("INTTK") || token.tk.equals("CHARTK"))
-                    && Tools.GetCountTK(CompUnit.count + 1).tk.equals("IDENFR")) { // Type ident
+                    && Tools.GetCountTK(CompUnit.count + 2).tk.equals("IDENFR")) { // Type ident
 
                 Decl.DeclAnalysis();
             } else if (token.tk.equals("CONSTTK")) { // const

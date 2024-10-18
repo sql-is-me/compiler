@@ -6,8 +6,12 @@ import frontend.Syntax.Syntax;
 
 public class LVal {
     static void LValAnalysis() {
-        Token token = Tools.GetNextTK();
+        CompUnit.count++; // IDENFR
+
+        Token token = Tools.LookNextTK();
         if (token.tk.equals("LBRACK")) { // [
+            CompUnit.count++; // [
+
             Exp.ExpAnalysis();
             if (!Tools.LookNextTK().tk.equals("LBRACK")) { // 缺 ]
                 Token temp = Tools.GetNowTK();

@@ -16,12 +16,18 @@ public class Lexer {
         public String tk;
         public int line;
         public int id;
+        public boolean status;
 
-        Token(String str, String tk, int line) {
+        Token(String str, String tk, int line, boolean status) {
+            if (status) {
+                this.id = count++;
+            } else {
+                this.id = -1;
+            }
             this.str = str;
             this.tk = tk;
             this.line = line;
-            this.id = count++;
+            this.status = status;
         }
 
         @Override
@@ -96,7 +102,7 @@ public class Lexer {
             pos++;
         }
 
-        tokens.add(new Token(number.toString(), "INTCON", lineNum));
+        tokens.add(new Token(number.toString(), "INTCON", lineNum, true));
     }
 
     private static void CharToken() {
@@ -119,7 +125,7 @@ public class Lexer {
             temp.append(line.charAt(pos));
             pos++;
         }
-        tokens.add(new Token(temp.toString(), "CHRCON", lineNum));
+        tokens.add(new Token(temp.toString(), "CHRCON", lineNum, true));
     }
 
     private static void StringToken() {
@@ -136,7 +142,7 @@ public class Lexer {
             temp.append(line.charAt(pos));
             pos++;
         }
-        tokens.add(new Token(temp.toString(), "STRCON", lineNum));
+        tokens.add(new Token(temp.toString(), "STRCON", lineNum, true));
     }
 
     private static void LetterToken() {
@@ -148,9 +154,9 @@ public class Lexer {
 
         String word = temp.toString();
         if (SAVEWORDS.containsKey(word)) {
-            tokens.add(new Token(word, SAVEWORDS.get(word), lineNum));
+            tokens.add(new Token(word, SAVEWORDS.get(word), lineNum, true));
         } else {
-            tokens.add(new Token(word, "IDENFR", lineNum));
+            tokens.add(new Token(word, "IDENFR", lineNum, true));
         }
     }
 
@@ -159,7 +165,7 @@ public class Lexer {
         temp.append(line.charAt(pos));
         String operator = temp.toString();
         pos++;
-        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum));
+        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum, true));
     }
 
     private static void OperatorToken2() {
@@ -184,7 +190,7 @@ public class Lexer {
         }
         String operator = temp.toString();
 
-        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum));
+        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum, true));
     }
 
     private static void JumpAnnotation(BufferedReader br) throws IOException {
@@ -264,13 +270,20 @@ public class Lexer {
                             ((cc == '&' && line.charAt(pos + 1) != '&')
                                     || (cc == '|' && line.charAt(pos + 1) != '|')))) {
                         ErrorLog.makelog_error(lineNum, 'a');
+                        if (cc == '&') {
+                            tokens.add(new Token("&&", SAVEWORDS.get("&&"), lineNum, false));
+                        } else if (cc == '|') {
+                            tokens.add(new Token("||", SAVEWORDS.get("||"), lineNum, false));
+                        }
 
                         // String operator = temp.toString();
                         // tokens.add(new Token(operator, "WRONG"));
                     } else {
                         temp.append(line.charAt(pos + 1));
                         String operator = temp.toString();
-                        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum));
+                        tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum, true));
+
+                        pos++; // fix bug
                     }
                     pos++;
                 } else {
@@ -278,7 +291,6 @@ public class Lexer {
                 }
             }
         }
-        ErrorLog.WriteErrorLogs();
         WriteLexerAns.WriteAnswer(tokens);
     }
 }

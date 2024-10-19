@@ -283,7 +283,7 @@ public class Lexer {
                         String operator = temp.toString();
                         tokens.add(new Token(operator, SAVEWORDS.get(operator), lineNum, true));
 
-                        pos++; // fix bug
+                        pos++; // fix bug, if none error jump '&'
                     }
                     pos++;
                 } else {

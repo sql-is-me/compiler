@@ -9,6 +9,7 @@ public class PrimaryExp {
         Token token = Tools.LookNextTK();
 
         if (token.tk.equals("LPARENT")) { // (
+            CompUnit.count++; // (
             Exp.ExpAnalysis();
             if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺 )
                 Token temp = Tools.GetNowTK();
@@ -18,7 +19,7 @@ public class PrimaryExp {
             }
         } else if (token.tk.equals("INTCON")) {
             Num_Char.NumberAnalysis();
-        } else if (token.tk.equals("CHARCON")) {
+        } else if (token.tk.equals("CHRCON")) {
             Num_Char.CharacterAnalysis();
         } else if (token.tk.equals("IDENFR")) {
             LVal.LValAnalysis();

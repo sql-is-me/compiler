@@ -19,7 +19,7 @@ public class ConstDef {
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     CompUnit.count++;
 
-                    if (Tools.GetNextTK().tk.equals("ASSIGN")) { // =
+                    if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
                         CompUnit.count++;
                         ConstInitVal.ConstInitValAnalysis();
                     }

@@ -12,7 +12,7 @@ public class Lexer {
     private static int count = 0;
 
     public static class Token { // token类
-        String str;
+        public String str;
         public String tk;
         public int line;
         public int id;

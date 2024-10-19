@@ -7,14 +7,14 @@ public class InitVal {
         if (Tools.LookNextTK().tk.equals("STRCON")) {
             CompUnit.count++;
         } else if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
-            CompUnit.count++;
+            CompUnit.count++; // {
             if (!Tools.LookNextTK().tk.equals("RBRACE")) { // }
                 Exp.ExpAnalysis();
-                while (!Tools.LookNextTK().tk.equals("COMMA")) { // ,
+                while (Tools.LookNextTK().tk.equals("COMMA")) { // ,
                     CompUnit.count++;
                     Exp.ExpAnalysis();
                 }
-                CompUnit.count++;
+                CompUnit.count++; // }
             } else {
                 CompUnit.count++;
             }

@@ -1,15 +1,34 @@
 package frontend.Syntax.Children;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
+import frontend.Syntax.Node;
 
 public class Stmt {
+    private static Boolean tryLVal() {
+        int count = CompUnit.count;
+        List<Node> temp = new ArrayList<>(Syntax.getNodes());
+
+        LVal.LValAnalysis();
+        if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
+            return true;
+        } else {
+            CompUnit.count = count;
+            Syntax.getNodes().clear();
+            Syntax.getNodes().addAll(temp);
+            return false;
+        }
+    }
+
     static void StmtAnalysis() {
         Token token = Tools.LookNextTK();
-        if (token.tk.equals("IDENFR")) {
-            LVal.LValAnalysis();
-            if (Tools.LookNextTK().tk.equals("ASSIGN")) {
+        if (token.tk.equals("IDENFR") && (Tools.GetCountTK(CompUnit.count + 2).tk.equals("ASSIGN")
+                || Tools.GetCountTK(CompUnit.count + 2).tk.equals("LBRACK"))) {
+            if (tryLVal()) {
                 CompUnit.count++; // =
                 if (!Tools.LookNextTK().tk.equals("GETINTTK") && !Tools.LookNextTK().tk.equals("GETCHARTK")) {
                     Exp.ExpAnalysis();
@@ -35,7 +54,17 @@ public class Stmt {
                         CompUnit.count++; // ;
                     }
                 }
+            } else {
+                Exp.ExpAnalysis();
+
+                if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
+                    Token tempToken = Tools.GetNowTK();
+                    ErrorLog.makelog_error(tempToken.line, 'i');
+                } else {
+                    CompUnit.count++; // ;
+                }
             }
+
         } else if (token.tk.equals("LBRACE")) {
             Block.BlockAnalysis();
         } else if (token.tk.equals("IFTK")) {
@@ -59,7 +88,7 @@ public class Stmt {
                 }
             }
         } else if (token.tk.equals("FORTK")) {
-            CompUnit.count++; // for
+            CompUnit.count += 2; // for (
             if (!Tools.LookNextTK().tk.equals("SEMICN")) {
                 ForStmt.ForStmtAnalysis();
             }

@@ -13,7 +13,7 @@ public class LVal {
             CompUnit.count++; // [
 
             Exp.ExpAnalysis();
-            if (!Tools.LookNextTK().tk.equals("LBRACK")) { // 缺 ]
+            if (!Tools.LookNextTK().tk.equals("RBRACK")) { // 缺 ]
                 Token temp = Tools.GetNowTK();
                 ErrorLog.makelog_error(temp.line, 'k');
             } else {

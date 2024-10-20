@@ -18,7 +18,7 @@ public class Compiler {
             Syntax syntax = new Syntax();
             syntax.SyntaxAnalysis();
 
-            ErrorLog.WriteErrorLogs();
+            ErrorLog.WriteErrorLogs(); // 输出错误日志
 
         } catch (FileNotFoundException fnfe) {
             System.err.println("file not found + " + fString);

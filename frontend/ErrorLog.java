@@ -7,22 +7,32 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class ErrorLog {
+    private int line;
+    private char errortype;
+
+    ErrorLog(int LineNum, char ErrorType) {
+        this.line = LineNum;
+        this.errortype = ErrorType;
+    }
+
+    @Override
+    public String toString() {
+        return line + " " + errortype + "\n";
+    }
+
     private static String errorfile = "error.txt";
 
-    private static List<String> errorlog = new ArrayList<String>();
+    private static List<ErrorLog> errorlog = new ArrayList<>();
 
     public static void makelog_error(int LineNum, char ErrorType) {
-        StringBuilder temp = new StringBuilder();
-        temp.append(LineNum);
-        temp.append(" " + ErrorType + "\n");
-        String log = temp.toString();
-
+        ErrorLog log = new ErrorLog(LineNum, ErrorType);
         errorlog.add(log);
     }
 
     public static void WriteErrorLogs() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(errorfile))) {
-            for (String error : errorlog) {
+            errorlog.sort((e1, e2) -> Integer.compare(e1.line, e2.line));
+            for (ErrorLog error : errorlog) {
                 bw.write(error.toString());
             }
         } catch (IOException e) {

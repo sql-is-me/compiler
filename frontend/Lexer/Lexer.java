@@ -291,6 +291,6 @@ public class Lexer {
                 }
             }
         }
-        WriteLexerAns.WriteAnswer(tokens);
+        // WriteLexerAns.WriteAnswer(tokens);
     }
 }

@@ -7,6 +7,7 @@ import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 import frontend.Syntax.Node;
+import SymbolTable.utils;
 
 public class Stmt {
     private static Boolean tryLVal() {
@@ -66,6 +67,7 @@ public class Stmt {
             }
 
         } else if (token.tk.equals("LBRACE")) {
+            utils.createSymTab(utils.curSymTab.id); // jump in
             Block.BlockAnalysis();
         } else if (token.tk.equals("IFTK")) {
             CompUnit.count++; // if

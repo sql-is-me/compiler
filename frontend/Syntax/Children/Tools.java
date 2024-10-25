@@ -5,6 +5,8 @@ import frontend.Syntax.Node;
 import frontend.Syntax.Syntax;
 import frontend.Syntax.Syntax.NodeType;
 
+import java.util.ArrayList;
+
 public class Tools {
     public static Token GetCountTK(int count) {
         return CompUnit.words.get(count);
@@ -26,5 +28,14 @@ public class Tools {
     public static void WriteLine(NodeType type, int index) {
         Node node = new Node(type, index);
         Syntax.getNodes().add(node);
+    }
+
+    public static ArrayList<Token> GetExpfromIndex(int begin, int end) {
+        ArrayList<Token> al = new ArrayList<>();
+        while (begin <= end) {
+            al.add(CompUnit.words.get(begin));
+            begin++;
+        }
+        return al;
     }
 }

@@ -9,7 +9,7 @@ public class ConstDecl {
         CompUnit.count++; // const
 
         if (Tools.LookNextTK().tk.equals("INTTK") || Tools.LookNextTK().tk.equals("CHARTK")) {
-            BType.BTypeAnalysis();
+            String btype = BType.BTypeAnalysis();
             ConstDef.ConstDefAnalysis();
 
             while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数

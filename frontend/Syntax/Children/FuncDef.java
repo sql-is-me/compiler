@@ -1,4 +1,5 @@
 package frontend.Syntax.Children;
+import SymbolTable.utils;
 
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
@@ -8,6 +9,8 @@ public class FuncDef {
     static void FuncDefAnalysis() {
         FuncType.FuncTypeAnalysis();
         CompUnit.count += 2; // IDENFR (
+
+        utils.createSymTab(utils.curSymTab.id); // jump in
 
         if (!Tools.LookNextTK().tk.equals("RPARENT") && !Tools.LookNextTK().tk.equals("LBRACE")) { // ) {
             FuncFParams.FuncFParamsAnalysis();

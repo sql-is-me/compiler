@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import SymbolTable.utils;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
@@ -12,6 +13,8 @@ public class MainFuncDef {
         } else {
             CompUnit.count++; // )
         }
+
+        utils.createSymTab(utils.curSymTab.id); // jump in
 
         if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
             Block.BlockAnalysis();

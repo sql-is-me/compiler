@@ -5,17 +5,21 @@ import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class VarDef {
-    static void VarDefAnalysis() {
+    static ThreePart VarDefAnalysis() {
+        ThreePart tp = new ThreePart(null, false, null);
         Token token = Tools.LookNextTK();
 
         if (token.tk.equals("IDENFR")) {
             CompUnit.count++;
+            tp.name = Tools.GetNowTK().str;
+
             token = Tools.LookNextTK();
 
             if (token.tk.equals("ASSIGN")) { // =
                 CompUnit.count++;
                 InitVal.InitValAnalysis();
             } else if (token.tk.equals("LBRACK")) { // [
+                tp.isArray = true;
                 CompUnit.count++;
                 ConstExp.ConstExpAnalysis();
 
@@ -34,5 +38,7 @@ public class VarDef {
         }
 
         Tools.WriteLine(Syntax.NodeType.VarDef, Tools.GetNowTK().id);
+        
+        return tp;
     }
 }

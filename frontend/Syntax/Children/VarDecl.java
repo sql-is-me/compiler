@@ -6,12 +6,16 @@ import frontend.Syntax.Syntax;
 
 public class VarDecl {
     static void VarDeclAnalysis() {
-        BType.BTypeAnalysis();
-        VarDef.VarDefAnalysis();
+        String btype = BType.BTypeAnalysis();
+        ThreePart tp = VarDef.VarDefAnalysis();
+
+        Tools.AddVarSymbol(btype, tp);
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count++;
             VarDef.VarDefAnalysis();
+
+            Tools.AddVarSymbol(btype, tp);
         }
 
         if (!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;

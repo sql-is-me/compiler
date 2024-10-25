@@ -10,11 +10,15 @@ public class ConstDecl {
 
         if (Tools.LookNextTK().tk.equals("INTTK") || Tools.LookNextTK().tk.equals("CHARTK")) {
             String btype = BType.BTypeAnalysis();
-            ConstDef.ConstDefAnalysis();
+            ThreePart tp = ConstDef.ConstDefAnalysis();
+
+            Tools.AddConstSymbol(btype, tp);
 
             while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
                 CompUnit.count++;
-                ConstDef.ConstDefAnalysis();
+                tp = ConstDef.ConstDefAnalysis();
+
+                Tools.AddConstSymbol(btype, tp);
             }
         }
 

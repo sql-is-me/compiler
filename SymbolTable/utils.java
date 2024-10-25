@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import frontend.Lexer.Lexer.Token;
 import SymbolTable.Symbol.TokenType;
-import SymbolTable.Pair;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -30,10 +29,11 @@ public class utils {
         level--;
     }
 
-    public static void addSymbol(String name, TokenType type, ArrayList<Integer> value, int size) {
+    public static void addSymbol(String name, TokenType type, ArrayList<Integer> value, int size,
+            ArrayList<TokenType> funcParaTypes) {
         Symbol symbol;
 
-        symbol = new Symbol(curSymTab.id, name, type, value, size);
+        symbol = new Symbol(curSymTab.id, name, type, value, size, funcParaTypes);
         curSymTab.curSymTab.put(name, symbol);
     }
 
@@ -114,71 +114,49 @@ public class utils {
         return null;
     }
 
-    public static int CalculateExp(ArrayList<Token> exp) {
-        int ans = 0;
-        int temp = 0;
-        boolean plusOrminu = true;
+    public static TokenType JudgeExpType(ArrayList<Token> exp) {
         Token token;
-        int btype = 0; // 0 char, 1 int
+        TokenType type = null;
         int expsize = exp.size();
         for (int i = 0; i < expsize; i++) {
             token = exp.get(i);
 
             if (token.tk.equals("INTCON")) {
-                temp = Integer.parseInt(token.str);
-                if (btype == 0) {
-                    btype = 1;
-                }
+                type = TokenType.Int;
             } else if (token.tk.equals("CHARCON")) {
-                temp = token.str.charAt(0);
-            } else if (token.tk.equals("IDENFR")) {
-                Pair pair = FindIdentfromSymTab(token.str, 1); // fix
-                if (pair.btype == 1 && btype == 0) {
-                    btype = 1;
+                if (type.equals(null)) {
+                    type = TokenType.Char;
+                } else {
+                    // error
                 }
-                temp = pair.value;
             } else {
+                if (token.tk.equals("IDENFR")) {
+                    TokenType ttype = ReturnIdentType(token.str);
+                    if (ttype.equals(TokenType.IntArray) || ttype.equals(TokenType.CharArray)) {
 
-            }
+                    } else if (ttype.equals(TokenType.Int) || ttype.equals(TokenType.Char)
+                            || ttype.equals(TokenType.ConstInt)) {
 
-            if (!plusOrminu) { // -
-                temp *= -1;
-            }
-
-            ans += temp;
-
-            if (i != expsize - 1 && exp.get(i + 1).tk.equals("PLUS")) {
-                plusOrminu = true; // +
-            } else {
-                plusOrminu = false; // -
+                    }
+                }
             }
         }
-        return ans;
+        return type;
     }
 
-    public static Pair FindIdentfromSymTab(String name, int index) {
-        Pair pair = null;
+    public static TokenType ReturnIdentType(String name) {
         Symbol symbol;
-        String type;
-        int btype = 1;
+        TokenType type;
         if (JudgeIdenfrExistNow(name)) {
             symbol = curSymTab.curSymTab.get(name);
-            type = symbol.type.toString();
-            if (type.equals("ConstChar") || type.equals("Char") || type.equals("CharArray")
-                    || type.equals("CharFunc")) {
-                btype = 0;
-            }
-            pair = new Pair(btype, symbol.value.get(index));
+            type = symbol.type;
         } else {
             if ((symbol = GetIdenfrfromBefore(name)) != null) {
-                type = symbol.type.toString();
-                if (type.equals("ConstChar") || type.equals("Char") || type.equals("CharArray")
-                        || type.equals("CharFunc")) {
-                    btype = 0;
-                }
-                pair = new Pair(btype, symbol.value.get(index));
+                type = symbol.type;
+            } else {
+                type = null;
             }
         }
-        return pair;
+        return type;
     }
 }

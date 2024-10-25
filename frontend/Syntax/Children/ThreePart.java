@@ -4,12 +4,14 @@ import java.util.ArrayList;
 
 import frontend.Lexer.Lexer.Token;
 
-public class Pair {
+public class ThreePart {
     String name;
+    Boolean isArray;
     ArrayList<Token> sizeExp;
 
-    public Pair(String name, ArrayList<Token> Exp) {
+    public ThreePart(String name, boolean isArray, ArrayList<Token> Exp) {
         this.name = name;
+        this.isArray = isArray;
         this.sizeExp = Exp;
     }
 }

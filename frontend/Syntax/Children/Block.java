@@ -10,7 +10,7 @@ public class Block {
             BlockItem.BlockItemAnalysis();
         }
         CompUnit.count++; // }
-
+        
         utils.jumpOutofBlock(); // jump out
 
         Tools.WriteLine(Syntax.NodeType.Block, Tools.GetNowTK().id);

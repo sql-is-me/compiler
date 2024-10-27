@@ -11,7 +11,10 @@ public class FuncDef {
 
         fp.returnType = FuncType.FuncTypeAnalysis();
         fp.name = Tools.LookNextTK().str; // get indent name
-        CompUnit.count += 2; // IDENFR (
+        CompUnit.count++; // IDENFR
+        utils.JudgeRepeat(Tools.GetNowTK()); // 判断是否重定义
+
+        CompUnit.count++; // (
 
         utils.createSymTab(utils.curSymTab); // jump in
 
@@ -26,7 +29,13 @@ public class FuncDef {
         } else {
             CompUnit.count++; // )
         }
+
+        utils.SetfuncType(fp.returnType); // in function block
         Block.BlockAnalysis();
+        if (utils.isinFunc()) { // 退出函数时，判断有无return
+            utils.JudgeReturnExist(Tools.GetNowTK()); // }
+            utils.SetfuncTypetoNull();
+        }
 
         Tools.WriteLine(Syntax.NodeType.FuncDef, Tools.GetNowTK().id);
 

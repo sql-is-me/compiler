@@ -6,6 +6,8 @@ import java.util.TreeMap;
 import java.util.Map;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.VarSymbol.VarTypes;
+import frontend.ErrorLog;
+import frontend.Lexer.Lexer.Token;
 
 public class utils {
     private static int level = 0; // 层次
@@ -184,11 +186,85 @@ public class utils {
     }
 
     /**
-     * 从最近的上级符号表获取该symbol
-     * 使用此函数前需先判断是否在当前符号表中，然后判断是否在前符号表中
+     * 重复性判断，并作报错处理
+     * 
+     * @param token 符号token
+     * @return 重复时返回true，不重复时返回false
+     */
+    public static boolean JudgeRepeat(Token token) {
+        if (JudgeIdenfrExistNow(token.str)) {
+            ErrorLog.makelog_error(token.line, 'b');
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 未定义判断，并作报错处理
+     * 
+     * @param token 符号token
+     * @return 不存在时返回true，存在时返回false
+     */
+    public static boolean JudgeUndefined(Token token) {
+        if (!JudgeIdenfrExistNow(token.str) && !JudgeIdenfrExistBefore(token.str)) {
+            ErrorLog.makelog_error(token.line, 'c');
+            return true;
+        }
+        return false;
+    }
+
+    /** 判断函数类型以及是否在函数体中 */
+    private static FuncTypes funcType = null;
+    /** 判断是否经历过return */
+    private static boolean findReturn = false;
+
+    /**
+     * 判断是否在函数体中
+     * 
+     * @return 若在则返回true 若否则返回false
+     */
+    public static boolean isinFunc() {
+        if (funcType != null) {
+            return true;
+        }
+        return false;
+    }
+
+    /** 进入函数触发，将funcType转变为当前函数类型 */
+    public static void SetfuncType(FuncTypes funcType) {
+        utils.funcType = funcType;
+    }
+
+    /** 退出函数触发，将funcType转变为Null */
+    public static void SetfuncTypetoNull() {
+        utils.funcType = null;
+    }
+
+    /**
+     * 经过return触发，将findReturn转为true
+     */
+    public static void SetfindReturn() {
+        findReturn = true;
+    }
+
+    /**
+     * 判断函数类型为非Void时有无返回语句,并在结束后将findReturn置为false
+     * 若不存在返回语句，则写错误日志
+     */
+    public static void JudgeReturnExist(Token token) {
+        if (!funcType.equals(FuncTypes.VoidFunc)) {
+            if (!findReturn) {
+                ErrorLog.makelog_error(token.line, 'g');
+            }
+        }
+        findReturn = false;
+    }
+
+    /**
+     * 从上级符号表获取该symbol
      * 
      * @param name
-     * @return Symbol
+     * @return Symbol 若无返回null
      */
     public static Symbol GetIdenfrfromBefore(String name) {
         SymTab findSymTab = curSymTab.lastSymTab;
@@ -200,6 +276,30 @@ public class utils {
             }
         }
         return null;
+    }
+
+    /**
+     * 从当前符号表获取该symbol
+     * 
+     * @param name
+     * @return Symbol 若无返回null
+     */
+    public static Symbol GetIdenfrfromNow(String name) {
+        Symbol findSymbol = curSymTab.curSymTab.get(name);
+        return findSymbol;
+    }
+
+    /**
+     * 判断LVal是否为常量 若是则写错误
+     * 
+     * @param varType LVal的类型
+     * @param line    LVal所在行
+     */
+    public static void JudgeLValisConst(String varType, int line) {
+        if (varType.equals(VarTypes.ConstInt.toString()) || varType.equals(VarTypes.ConstIntArray.toString())
+                || varType.equals(VarTypes.ConstChar.toString()) || varType.equals(VarTypes.ConstIntArray.toString())) {
+            ErrorLog.makelog_error(line, 'c');
+        }
     }
 
     // public static TokenType JudgeExpType(ArrayList<Token> exp) {
@@ -243,8 +343,7 @@ public class utils {
         Symbol symbol;
         String type;
 
-        if (JudgeIdenfrExistNow(name)) {
-            symbol = curSymTab.curSymTab.get(name);
+        if ((symbol = GetIdenfrfromNow(name)) != null) {
             if (symbol instanceof VarSymbol) {
                 VarSymbol varSymbol = (VarSymbol) symbol;
                 type = varSymbol.type.toString();

@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import SymbolTable.utils;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
@@ -10,6 +11,11 @@ public class ConstDef {
 
         if (Tools.LookNextTK().tk.equals("IDENFR")) {
             CompUnit.count++;
+
+            if (utils.JudgeRepeat(Tools.GetNowTK())) {
+                // make errorlog
+            }
+
             tp.name = Tools.GetNowTK().str;
 
             if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =

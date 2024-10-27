@@ -1,6 +1,7 @@
 package frontend.Syntax.Children;
 
 import SymbolTable.utils;
+import SymbolTable.FuncSymbol.FuncTypes;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
@@ -14,10 +15,14 @@ public class MainFuncDef {
             CompUnit.count++; // )
         }
 
+        utils.SetfuncType(FuncTypes.IntFunc);
+        
         utils.createSymTab(utils.curSymTab); // jump in
+        Block.BlockAnalysis();
 
-        if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
-            Block.BlockAnalysis();
+        if (utils.isinFunc()) { // 退出函数时，判断有无return
+            utils.JudgeReturnExist(Tools.GetNowTK()); // }
+            utils.SetfuncTypetoNull();
         }
 
         Tools.WriteLine(Syntax.NodeType.MainFuncDef, Tools.GetNowTK().id);

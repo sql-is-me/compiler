@@ -13,7 +13,7 @@ public class VarDecl {
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count++;
-            VarDef.VarDefAnalysis();
+            tp = VarDef.VarDefAnalysis();
 
             Tools.AddVarSymbol(false, btype, tp);
         }

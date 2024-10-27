@@ -115,6 +115,7 @@ public class Stmt {
             }
         } else if (token.tk.equals("RETURNTK")) {
             CompUnit.count++;
+            utils.SetfindReturn();
             if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTCON")
                     || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
                     || Tools.LookNextTK().tk.equals("PLUS") || Tools.LookNextTK().tk.equals("MINU")

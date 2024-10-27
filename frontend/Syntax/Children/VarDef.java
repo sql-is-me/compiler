@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import SymbolTable.utils;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
@@ -11,10 +12,14 @@ public class VarDef {
 
         if (token.tk.equals("IDENFR")) {
             CompUnit.count++;
+
+            if (utils.JudgeRepeat(Tools.GetNowTK())) {
+                // make errorlog
+            }
+
             tp.name = Tools.GetNowTK().str;
 
             token = Tools.LookNextTK();
-
             if (token.tk.equals("ASSIGN")) { // =
                 CompUnit.count++;
                 InitVal.InitValAnalysis();
@@ -38,7 +43,7 @@ public class VarDef {
         }
 
         Tools.WriteLine(Syntax.NodeType.VarDef, Tools.GetNowTK().id);
-        
+
         return tp;
     }
 }

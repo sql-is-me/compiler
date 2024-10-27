@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import SymbolTable.utils;
 import SymbolTable.VarSymbol.VarTypes;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
@@ -13,6 +14,11 @@ public class FuncFParam {
         Token token = Tools.LookNextTK();
         if (token.tk.equals("IDENFR")) { // ident
             CompUnit.count++;
+
+            if (utils.JudgeRepeat(Tools.GetNowTK())) {
+                // make errorlog
+            }
+
             tp.name = token.str;
 
             if (Tools.LookNextTK().tk.equals("LBRACK")) { // [

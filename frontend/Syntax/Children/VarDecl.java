@@ -9,13 +9,13 @@ public class VarDecl {
         String btype = BType.BTypeAnalysis();
         ThreePart tp = VarDef.VarDefAnalysis();
 
-        Tools.AddVarSymbol(btype, tp);
+        Tools.AddVarSymbol(false, btype, tp);
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count++;
             VarDef.VarDefAnalysis();
 
-            Tools.AddVarSymbol(btype, tp);
+            Tools.AddVarSymbol(false, btype, tp);
         }
 
         if (!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;

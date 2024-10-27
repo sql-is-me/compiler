@@ -14,7 +14,7 @@ public class MainFuncDef {
             CompUnit.count++; // )
         }
 
-        utils.createSymTab(utils.curSymTab.id); // jump in
+        utils.createSymTab(utils.curSymTab); // jump in
 
         if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
             Block.BlockAnalysis();

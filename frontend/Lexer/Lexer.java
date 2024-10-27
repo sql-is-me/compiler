@@ -229,7 +229,7 @@ public class Lexer {
     }
 
     // 词法分析器
-    public void lexer(BufferedReader br) throws IOException {
+    public static void lexer(BufferedReader br) throws IOException {
         char cc;
         while ((line = br.readLine()) != null) {
             lineNum++;
@@ -291,6 +291,5 @@ public class Lexer {
                 }
             }
         }
-        // WriteLexerAns.WriteAnswer(tokens);
     }
 }

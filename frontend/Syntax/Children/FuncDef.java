@@ -1,28 +1,25 @@
 package frontend.Syntax.Children;
 
-import java.util.ArrayList;
-
 import SymbolTable.utils;
-import SymbolTable.Symbol.TokenType;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class FuncDef {
     static void FuncDefAnalysis() {
-        TokenType returntype;
-        FuncPart fp = new FuncPart(null, 0, null);
+        FuncPart fp = new FuncPart(null, null, 0, null);
 
-        returntype = FuncType.FuncTypeAnalysis();
-        fp.name = Tools.LookNextTK().str; // get inden name
+        fp.returnType = FuncType.FuncTypeAnalysis();
+        fp.name = Tools.LookNextTK().str; // get indent name
         CompUnit.count += 2; // IDENFR (
 
-        utils.createSymTab(utils.curSymTab.id); // jump in
+        utils.createSymTab(utils.curSymTab); // jump in
 
         if (!Tools.LookNextTK().tk.equals("RPARENT") && !Tools.LookNextTK().tk.equals("LBRACE")) { // ) {
             fp.paramTypes = FuncFParams.FuncFParamsAnalysis();
-            fp.paramCount = fp.paramTypes.size();
+            fp.paramNumber = fp.paramTypes.size();
         }
+
         if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺)
             Token temp = Tools.GetNowTK();
             ErrorLog.makelog_error(temp.line, 'j');
@@ -33,6 +30,6 @@ public class FuncDef {
 
         Tools.WriteLine(Syntax.NodeType.FuncDef, Tools.GetNowTK().id);
 
-        Tools.AddFuncSymbol(returntype, fp);
+        Tools.AddFuncSymbol(fp);
     }
 }

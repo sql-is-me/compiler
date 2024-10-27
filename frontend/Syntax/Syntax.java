@@ -49,6 +49,10 @@ public class Syntax {
         return nodes;
     }
 
+    public static List<String> getParser() { // get
+        return parser;
+    }
+
     private static void setParser(List<Token> Lexer) {
         for (Token token : Lexer) {
             if (token.status) {
@@ -57,9 +61,8 @@ public class Syntax {
         }
     }
 
-    public void SyntaxAnalysis() { // 启动分析
+    public static void SyntaxAnalysis() { // 启动分析
         setParser(frontend.Lexer.Lexer.tokens);
         CompUnit.CompUnitAnalysis();
-        WriteSyntaxAns.WriteAnswer(parser, nodes);
     }
 }

@@ -3,8 +3,6 @@ package SymbolTable;
 import java.util.*;
 
 public class SymTab {
-    int count = 0;
-
     public int id;
     public int parentId;
     public int level; // 层次
@@ -14,9 +12,8 @@ public class SymTab {
     public LinkedHashMap<String, Symbol> curSymTab;
     public ArrayList<SymTab> childSymTabs;
 
-    public SymTab(int parentId, int level, SymTab lastSymTab) {
-        this.id = count++;
-        this.parentId = parentId;
+    public SymTab(int level, SymTab lastSymTab) {
+        this.id = ++utils.idCount_SymTab;
         this.level = level;
         this.lastSymTab = lastSymTab;
         this.curSymTab = new LinkedHashMap<String, Symbol>();

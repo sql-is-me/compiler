@@ -1,20 +1,20 @@
 package frontend.Syntax.Children;
 
-import SymbolTable.Symbol.TokenType;
+import SymbolTable.FuncSymbol.FuncTypes;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
 
 public class FuncType {
-    static TokenType FuncTypeAnalysis() {
-        TokenType tt;
+    static FuncTypes FuncTypeAnalysis() {
+        FuncTypes tt;
         Token token = Tools.LookNextTK();
 
         if (token.tk.equals("INTTK")) {
-            tt = TokenType.IntFunc;
+            tt = FuncTypes.IntFunc;
         } else if (token.tk.equals("CHARTK")) {
-            tt = TokenType.CharFunc;
+            tt = FuncTypes.CharFunc;
         } else {
-            tt = TokenType.VoidFunc;
+            tt = FuncTypes.VoidFunc;
         }
         CompUnit.count++; // return type
 

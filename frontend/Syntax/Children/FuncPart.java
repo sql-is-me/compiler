@@ -2,16 +2,19 @@ package frontend.Syntax.Children;
 
 import java.util.ArrayList;
 
-import SymbolTable.Symbol.TokenType;
+import SymbolTable.FuncSymbol.FuncTypes;
+import SymbolTable.VarSymbol.VarTypes;
 
 public class FuncPart {
     String name;
-    int paramCount;
-    ArrayList<TokenType> paramTypes;
+    FuncTypes returnType;
+    int paramNumber;
+    ArrayList<VarTypes> paramTypes;
 
-    public FuncPart(String name, int paramCount, ArrayList<TokenType> paramTypes) {
+    public FuncPart(String name, FuncTypes returnType, int paramNumber, ArrayList<VarTypes> paramTypes) {
         this.name = name;
-        this.paramCount = paramCount;
+        this.returnType = returnType;
+        this.paramNumber = paramNumber;
         this.paramTypes = paramTypes;
     }
 }

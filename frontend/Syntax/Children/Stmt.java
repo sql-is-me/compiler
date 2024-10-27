@@ -67,7 +67,7 @@ public class Stmt {
             }
 
         } else if (token.tk.equals("LBRACE")) {
-            utils.createSymTab(utils.curSymTab.id); // jump in
+            utils.createSymTab(utils.curSymTab); // jump in
             Block.BlockAnalysis();
         } else if (token.tk.equals("IFTK")) {
             CompUnit.count++; // if

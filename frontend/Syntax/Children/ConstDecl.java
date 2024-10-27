@@ -12,13 +12,13 @@ public class ConstDecl {
             String btype = BType.BTypeAnalysis();
             ThreePart tp = ConstDef.ConstDefAnalysis();
 
-            Tools.AddConstSymbol(btype, tp);
+            Tools.AddVarSymbol(true, btype, tp);
 
             while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
                 CompUnit.count++;
                 tp = ConstDef.ConstDefAnalysis();
 
-                Tools.AddConstSymbol(btype, tp);
+                Tools.AddVarSymbol(true, btype, tp);
             }
         }
 

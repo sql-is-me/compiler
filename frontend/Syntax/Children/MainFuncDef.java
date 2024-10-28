@@ -16,14 +16,12 @@ public class MainFuncDef {
         }
 
         utils.SetfuncType(FuncTypes.IntFunc);
-        
+
         utils.createSymTab(utils.curSymTab); // jump in
         Block.BlockAnalysis();
 
-        if (utils.isinFunc()) { // 退出函数时，判断有无return
-            utils.JudgeReturnExist(Tools.GetNowTK()); // }
-            utils.SetfuncTypetoNull();
-        }
+        // 退出函数时，判断有无return
+        utils.JudgeReturnExist(Tools.GetNowTK()); // }
 
         Tools.WriteLine(Syntax.NodeType.MainFuncDef, Tools.GetNowTK().id);
     }

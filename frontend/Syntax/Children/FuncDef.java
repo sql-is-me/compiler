@@ -31,11 +31,10 @@ public class FuncDef {
         }
 
         utils.SetfuncType(fp.returnType); // in function block
+
         Block.BlockAnalysis();
-        if (utils.isinFunc()) { // 退出函数时，判断有无return
-            utils.JudgeReturnExist(Tools.GetNowTK()); // }
-            utils.SetfuncTypetoNull();
-        }
+
+        utils.JudgeReturnExist(Tools.GetNowTK()); // } // 退出函数时，判断最后有无return
 
         Tools.WriteLine(Syntax.NodeType.FuncDef, Tools.GetNowTK().id);
 

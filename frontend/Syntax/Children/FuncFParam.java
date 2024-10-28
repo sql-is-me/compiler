@@ -15,9 +15,7 @@ public class FuncFParam {
         if (token.tk.equals("IDENFR")) { // ident
             CompUnit.count++;
 
-            if (utils.JudgeRepeat(Tools.GetNowTK())) {
-                // make errorlog
-            }
+            utils.JudgeRepeat(Tools.GetNowTK());
 
             tp.name = token.str;
 

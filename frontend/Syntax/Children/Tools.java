@@ -18,11 +18,6 @@ public class Tools {
         return CompUnit.words.get(CompUnit.count);
     }
 
-    public static Token GetNextTK() { // 找到下一个TK
-        CompUnit.count++;
-        return CompUnit.words.get(CompUnit.count);
-    }
-
     public static Token LookNextTK() { // 看下一个TK
         return CompUnit.words.get(CompUnit.count + 1);
     }

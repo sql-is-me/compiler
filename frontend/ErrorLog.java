@@ -39,4 +39,12 @@ public class ErrorLog {
             System.err.println("could not open + " + errorfile);
         }
     }
+
+    public static List<ErrorLog> GetErrorLog() {
+        return errorlog;
+    }
+
+    public static void SetErrorLog(List<ErrorLog> oldErrorLog) {
+        errorlog = oldErrorLog;
+    }
 }

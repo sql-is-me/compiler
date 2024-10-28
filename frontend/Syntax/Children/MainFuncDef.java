@@ -15,9 +15,10 @@ public class MainFuncDef {
             CompUnit.count++; // )
         }
 
+        utils.createSymTab(utils.curSymTab); // jump in
+
         utils.SetfuncType(FuncTypes.IntFunc);
 
-        utils.createSymTab(utils.curSymTab); // jump in
         Block.BlockAnalysis();
 
         // 退出函数时，判断有无return

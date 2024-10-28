@@ -13,9 +13,7 @@ public class VarDef {
         if (token.tk.equals("IDENFR")) {
             CompUnit.count++;
 
-            if (utils.JudgeRepeat(Tools.GetNowTK())) {
-                // make errorlog
-            }
+            utils.JudgeRepeat(Tools.GetNowTK());
 
             tp.name = Tools.GetNowTK().str;
 

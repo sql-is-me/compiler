@@ -14,17 +14,20 @@ public class Stmt {
     private static Boolean tryLVal() {
         int count = CompUnit.count;
         List<Node> temp = new ArrayList<>(Syntax.getNodes());
+        List<ErrorLog> oldErrorLog = new ArrayList<>(ErrorLog.GetErrorLog());
 
         LVal.LValAnalysis();
         if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
             CompUnit.count = count;
             Syntax.getNodes().clear();
             Syntax.getNodes().addAll(temp);
+            ErrorLog.SetErrorLog(oldErrorLog);
             return true;
         } else {
             CompUnit.count = count;
             Syntax.getNodes().clear();
             Syntax.getNodes().addAll(temp);
+            ErrorLog.SetErrorLog(oldErrorLog);
             return false;
         }
     }
@@ -128,7 +131,7 @@ public class Stmt {
             }
         } else if (token.tk.equals("RETURNTK")) {
             CompUnit.count++;
-            utils.JudgeReturnUnmatch(token, Tools.GetNextTK());
+            utils.JudgeReturnUnmatch(token, Tools.LookNextTK());
 
             if (Tools.LookNextTK().tk.equals("LPARENT") || Tools.LookNextTK().tk.equals("INTCON")
                     || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
@@ -144,7 +147,7 @@ public class Stmt {
                 CompUnit.count++; // ;
             }
 
-            utils.findReturn(Tools.GetNextTK());
+            utils.findReturn(Tools.LookNextTK());
 
         } else if (token.tk.equals("PRINTFTK")) {
             CompUnit.count++;

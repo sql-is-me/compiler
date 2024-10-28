@@ -37,9 +37,9 @@ public class utils {
     public static SymTab curSymTab = globalSymTab;
 
     /**
-     * 以传入符号表为父表造一个子表
+     * 以当前符号表为父表造一个子表
      * 
-     * @param parentId // 父符号表
+     * @param curSymTab // 父符号表
      * 
      * @return 新生成的子表
      */
@@ -67,8 +67,13 @@ public class utils {
      */
     public static void addFuncSymbol(String name, FuncTypes returnType, ArrayList<VarTypes> paramTypes,
             int paramNumber) {
+        SymTab recordSymtab = curSymTab;// 先跳回上一级符号表，加入函数相关信息
+        curSymTab = curSymTab.lastSymTab;
+
         Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber);
         curSymTab.curSymTab.put(name, symbol);
+
+        curSymTab = recordSymtab; // 再跳回去
     }
 
     /**
@@ -213,6 +218,9 @@ public class utils {
         return false;
     }
 
+    /** 判断该标识符是否被定义，以帮助本行的错误排查 */
+    public static boolean isdefined = false;
+
     /**
      * 未定义判断，并作报错处理
      * 
@@ -222,8 +230,10 @@ public class utils {
     public static boolean JudgeUndefined(Token token) {
         if (!JudgeIdenfrExistNow(token.str) && !JudgeIdenfrExistBefore(token.str)) {
             ErrorLog.makelog_error(token.line, 'c');
+            isdefined = false;
             return true;
         }
+        isdefined = true;
         return false;
     }
 
@@ -323,7 +333,7 @@ public class utils {
      */
     public static Symbol GetIdenfr(String name) {
         Symbol symbol;
-        if ((symbol = GetIdenfrfromNow(name)).equals(null)) {
+        if ((symbol = GetIdenfrfromNow(name)) == null) {
             symbol = GetIdenfrfromBefore(name);
         }
         return symbol;
@@ -336,9 +346,14 @@ public class utils {
      * @param line    LVal所在行
      */
     public static void JudgeLValisConst(String varType, int line) {
+        if (varType == null) // LVal未定义，已经报过错，故跳过
+        {
+            return;
+        }
+
         if (varType.equals(VarTypes.ConstInt.toString()) || varType.equals(VarTypes.ConstIntArray.toString())
-                || varType.equals(VarTypes.ConstChar.toString()) || varType.equals(VarTypes.ConstIntArray.toString())) {
-            ErrorLog.makelog_error(line, 'c');
+                || varType.equals(VarTypes.ConstChar.toString()) || varType.equals(VarTypes.ConstCharArray.toString())) {
+            ErrorLog.makelog_error(line, 'h');
         }
     }
 
@@ -418,12 +433,14 @@ public class utils {
      * @param token             函数名token
      * @param funcRParamsNumber 参数个数
      */
-    public static void CheckFuncRParamsNumber(Token token, int funcRParamsNumber) {
+    public static boolean CheckFuncRParamsNumber(Token token, int funcRParamsNumber) {
         FuncSymbol funcSymbol = (FuncSymbol) GetIdenfr(token.str);
 
         if (funcRParamsNumber != funcSymbol.paramNumber) {
             ErrorLog.makelog_error(token.line, 'd');
+            return false;
         }
+        return true;
     }
 
     /** 循环嵌套层数 */
@@ -468,7 +485,7 @@ public class utils {
 
             if (token.tk.equals("INTCON")) {
                 type = CalculateType(type, TokenTypes.Int);
-            } else if (token.tk.equals("CHARCON")) {
+            } else if (token.tk.equals("CHRCON")) {
                 type = CalculateType(type, TokenTypes.Char);
             } else if (token.tk.equals("IDENFR")) {
                 Symbol symbol = GetIdenfr(token.str);
@@ -480,7 +497,7 @@ public class utils {
                     tempType = TokenTypes.valueOf(funcSymbol.returnType.toString());
                 }
 
-                if (isArray(tempType) && exp.get(i + 1).tk.equals("LBRACK")) {
+                if (isArray(tempType) && i < exp.size() - 1 && exp.get(i + 1).tk.equals("LBRACK")) {
                     i += 2;// indent [
                     childList = new ArrayList<>();
 
@@ -501,7 +518,7 @@ public class utils {
                     }
                     type = CalculateType(type, tempType);
 
-                } else if (isFunc(tempType)) { // exp是否无漏下的) fix
+                } else if (isFunc(tempType)) {
                     i += 2; // jump to (
                     int level = 1; // ()层数
                     while (level != 0 && i < expsize) {
@@ -512,9 +529,11 @@ public class utils {
                         }
                         i++;
                     }
-
-                    type = CalculateType(type, tempType);
+                    i--; // 回退到)
                 }
+
+                type = CalculateType(type, tempType);
+
             } else if (token.str.equals("(")) {
                 childList = new ArrayList<>();
                 int level = 1; // ()层数
@@ -530,7 +549,8 @@ public class utils {
                     i++;
                 }
 
-                childList.removeLast(); // 移除)
+                i--; // 回退到( 下一步+2
+                childList.remove(childList.size() - 1); // 移除)
                 tempType = TokenTypes.valueOf(JudgeExpType(childList));
                 type = CalculateType(type, tempType);
 
@@ -553,6 +573,10 @@ public class utils {
      * @return 如果是Array返回true
      */
     private static boolean isArray(TokenTypes tokenType) {
+        if (tokenType == null) {
+            return false;
+        }
+
         if (tokenType.equals(TokenTypes.IntArray) || tokenType.equals(TokenTypes.CharArray)
                 || tokenType.equals(TokenTypes.ConstIntArray) || tokenType.equals(TokenTypes.ConstCharArray)) {
             return true;
@@ -567,6 +591,10 @@ public class utils {
      * @return 如果是Var返回true
      */
     private static boolean isVar(TokenTypes tokenType) {
+        if (tokenType == null) {
+            return false;
+        }
+
         if (tokenType.equals(TokenTypes.Int) || tokenType.equals(TokenTypes.Char)
                 || tokenType.equals(TokenTypes.ConstInt) || tokenType.equals(TokenTypes.ConstChar)) {
             return true;
@@ -581,6 +609,10 @@ public class utils {
      * @return 如果是func返回true
      */
     private static boolean isFunc(TokenTypes tokenType) {
+        if (tokenType == null) {
+            return false;
+        }
+
         if (tokenType.equals(TokenTypes.IntFunc) || tokenType.equals(TokenTypes.CharFunc)
                 || tokenType.equals(TokenTypes.VoidFunc)) {
             return true;
@@ -615,7 +647,7 @@ public class utils {
             if (isArray(temp)) { // 不能与数组做计算
                 System.err.println("var Array");
                 return null;
-            } else if (temp.equals(null)) { // temp is null
+            } else if (temp == null) { // temp is null
                 System.err.println("temp is null");
                 return null;
             }
@@ -644,6 +676,10 @@ public class utils {
      * @return TokenTypes int，char，intArray，charArray
      */
     private static TokenTypes RemoveConstandFunc(TokenTypes now) {
+        if (now == null) {
+            return null;
+        }
+
         if (now.equals(TokenTypes.ConstInt)) {
             now = TokenTypes.Int;
         } else if (now.equals(TokenTypes.ConstChar)) {
@@ -656,14 +692,24 @@ public class utils {
             now = TokenTypes.Int;
         } else if (now.equals(TokenTypes.CharFunc)) {
             now = TokenTypes.Char;
-        } else { // voidFunc or null
+        } else if (now.equals(TokenTypes.VoidFunc)) {
             now = null;
         }
         return now;
     }
 
-    public static void JudgeFuncRParamsCorrect(Token funcIdent, ArrayList<VarTypes> paramsTypes) {
+    public static void JudgeFuncRParamsCorrect(Token funcIdent, int funcRParamsNumber,
+            ArrayList<VarTypes> paramsTypes) {
         FuncSymbol funcSymbol = (FuncSymbol) GetIdenfr(funcIdent.str);
+
+        if(!isdefined)
+        {
+            return;
+        }
+
+        if (!CheckFuncRParamsNumber(funcIdent, funcRParamsNumber)) {
+            return;
+        }
 
         for (int i = 0; i < funcSymbol.paramTypes.size(); i++) {
             if (funcSymbol.paramTypes.get(i).equals(paramsTypes.get(i))) {

@@ -1,5 +1,7 @@
 package frontend.Syntax.Children;
 
+import java.util.ArrayList;
+
 import SymbolTable.utils;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
@@ -21,7 +23,12 @@ public class FuncDef {
         if (!Tools.LookNextTK().tk.equals("RPARENT") && !Tools.LookNextTK().tk.equals("LBRACE")) { // ) {
             fp.paramTypes = FuncFParams.FuncFParamsAnalysis();
             fp.paramNumber = fp.paramTypes.size();
+        } else { // 无参数情况
+            fp.paramTypes = new ArrayList<>();
+            fp.paramNumber = 0;
         }
+
+        Tools.AddFuncSymbol(fp);
 
         if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺)
             Token temp = Tools.GetNowTK();
@@ -37,7 +44,5 @@ public class FuncDef {
         utils.JudgeReturnExist(Tools.GetNowTK()); // } // 退出函数时，判断最后有无return
 
         Tools.WriteLine(Syntax.NodeType.FuncDef, Tools.GetNowTK().id);
-
-        Tools.AddFuncSymbol(fp);
     }
 }

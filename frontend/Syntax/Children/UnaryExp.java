@@ -40,8 +40,7 @@ public class UnaryExp {
                 }
             }
 
-            utils.CheckFuncRParamsNumber(funcNameToken, funcRParamsNumber);
-            utils.JudgeFuncRParamsCorrect(funcNameToken, funcParamsTypes);
+            utils.JudgeFuncRParamsCorrect(funcNameToken, funcRParamsNumber, funcParamsTypes);
 
             if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
                 Token temp = Tools.GetNowTK();

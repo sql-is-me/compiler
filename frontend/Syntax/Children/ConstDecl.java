@@ -17,7 +17,7 @@ public class ConstDecl {
             while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
                 CompUnit.count++;
                 tp = ConstDef.ConstDefAnalysis();
-
+                
                 Tools.AddVarSymbol(true, btype, tp);
             }
         }

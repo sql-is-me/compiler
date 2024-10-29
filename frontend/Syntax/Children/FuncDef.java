@@ -14,7 +14,8 @@ public class FuncDef {
         fp.returnType = FuncType.FuncTypeAnalysis();
         fp.name = Tools.LookNextTK().str; // get indent name
         CompUnit.count++; // IDENFR
-        utils.JudgeRepeat(Tools.GetNowTK()); // 判断是否重定义
+
+        boolean isFuncRepeat = utils.JudgeRepeat(Tools.GetNowTK()); // 判断是否重定义
 
         CompUnit.count++; // (
 
@@ -28,7 +29,7 @@ public class FuncDef {
             fp.paramNumber = 0;
         }
 
-        Tools.AddFuncSymbol(fp);
+        Tools.AddFuncSymbol(fp, isFuncRepeat);
 
         if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺)
             Token temp = Tools.GetNowTK();

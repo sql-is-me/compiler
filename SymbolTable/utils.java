@@ -205,16 +205,61 @@ public class utils {
     }
 
     /**
+     * 判断该重定义的符号是否之前被定义为全局函数,并且该符号所处位置不是全局
+     * 
+     * @param name 重定义的符号名
+     */
+    public static void JudgeIdenfrisGlobalFunc(String name) {
+        SymTab findSymTab = globalSymTab;
+
+        if (!globalSymTab.equals(curSymTab) && findSymTab.curSymTab.containsKey(name)) {
+            Symbol findSymbol = findSymTab.curSymTab.get(name);
+            if (findSymbol instanceof FuncSymbol) {
+                repeatSymbolisFunc = true;
+            }
+        }
+        repeatSymbolisFunc = false;
+    }
+
+    /** 用以判断是否重定义 */
+    private static boolean isRepeat = false;
+
+    /** 用以判断符号是否之前被定义为全局函数 */
+    private static boolean repeatSymbolisFunc = false;
+
+    /**
+     * 获取用定义判断条件
+     * 
+     * @return 如果该indent已经被定义返回true
+     */
+    public static boolean GetRepeat() {
+        return isRepeat;
+    }
+
+    /**
+     * 获取被重定义的符号之前是否为全局函数
+     * 
+     * @return 如果是返回true
+     */
+    public static boolean GetRepeatSymbolisFunc() {
+        return repeatSymbolisFunc;
+    }
+
+    /**
      * 重复性判断，并作报错处理
      * 
      * @param token 符号token
      * @return 重复时返回true，不重复时返回false
      */
     public static boolean JudgeRepeat(Token token) {
+        // JudgeIdenfrisGlobalFunc(token.str);
+
         if (JudgeIdenfrExistNow(token.str)) {
+            isRepeat = true;
             ErrorLog.makelog_error(token.line, 'b');
             return true;
         }
+        isRepeat = false;
         return false;
     }
 
@@ -352,7 +397,8 @@ public class utils {
         }
 
         if (varType.equals(VarTypes.ConstInt.toString()) || varType.equals(VarTypes.ConstIntArray.toString())
-                || varType.equals(VarTypes.ConstChar.toString()) || varType.equals(VarTypes.ConstCharArray.toString())) {
+                || varType.equals(VarTypes.ConstChar.toString())
+                || varType.equals(VarTypes.ConstCharArray.toString())) {
             ErrorLog.makelog_error(line, 'h');
         }
     }
@@ -702,8 +748,7 @@ public class utils {
             ArrayList<VarTypes> paramsTypes) {
         FuncSymbol funcSymbol = (FuncSymbol) GetIdenfr(funcIdent.str);
 
-        if(!isdefined)
-        {
+        if (!isdefined) {
             return;
         }
 
@@ -756,7 +801,7 @@ public class utils {
     }
 
     /**
-     * 判断printf所需的参数是否与传入的参数相吻合
+     * 判断printf所需的参数是否与传入的参数数量是否相同
      * 若不吻合写错误日志
      * 
      * @param printfToken     printf的token
@@ -766,13 +811,21 @@ public class utils {
     public static void JudgePrintfParamsCorrect(Token printfToken, ArrayList<VarTypes> needParamsTypes,
             ArrayList<VarTypes> paramsTypes) {
 
-        for (int i = 0; i < needParamsTypes.size(); i++) {
-            if (needParamsTypes.get(i).equals(paramsTypes.get(i))) {
-                continue;
-            } else {
-                ErrorLog.makelog_error(printfToken.line, 'l');
-                return;
-            }
+        if (needParamsTypes.size() != paramsTypes.size()) {
+            ErrorLog.makelog_error(printfToken.line, 'l');
+            return;
         }
+
+        // for (int i = 0; i < needParamsTypes.size(); i++) {
+        // if (needParamsTypes.get(i).equals(paramsTypes.get(i))) {
+        // continue;
+        // } else if (needParamsTypes.get(i).equals(VarTypes.Int) &&
+        // paramsTypes.get(i).equals(VarTypes.Char)) {
+        // continue;
+        // } else {
+        // ErrorLog.makelog_error(printfToken.line, 'l');
+        // return;
+        // }
+        // }
     }
 }

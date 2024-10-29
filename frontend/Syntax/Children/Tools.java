@@ -36,39 +36,50 @@ public class Tools {
         return al;
     }
 
+    /**
+     * 通过调用utils来向符号表添加符号
+     * 
+     * @param isConst
+     * @param btype
+     * @param tp
+     */
     public static void AddVarSymbol(boolean isConst, String btype, ThreePart tp) { // wait for add more parameter
-        if (isConst) {
-            if (btype.equals("Int")) {
-                if (tp.isArray) {
-                    utils.addVarSymbol(tp.name, VarTypes.ConstIntArray, 0, null);
+        if (!utils.GetRepeat()) {
+            if (isConst) {
+                if (btype.equals("Int")) {
+                    if (tp.isArray) {
+                        utils.addVarSymbol(tp.name, VarTypes.ConstIntArray, 0, null);
+                    } else {
+                        utils.addVarSymbol(tp.name, VarTypes.ConstInt, 0, null);
+                    }
                 } else {
-                    utils.addVarSymbol(tp.name, VarTypes.ConstInt, 0, null);
+                    if (tp.isArray) {
+                        utils.addVarSymbol(tp.name, VarTypes.ConstCharArray, 0, null);
+                    } else {
+                        utils.addVarSymbol(tp.name, VarTypes.ConstChar, 0, null);
+                    }
                 }
             } else {
-                if (tp.isArray) {
-                    utils.addVarSymbol(tp.name, VarTypes.ConstCharArray, 0, null);
+                if (btype.equals("Int")) {
+                    if (tp.isArray) {
+                        utils.addVarSymbol(tp.name, VarTypes.IntArray, 0, null);
+                    } else {
+                        utils.addVarSymbol(tp.name, VarTypes.Int, 0, null);
+                    }
                 } else {
-                    utils.addVarSymbol(tp.name, VarTypes.ConstChar, 0, null);
-                }
-            }
-        } else {
-            if (btype.equals("Int")) {
-                if (tp.isArray) {
-                    utils.addVarSymbol(tp.name, VarTypes.IntArray, 0, null);
-                } else {
-                    utils.addVarSymbol(tp.name, VarTypes.Int, 0, null);
-                }
-            } else {
-                if (tp.isArray) {
-                    utils.addVarSymbol(tp.name, VarTypes.CharArray, 0, null);
-                } else {
-                    utils.addVarSymbol(tp.name, VarTypes.Char, 0, null);
+                    if (tp.isArray) {
+                        utils.addVarSymbol(tp.name, VarTypes.CharArray, 0, null);
+                    } else {
+                        utils.addVarSymbol(tp.name, VarTypes.Char, 0, null);
+                    }
                 }
             }
         }
     }
 
-    public static void AddFuncSymbol(FuncPart fp) { // wait for add more parameter
-        utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber);
+    public static void AddFuncSymbol(FuncPart fp, boolean isFuncRepeat) { // wait for add more parameter
+        if (!isFuncRepeat) {
+            utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber);
+        }
     }
 }

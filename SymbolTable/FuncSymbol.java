@@ -20,7 +20,8 @@ public class FuncSymbol extends Symbol {
     public enum FuncTypes {
         IntFunc,
         CharFunc,
-        VoidFunc
+        VoidFunc,
+        Undefined
     }
 
     @Override

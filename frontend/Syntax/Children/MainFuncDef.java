@@ -19,7 +19,7 @@ public class MainFuncDef {
 
         utils.SetfuncType(FuncTypes.IntFunc);
 
-        Block.BlockAnalysis();
+        Block.BlockAnalysis(true);
 
         // 退出函数时，判断有无return
         utils.JudgeReturnExist(Tools.GetNowTK()); // }

@@ -3,14 +3,21 @@ package frontend.Syntax.Children;
 import frontend.ErrorLog;
 import frontend.Lexer.Lexer.Token;
 import frontend.Syntax.Syntax;
+import SymbolTable.VarSymbol;
 import SymbolTable.utils;
+import SymbolTable.VarSymbol.VarTypes;
 
 public class LVal {
-    static String LValAnalysis() {
+    static VarTypes LValAnalysis() {
         CompUnit.count++; // IDENFR
-        String varType = utils.ReturnType(Tools.GetNowTK().str);
+        VarTypes varType;
 
-        utils.JudgeUndefined(Tools.GetNowTK());
+        if (utils.JudgeUndefined(Tools.GetNowTK())) {
+            varType = VarTypes.Undefined;
+        } else {
+            VarSymbol varSymbol = (VarSymbol) utils.GetIdenfr(Tools.GetNowTK().str);
+            varType = varSymbol.type;
+        }
 
         Token token = Tools.LookNextTK();
         if (token.tk.equals("LBRACK")) { // [

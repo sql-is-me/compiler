@@ -1,11 +1,12 @@
 package frontend.Syntax.Children;
 
 import SymbolTable.utils;
+import SymbolTable.VarSymbol.VarTypes;
 import frontend.Syntax.Syntax;
 
 public class ForStmt {
     static void ForStmtAnalysis() {
-        String varType = LVal.LValAnalysis();
+        VarTypes varType = LVal.LValAnalysis();
         utils.JudgeLValisConst(varType, Tools.GetNowTK().line);
 
         CompUnit.count++; // =

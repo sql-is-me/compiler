@@ -21,7 +21,8 @@ public class utils {
         IntArray,
         CharArray,
         ConstIntArray,
-        ConstCharArray
+        ConstCharArray,
+        Undefined
     }
 
     private static int level = 0; // 层次
@@ -52,7 +53,7 @@ public class utils {
     /**
      * 跳出当前子表
      */
-    public static void jumpOutofBlock() {
+    public static void jumpOutSymTab() {
         curSymTab = curSymTab.lastSymTab;
         level--;
     }
@@ -284,13 +285,14 @@ public class utils {
 
     /** 判断函数类型以及是否在函数体中 */
     private static FuncTypes funcType = null;
-    /** 判断是否经历过return */
+    /** 判断是否找到return */
     private static boolean findReturn = false;
     /** 用以存储函数体的SymTab，判断是否到达函数最外层 */
     private static SymTab funcSymTab = null;
 
     /** 进入函数触发，将funcType转变为当前函数类型,将funcSymTab转变为当前函数所在符号表 */
     public static void SetfuncType(FuncTypes funcType) {
+        findReturn = false;
         utils.funcType = funcType;
         utils.funcSymTab = utils.curSymTab;
     }
@@ -305,8 +307,8 @@ public class utils {
      * 经过return时触发，判断是否在函数体符号表中且下一个token是}
      * 若是将findReturn转为true
      */
-    public static void findReturn(Token nextToken) {
-        if (nextToken.tk.equals("RBRACE") && utils.curSymTab.equals(funcSymTab)) {
+    public static void findReturn(Token RBRACEToken) {
+        if (RBRACEToken.tk.equals("RBRACE") && utils.curSymTab.equals(funcSymTab)) {
             findReturn = true;
         }
     }
@@ -321,7 +323,6 @@ public class utils {
                 ErrorLog.makelog_error(returnToken.line, 'g');
             }
         }
-        findReturn = false;
         SetfuncTypeandSymTabtoNull();
     }
 
@@ -371,6 +372,17 @@ public class utils {
     }
 
     /**
+     * 从全局符号表获取该symbol
+     * 
+     * @param name
+     * @return Symbol 若无返回null
+     */
+    public static Symbol GetIdenfrfromGlobal(String name) {
+        Symbol findSymbol = globalSymTab.curSymTab.get(name);
+        return findSymbol;
+    }
+
+    /**
      * 直接从当前和上级符号表获取该符号，并返回Symbol
      * 
      * @param name 符号名
@@ -390,15 +402,15 @@ public class utils {
      * @param varType LVal的类型
      * @param line    LVal所在行
      */
-    public static void JudgeLValisConst(String varType, int line) {
+    public static void JudgeLValisConst(VarTypes varType, int line) {
         if (varType == null) // LVal未定义，已经报过错，故跳过
         {
             return;
         }
 
-        if (varType.equals(VarTypes.ConstInt.toString()) || varType.equals(VarTypes.ConstIntArray.toString())
-                || varType.equals(VarTypes.ConstChar.toString())
-                || varType.equals(VarTypes.ConstCharArray.toString())) {
+        if (varType.equals(VarTypes.ConstInt) || varType.equals(VarTypes.ConstIntArray)
+                || varType.equals(VarTypes.ConstChar)
+                || varType.equals(VarTypes.ConstCharArray)) {
             ErrorLog.makelog_error(line, 'h');
         }
     }
@@ -408,7 +420,7 @@ public class utils {
      *
      * @param name 名字
      * 
-     * @return String类型的type 若表中无该名字符号，则返回null
+     * @return String类型的type
      */
     public static String ReturnType(String name) {
         Symbol symbol;
@@ -476,12 +488,11 @@ public class utils {
      * 判断调用该函数时的参数数量是否满足该函数的参数数量要求
      * 如果不满足则写错误日志
      * 
+     * @param funcSymbol        函数符号
+     * @param funcRParamsNumber 调用时传入的参数个数
      * @param token             函数名token
-     * @param funcRParamsNumber 参数个数
      */
-    public static boolean CheckFuncRParamsNumber(Token token, int funcRParamsNumber) {
-        FuncSymbol funcSymbol = (FuncSymbol) GetIdenfr(token.str);
-
+    public static boolean CheckFuncRParamsNumber(FuncSymbol funcSymbol, int funcRParamsNumber, Token token) {
         if (funcRParamsNumber != funcSymbol.paramNumber) {
             ErrorLog.makelog_error(token.line, 'd');
             return false;
@@ -525,6 +536,7 @@ public class utils {
         TokenTypes tempType = null;
         TokenTypes type = null;
         int expsize = exp.size();
+        String expType = null;
 
         for (int i = 0; i < expsize; i += 2) {
             token = exp.get(i);
@@ -538,20 +550,34 @@ public class utils {
                 if (symbol instanceof VarSymbol) {
                     VarSymbol varSymbol = (VarSymbol) symbol;
                     tempType = TokenTypes.valueOf(varSymbol.type.toString());
-                } else {
+                } else if (symbol instanceof FuncSymbol) {
                     FuncSymbol funcSymbol = (FuncSymbol) symbol;
                     tempType = TokenTypes.valueOf(funcSymbol.returnType.toString());
+                } else {
+                    tempType = TokenTypes.Undefined;
                 }
 
                 if (isArray(tempType) && i < exp.size() - 1 && exp.get(i + 1).tk.equals("LBRACK")) {
+                    tempType = RemoveConstandFunc(tempType);
+
                     i += 2;// indent [
                     childList = new ArrayList<>();
-
-                    while (!token.tk.equals("RBRACK") && i < expsize) {
+                    int level = 1;
+                    while (level != 0 && i < expsize) {
+                        if (exp.get(i).str.equals("]")) {
+                            level--;
+                            if (level == 0) {
+                                break;
+                            }
+                        } else if (exp.get(i).str.equals("[")) {
+                            level++;
+                        }
                         childList.add(exp.get(i));
                         i++;
                     }
-                    TokenTypes tempType2 = TokenTypes.valueOf(JudgeExpType(childList));
+
+                    expType = JudgeExpType(childList);
+                    TokenTypes tempType2 = TokenTypes.valueOf(expType);
 
                     if (tempType2.equals(TokenTypes.Int)) {
                         if (tempType.equals(TokenTypes.IntArray)) {
@@ -562,7 +588,6 @@ public class utils {
                     } else {
                         System.err.println("Array index is not int");
                     }
-                    type = CalculateType(type, tempType);
 
                 } else if (isFunc(tempType)) {
                     i += 2; // jump to (
@@ -588,6 +613,9 @@ public class utils {
                 while (level != 0 && i < expsize) {
                     if (exp.get(i).str.equals(")")) {
                         level--;
+                        if (level == 0) {
+                            break;
+                        }
                     } else if (exp.get(i).str.equals("(")) {
                         level++;
                     }
@@ -595,15 +623,15 @@ public class utils {
                     i++;
                 }
 
-                i--; // 回退到( 下一步+2
-                childList.remove(childList.size() - 1); // 移除)
-                tempType = TokenTypes.valueOf(JudgeExpType(childList));
+                expType = JudgeExpType(childList);
+                tempType = TokenTypes.valueOf(expType);
                 type = CalculateType(type, tempType);
 
-            } else if (token.str.equals("+") || token.str.equals("-")) {
-                while (exp.get(i).str.equals("+") || exp.get(i).str.equals("-")) {
+            } else if (token.str.equals("+") || token.str.equals("-")) { // UnaryOp
+                while ((exp.get(i).str.equals("+") || exp.get(i).str.equals("-")) && i < expsize) {
                     i++;
                 }
+                i -= 2;
                 continue;
             } else {
                 System.err.println("error when calType in Exp");
@@ -686,6 +714,10 @@ public class utils {
      * @return TokenTypes
      */
     private static TokenTypes CalculateType(TokenTypes before, TokenTypes temp) {
+        if (temp.equals(TokenTypes.Undefined)) {
+            return TokenTypes.Undefined;
+        }
+
         before = RemoveConstandFunc(before);
         temp = RemoveConstandFunc(temp);
 
@@ -746,22 +778,24 @@ public class utils {
 
     public static void JudgeFuncRParamsCorrect(Token funcIdent, int funcRParamsNumber,
             ArrayList<VarTypes> paramsTypes) {
-        FuncSymbol funcSymbol = (FuncSymbol) GetIdenfr(funcIdent.str);
+        FuncSymbol funcSymbol = (FuncSymbol) GetIdenfrfromGlobal(funcIdent.str); // 从全局表开始找，局部变量可能会覆盖函数
 
         if (!isdefined) {
             return;
         }
 
-        if (!CheckFuncRParamsNumber(funcIdent, funcRParamsNumber)) {
+        if (!CheckFuncRParamsNumber(funcSymbol, funcRParamsNumber, funcIdent)) {
             return;
         }
 
         for (int i = 0; i < funcSymbol.paramTypes.size(); i++) {
-            if (funcSymbol.paramTypes.get(i).equals(paramsTypes.get(i))) {
+            VarTypes needType = funcSymbol.paramTypes.get(i);
+            VarTypes loadType = paramsTypes.get(i);
+
+            if (needType.equals(loadType)) {
                 continue;
-            } else if ((funcSymbol.paramTypes.get(i).equals(VarTypes.Int)
-                    || funcSymbol.paramTypes.get(i).equals(VarTypes.Char))
-                    && (paramsTypes.get(i).equals(VarTypes.Int) || paramsTypes.get(i).equals(VarTypes.Char))) {
+            } else if ((needType.equals(VarTypes.Int) && loadType.equals(VarTypes.Char))
+                    || (loadType.equals(VarTypes.Int) && needType.equals(VarTypes.Char))) {
                 continue;
             } else {
                 ErrorLog.makelog_error(funcIdent.line, 'e');
@@ -773,7 +807,7 @@ public class utils {
     /**
      * 分析并获得printf语句中所需要的参数类型
      * 
-     * @param stringToken StRCON
+     * @param stringToken STRCON
      * @return ArrayList<VarTypes> 所需参数类型List
      */
     public static ArrayList<VarTypes> AnalysisPrintString(Token stringToken) {

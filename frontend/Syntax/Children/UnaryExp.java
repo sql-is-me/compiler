@@ -14,7 +14,7 @@ public class UnaryExp {
     static void UnaryExpAnalysis() {
         Pair pair = null;
         int funcRParamsNumber = 0;
-        ArrayList<VarTypes> funcParamsTypes = null;
+        ArrayList<VarTypes> funcParamsTypes = new ArrayList<>();
         Token token = Tools.LookNextTK();
         Token funcNameToken;
         if (token.tk.equals("IDENFR") && Tools.GetCountTK(CompUnit.count + 2).tk.equals("LPARENT")) {
@@ -40,7 +40,9 @@ public class UnaryExp {
                 }
             }
 
-            utils.JudgeFuncRParamsCorrect(funcNameToken, funcRParamsNumber, funcParamsTypes);
+            if (!funcParamsTypes.contains(VarTypes.Undefined)) {
+                utils.JudgeFuncRParamsCorrect(funcNameToken, funcRParamsNumber, funcParamsTypes);
+            }
 
             if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )
                 Token temp = Tools.GetNowTK();

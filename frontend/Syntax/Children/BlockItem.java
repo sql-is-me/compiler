@@ -1,5 +1,6 @@
 package frontend.Syntax.Children;
 
+import SymbolTable.utils;
 import frontend.Lexer.Lexer.Token;
 
 public class BlockItem {
@@ -8,7 +9,7 @@ public class BlockItem {
         if (token.tk.equals("INTTK") || token.tk.equals("CHARTK") || token.tk.equals("CONSTTK")) {
             Decl.DeclAnalysis();
         } else {
-            Stmt.StmtAnalysis();
+            Stmt.StmtAnalysis(false);
         }
     }
 }

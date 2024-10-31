@@ -40,7 +40,7 @@ public class FuncDef {
 
         utils.SetfuncType(fp.returnType); // in function block
 
-        Block.BlockAnalysis();
+        Block.BlockAnalysis(true);
 
         utils.JudgeReturnExist(Tools.GetNowTK()); // } // 退出函数时，判断最后有无return
 

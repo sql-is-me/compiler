@@ -22,7 +22,8 @@ public class VarSymbol extends Symbol {
         IntArray,
         CharArray,
         ConstIntArray,
-        ConstCharArray
+        ConstCharArray,
+        Undefined
     }
 
     @Override

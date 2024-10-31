@@ -32,12 +32,13 @@ public class Stmt {
         }
     }
 
-    static void StmtAnalysis() {
+    static void StmtAnalysis(boolean IForFORwithoutBlock) {
         Token token = Tools.LookNextTK();
+
         if (token.tk.equals("IDENFR") && (Tools.GetCountTK(CompUnit.count + 2).tk.equals("ASSIGN")
                 || Tools.GetCountTK(CompUnit.count + 2).tk.equals("LBRACK"))) {
             if (tryLVal()) {
-                String varType = LVal.LValAnalysis();
+                VarTypes varType = LVal.LValAnalysis();
                 utils.JudgeLValisConst(varType, Tools.GetNowTK().line);
 
                 CompUnit.count++; // =
@@ -77,8 +78,7 @@ public class Stmt {
             }
 
         } else if (token.tk.equals("LBRACE")) {
-            utils.createSymTab(utils.curSymTab); // jump in
-            Block.BlockAnalysis();
+            Block.BlockAnalysis(false);
         } else if (token.tk.equals("IFTK")) {
             CompUnit.count++; // if
 
@@ -93,10 +93,19 @@ public class Stmt {
                     CompUnit.count++; // )
                 }
 
-                Stmt.StmtAnalysis();
+                if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                    Stmt.StmtAnalysis(true);
+                } else {
+                    Stmt.StmtAnalysis(false);
+                }
+
                 if (Tools.LookNextTK().tk.equals("ELSETK")) {
                     CompUnit.count++; // else
-                    Stmt.StmtAnalysis();
+                    if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                        Stmt.StmtAnalysis(true);
+                    } else {
+                        Stmt.StmtAnalysis(false);
+                    }
                 }
             }
         } else if (token.tk.equals("FORTK")) {
@@ -116,7 +125,11 @@ public class Stmt {
             CompUnit.count++; // )
 
             utils.Inloop();
-            Stmt.StmtAnalysis();
+            if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                Stmt.StmtAnalysis(true);
+            } else {
+                Stmt.StmtAnalysis(false);
+            }
             utils.Outloop();
 
         } else if (token.tk.equals("BREAKTK") || token.tk.equals("CONTINUETK")) {
@@ -147,7 +160,9 @@ public class Stmt {
                 CompUnit.count++; // ;
             }
 
-            utils.findReturn(Tools.LookNextTK());
+            if (!IForFORwithoutBlock) {
+                utils.findReturn(Tools.LookNextTK());
+            }
 
         } else if (token.tk.equals("PRINTFTK")) {
             CompUnit.count++;
@@ -166,7 +181,9 @@ public class Stmt {
                         paramsTypes.add(VarTypes.valueOf(utils.JudgeExpType(expTokens)));
                     }
 
-                    utils.JudgePrintfParamsCorrect(printfToken, needParamsTypes, paramsTypes);
+                    if (!paramsTypes.contains(VarTypes.Undefined)) {
+                        utils.JudgePrintfParamsCorrect(printfToken, needParamsTypes, paramsTypes);
+                    }
                 }
             }
             if (!Tools.LookNextTK().tk.equals("RPARENT")) { // )

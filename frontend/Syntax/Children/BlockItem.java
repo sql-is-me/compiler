@@ -1,6 +1,5 @@
 package frontend.Syntax.Children;
 
-import SymbolTable.utils;
 import frontend.Lexer.Lexer.Token;
 
 public class BlockItem {

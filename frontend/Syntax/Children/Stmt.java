@@ -1,12 +1,12 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import frontend.ErrorLog;
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
-import frontend.Syntax.Node;
+import Frontend.ErrorLog;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Node;
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 import SymbolTable.VarSymbol.VarTypes;
 

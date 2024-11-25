@@ -1,4 +1,4 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
 public class BType {
     static String BTypeAnalysis() {

@@ -1,9 +1,9 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
+import Frontend.ErrorLog;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
-import frontend.ErrorLog;
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
 
 public class VarDef {
     static ThreePart VarDefAnalysis() {

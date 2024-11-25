@@ -1,6 +1,6 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
+import Frontend.Lexer.Lexer.Token;
 
 public class BlockItem {
     static void BlockItemAnalysis() {

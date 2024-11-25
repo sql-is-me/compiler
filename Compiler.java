@@ -1,14 +1,11 @@
-import frontend.ErrorLog;
-import frontend.Lexer.*;
-import frontend.Syntax.*;
-
+import Frontend.ErrorLog;
+import Frontend.Lexer.*;
+import Frontend.Syntax.*;
+import SymbolTable.Symbol;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-
-import SymbolTable.Symbol;
-import SymbolTable.WriteSymbolAns;
 
 public class Compiler {
     public static void main(String[] args) {
@@ -22,7 +19,7 @@ public class Compiler {
             // WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
 
             Symbol.VisitAllSymbolTable();
-            WriteSymbolAns.WriteAnwser();
+            // WriteSymbolAns.WriteAnwser();
 
             ErrorLog.WriteErrorLogs(); // 输出错误日志
 

@@ -1,4 +1,4 @@
-package frontend.Syntax;
+package Frontend.Syntax;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

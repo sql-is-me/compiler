@@ -1,4 +1,4 @@
-package frontend.Syntax;
+package Frontend.Syntax;
 
 public class Node {
     String name;

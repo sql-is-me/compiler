@@ -1,8 +1,8 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
-import frontend.ErrorLog;
+import Frontend.ErrorLog;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 
 public class ConstDecl {
     static void ConstDeclAnalysis() {

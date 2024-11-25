@@ -3,11 +3,13 @@ package SymbolTable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.TreeMap;
+
+import Frontend.ErrorLog;
+import Frontend.Lexer.Lexer.Token;
+
 import java.util.Map;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.VarSymbol.VarTypes;
-import frontend.ErrorLog;
-import frontend.Lexer.Lexer.Token;
 
 public class utils {
     public enum TokenTypes {

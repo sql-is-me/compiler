@@ -1,13 +1,14 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Node;
-import frontend.Syntax.Syntax;
-import frontend.Syntax.Syntax.NodeType;
 import SymbolTable.VarSymbol.VarTypes;
 import SymbolTable.utils;
 
 import java.util.ArrayList;
+
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Node;
+import Frontend.Syntax.Syntax;
+import Frontend.Syntax.Syntax.NodeType;
 
 public class Tools {
     public static Token GetCountTK(int count) {

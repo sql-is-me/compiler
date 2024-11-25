@@ -1,12 +1,12 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
 
+import Frontend.Pair;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 import SymbolTable.VarSymbol.VarTypes;
-import frontend.Pair;
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
 
 public class FuncRParams {
     static Pair FuncRParamsAnalysis() {

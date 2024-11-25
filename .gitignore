@@ -1,4 +1,6 @@
 *.txt
 *.zip
+2024代码生成公共测试程序库
+*.c
 
 !testfile.txt

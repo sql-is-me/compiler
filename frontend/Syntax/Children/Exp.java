@@ -1,9 +1,9 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
 
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 
 public class Exp {
     static void ExpAnalysis() {

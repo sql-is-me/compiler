@@ -1,10 +1,10 @@
-package frontend.Syntax.Children;
-
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
-import frontend.Lexer.Lexer;
+package Frontend.Syntax.Children;
 
 import java.util.List;
+
+import Frontend.Lexer.Lexer;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 
 public class CompUnit {
     public static int count = -1;

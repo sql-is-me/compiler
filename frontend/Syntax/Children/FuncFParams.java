@@ -1,9 +1,10 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
-import frontend.Syntax.Syntax;
 import SymbolTable.VarSymbol.VarTypes;
 
 import java.util.ArrayList;
+
+import Frontend.Syntax.Syntax;
 
 public class FuncFParams {
     static ArrayList<VarTypes> FuncFParamsAnalysis() {

@@ -1,7 +1,7 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
-import frontend.Syntax.Syntax;
 
 public class Block {
     static void BlockAnalysis(boolean isFunc) {

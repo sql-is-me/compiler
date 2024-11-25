@@ -1,6 +1,6 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
-import frontend.Syntax.Syntax;
+import Frontend.Syntax.Syntax;
 
 public class ConstInitVal {
     // ConstInitVal → ConstExp | '{' [ ConstExp { ',' ConstExp } ] '}' | StringConst

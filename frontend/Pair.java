@@ -1,4 +1,4 @@
-package frontend;
+package Frontend;
 
 public class Pair {
     public Object a;

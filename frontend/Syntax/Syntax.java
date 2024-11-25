@@ -1,10 +1,11 @@
-package frontend.Syntax;
+package Frontend.Syntax;
 
 import java.util.List;
-import java.util.ArrayList;
 
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Children.CompUnit;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Children.CompUnit;
+
+import java.util.ArrayList;
 
 public class Syntax {
 
@@ -62,7 +63,7 @@ public class Syntax {
     }
 
     public static void SyntaxAnalysis() { // 启动分析
-        setParser(frontend.Lexer.Lexer.tokens);
+        setParser(Frontend.Lexer.Lexer.tokens);
         CompUnit.CompUnitAnalysis();
     }
 }

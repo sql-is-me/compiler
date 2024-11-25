@@ -1,8 +1,8 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 import SymbolTable.VarSymbol.VarTypes;
-import frontend.Syntax.Syntax;
 
 public class ForStmt {
     static void ForStmtAnalysis() {

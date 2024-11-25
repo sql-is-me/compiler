@@ -1,8 +1,8 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
 
-import frontend.Lexer.Lexer.Token;
+import Frontend.Lexer.Lexer.Token;
 
 public class ThreePart {
     String name;

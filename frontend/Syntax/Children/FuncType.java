@@ -1,8 +1,8 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 import SymbolTable.FuncSymbol.FuncTypes;
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
 
 public class FuncType {
     static FuncTypes FuncTypeAnalysis() {

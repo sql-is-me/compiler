@@ -1,10 +1,10 @@
-package frontend.Syntax.Children;
+package Frontend.Syntax.Children;
 
+import Frontend.ErrorLog;
+import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 import SymbolTable.FuncSymbol.FuncTypes;
-import frontend.ErrorLog;
-import frontend.Lexer.Lexer.Token;
-import frontend.Syntax.Syntax;
 
 public class MainFuncDef {
     static void MainFuncDefAnalysis() {

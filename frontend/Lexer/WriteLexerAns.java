@@ -1,11 +1,11 @@
-package frontend.Lexer;
+package Frontend.Lexer;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-import frontend.Lexer.Lexer.Token;
+import Frontend.Lexer.Lexer.Token;
 
 public class WriteLexerAns {
     private static String lexerfile = "lexer.txt";

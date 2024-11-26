@@ -7,15 +7,15 @@ import Frontend.Syntax.Syntax;
 public class VarDecl {
     static void VarDeclAnalysis() {
         String btype = BType.BTypeAnalysis();
-        ThreePart tp = VarDef.VarDefAnalysis();
+        VarsAttribute va = VarDef.VarDefAnalysis();
 
-        Tools.AddVarSymbol(false, btype, tp);
+        Tools.AddVarSymbol(false, btype, va);
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // "," 多个参数
             CompUnit.count++;
-            tp = VarDef.VarDefAnalysis();
+            va = VarDef.VarDefAnalysis();
 
-            Tools.AddVarSymbol(false, btype, tp);
+            Tools.AddVarSymbol(false, btype, va);
         }
 
         if (!Tools.LookNextTK().tk.equals("SEMICN")) // 缺;

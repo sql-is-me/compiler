@@ -4,6 +4,7 @@ import SymbolTable.VarSymbol.VarTypes;
 import SymbolTable.utils;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Node;
@@ -42,36 +43,36 @@ public class Tools {
      * 
      * @param isConst
      * @param btype
-     * @param tp
+     * @param va
      */
-    public static void AddVarSymbol(boolean isConst, String btype, ThreePart tp) { // wait for add more parameter
+    public static void AddVarSymbol(boolean isConst, String btype, VarsAttribute va) {
         if (!utils.GetRepeat()) {
             if (isConst) {
                 if (btype.equals("Int")) {
-                    if (tp.isArray) {
-                        utils.addVarSymbol(tp.name, VarTypes.ConstIntArray, 0, null);
+                    if (va.isArray) {
+                        utils.addVarSymbol(va.name, VarTypes.ConstIntArray, va.arrSize, va.initValues, va.valueExp);
                     } else {
-                        utils.addVarSymbol(tp.name, VarTypes.ConstInt, 0, null);
+                        utils.addVarSymbol(va.name, VarTypes.ConstInt, va.arrSize, va.initValues, va.valueExp);
                     }
                 } else {
-                    if (tp.isArray) {
-                        utils.addVarSymbol(tp.name, VarTypes.ConstCharArray, 0, null);
+                    if (va.isArray) {
+                        utils.addVarSymbol(va.name, VarTypes.ConstCharArray, va.arrSize, va.initValues, va.valueExp);
                     } else {
-                        utils.addVarSymbol(tp.name, VarTypes.ConstChar, 0, null);
+                        utils.addVarSymbol(va.name, VarTypes.ConstChar, va.arrSize, va.initValues, va.valueExp);
                     }
                 }
             } else {
                 if (btype.equals("Int")) {
-                    if (tp.isArray) {
-                        utils.addVarSymbol(tp.name, VarTypes.IntArray, 0, null);
+                    if (va.isArray) {
+                        utils.addVarSymbol(va.name, VarTypes.IntArray, va.arrSize, va.initValues, va.valueExp);
                     } else {
-                        utils.addVarSymbol(tp.name, VarTypes.Int, 0, null);
+                        utils.addVarSymbol(va.name, VarTypes.Int, va.arrSize, va.initValues, va.valueExp);
                     }
                 } else {
-                    if (tp.isArray) {
-                        utils.addVarSymbol(tp.name, VarTypes.CharArray, 0, null);
+                    if (va.isArray) {
+                        utils.addVarSymbol(va.name, VarTypes.CharArray, va.arrSize, va.initValues, va.valueExp);
                     } else {
-                        utils.addVarSymbol(tp.name, VarTypes.Char, 0, null);
+                        utils.addVarSymbol(va.name, VarTypes.Char, va.arrSize, va.initValues, va.valueExp);
                     }
                 }
             }
@@ -82,5 +83,94 @@ public class Tools {
         if (!isFuncRepeat) {
             utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber);
         }
+    }
+
+    public static int calConstExp(ArrayList<Token> exp) {
+        Stack<Integer> num = new Stack<>();
+        int temp = 0;
+        int result = 0;
+        char sign = '+';
+        boolean needCal = false;
+        boolean needMinus = false;
+
+        for (int i = 0; i < exp.size(); i++) {
+            Token t = exp.get(i);
+
+            if (t.tk.equals("INTCON")) {
+                temp = Integer.valueOf(t.str);
+
+                if (needMinus) {
+                    num.push(-temp);
+                    needMinus = false;
+                } else if (needCal) {
+                    int num1 = num.pop();
+                    if (sign == '*') {
+                        num.push(num1 * temp);
+                    } else if (sign == '/') {
+                        num.push(num1 / temp);
+                    } else if (sign == '%') {
+                        num.push(num1 % temp);
+                    }
+                    needCal = false;
+                } else {
+                    num.push(temp);
+                }
+
+            } else if (t.str.equals("(")) {
+                i++;
+                int j = i;
+                int level = 1;
+
+                while (j < exp.size()) {
+                    if (exp.get(j).str.equals("(")) {
+                        level++;
+                    } else if (exp.get(j).str.equals(")")) {
+                        level--;
+                    }
+
+                    j++;
+
+                    if (level == 0) {
+                        break;
+                    }
+                }
+                ArrayList<Token> subExp = GetExpfromIndex(i, j - 2); // FIXME: 有没有可能这里会出现()的情况？
+
+                temp = calConstExp(subExp);
+                if (needMinus) {
+                    num.push(-temp);
+                    needMinus = false;
+                } else if (needCal) {
+                    int num1 = num.pop();
+                    if (sign == '*') {
+                        num.push(num1 * temp);
+                    } else if (sign == '/') {
+                        num.push(num1 / temp);
+                    } else if (sign == '%') {
+                        num.push(num1 % temp);
+                    }
+                    needCal = false;
+                } else {
+                    num.push(temp);
+                }
+
+                i = j - 1;
+            }
+
+            else {
+                sign = t.str.charAt(0);
+                if (sign == '-') {
+                    needMinus = true;
+                } else if (sign == '*' || sign == '/' || sign == '%') {
+                    needCal = true;
+                }
+            }
+
+        }
+        for (int val : num) {
+            result += val;
+        }
+
+        return result;
     }
 }

@@ -13,12 +13,12 @@ public class Compiler {
 
         try (BufferedReader filebr = new BufferedReader(new FileReader(fString))) {
             Lexer.lexer(filebr);
-            // WriteLexerAns.WriteAnswer(Lexer.tokens);
+            WriteLexerAns.WriteAnswer(Lexer.tokens);
 
-            Syntax.SyntaxAnalysis();
+            // Syntax.SyntaxAnalysis();
             // WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
 
-            Symbol.VisitAllSymbolTable();
+            // Symbol.VisitAllSymbolTable();
             // WriteSymbolAns.WriteAnwser();
 
             ErrorLog.WriteErrorLogs(); // 输出错误日志

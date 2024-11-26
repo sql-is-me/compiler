@@ -43,7 +43,7 @@ public class Stmt {
 
                 CompUnit.count++; // =
                 if (!Tools.LookNextTK().tk.equals("GETINTTK") && !Tools.LookNextTK().tk.equals("GETCHARTK")) {
-                    Exp.ExpAnalysis();
+                    Exp.ExpAnalysis();// FIXME
                     if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
                         Token tempToken = Tools.GetNowTK();
                         ErrorLog.makelog_error(tempToken.line, 'i');
@@ -67,7 +67,7 @@ public class Stmt {
                     }
                 }
             } else {
-                Exp.ExpAnalysis();
+                Exp.ExpAnalysis();// FIXME
 
                 if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
                     Token tempToken = Tools.GetNowTK();
@@ -150,7 +150,7 @@ public class Stmt {
                     || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
                     || Tools.LookNextTK().tk.equals("PLUS") || Tools.LookNextTK().tk.equals("MINU")
                     || Tools.LookNextTK().tk.equals("NOT")) {
-                Exp.ExpAnalysis();
+                Exp.ExpAnalysis();// FIXME
             }
 
             if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
@@ -204,7 +204,7 @@ public class Stmt {
                     || Tools.LookNextTK().tk.equals("CHRCON") || Tools.LookNextTK().tk.equals("IDENFR")
                     || Tools.LookNextTK().tk.equals("PLUS") || Tools.LookNextTK().tk.equals("MINU")
                     || Tools.LookNextTK().tk.equals("NOT")) {
-                Exp.ExpAnalysis();
+                Exp.ExpAnalysis();// FIXME
             }
             if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
                 Token tempToken = Tools.GetNowTK();

@@ -23,7 +23,7 @@ public class LVal {
         if (token.tk.equals("LBRACK")) { // [
             CompUnit.count++; // [
 
-            Exp.ExpAnalysis();
+            Exp.ExpAnalysis(); // FIXME
             if (!Tools.LookNextTK().tk.equals("RBRACK")) { // 缺 ]
                 Token temp = Tools.GetNowTK();
                 ErrorLog.makelog_error(temp.line, 'k');

@@ -9,7 +9,7 @@ public class VarsAttribute {
     Boolean isArray;
     int arrSize;
     ArrayList<Integer> initValues;
-    ArrayList<Token> valueExp;
+    ArrayList<ArrayList<Token>> valueExp;
 
     public VarsAttribute(String name) {
         this.name = name;

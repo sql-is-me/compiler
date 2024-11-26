@@ -87,7 +87,7 @@ public class utils {
      * @param size  //数组长度
      * @param value //值
      */
-    public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value, ArrayList<Token> valueExp) {
+    public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value, ArrayList<ArrayList<Token>> valueExp) {
         Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, value, valueExp);
         curSymTab.curSymTab.put(name, symbol);
     }

@@ -10,7 +10,7 @@ public class PrimaryExp {
 
         if (token.tk.equals("LPARENT")) { // (
             CompUnit.count++; // (
-            Exp.ExpAnalysis();
+            Exp.ExpAnalysis(); // FIXME
             if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺 )
                 Token temp = Tools.GetNowTK();
                 ErrorLog.makelog_error(temp.line, 'j');

@@ -2,6 +2,7 @@ package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
 
+import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
 
 public class ConstInitVal {
@@ -10,6 +11,11 @@ public class ConstInitVal {
         ArrayList<Integer> values = new ArrayList<>();
 
         if (Tools.LookNextTK().tk.equals("STRCON")) {
+            Token t = Tools.LookNextTK();
+            for (char c : t.str.toCharArray()) {
+                values.add((int) c);
+            }
+            
             CompUnit.count++;
         } else if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
             CompUnit.count++; // {

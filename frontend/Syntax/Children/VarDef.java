@@ -20,7 +20,7 @@ public class VarDef {
             token = Tools.LookNextTK();
             if (token.tk.equals("ASSIGN")) { // =
                 CompUnit.count++;
-                InitVal.InitValAnalysis();
+                va.valueExp = InitVal.InitValAnalysis();
             } else if (token.tk.equals("LBRACK")) { // [
                 va.isArray = true;
                 CompUnit.count++;
@@ -35,7 +35,7 @@ public class VarDef {
 
                 if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
                     CompUnit.count++;
-                    InitVal.InitValAnalysis();
+                    va.valueExp = InitVal.InitValAnalysis();
                 }
             }
         }

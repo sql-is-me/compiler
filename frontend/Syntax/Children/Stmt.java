@@ -177,7 +177,7 @@ public class Stmt {
 
                     while (Tools.LookNextTK().tk.equals("COMMA")) {
                         CompUnit.count++; // ,
-                        expTokens = Exp.ExpAnalysis(true);
+                        expTokens = Exp.ExpAnalysis(); // FIXME
                         paramsTypes.add(VarTypes.valueOf(utils.JudgeExpType(expTokens)));
                     }
 

@@ -47,4 +47,8 @@ public class ErrorLog {
     public static void SetErrorLog(List<ErrorLog> oldErrorLog) {
         errorlog = oldErrorLog;
     }
+
+    public static boolean someThingWrong() {
+        return errorlog.size() != 0;
+    }
 }

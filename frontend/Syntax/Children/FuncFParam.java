@@ -1,5 +1,8 @@
 package Frontend.Syntax.Children;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import Frontend.ErrorLog;
 import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
@@ -30,6 +33,12 @@ public class FuncFParam {
                     CompUnit.count++;
                 }
             }
+        }
+
+        if (va.arrSize != 0)
+            va.initValues = new ArrayList<>(Collections.nCopies(va.arrSize, 0));
+        else {
+            va.initValues = new ArrayList<>(Collections.nCopies(1, 0));
         }
 
         Tools.AddVarSymbol(false, btype, va);

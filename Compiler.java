@@ -1,6 +1,7 @@
 import Frontend.ErrorLog;
 import Frontend.Lexer.*;
 import Frontend.Syntax.*;
+import Midend.MidCodeGenerate;
 import SymbolTable.Symbol;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -13,15 +14,20 @@ public class Compiler {
 
         try (BufferedReader filebr = new BufferedReader(new FileReader(fString))) {
             Lexer.lexer(filebr);
-            WriteLexerAns.WriteAnswer(Lexer.tokens);
+            // WriteLexerAns.WriteAnswer(Lexer.tokens);
 
-            // Syntax.SyntaxAnalysis();
+            Syntax.SyntaxAnalysis();
             // WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
 
-            // Symbol.VisitAllSymbolTable();
+            Symbol.VisitAllSymbolTable();
             // WriteSymbolAns.WriteAnwser();
 
-            ErrorLog.WriteErrorLogs(); // 输出错误日志
+            if (ErrorLog.someThingWrong()) {
+                ErrorLog.WriteErrorLogs();// 输出错误日志
+            } else {
+                MidCodeGenerate.generateMidCode();
+                MidCodeGenerate.printfCodetoLL();
+            }
 
         } catch (FileNotFoundException fnfe) {
             System.err.println("file not found + " + fString);

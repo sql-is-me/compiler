@@ -3,10 +3,22 @@ source_filename = "test.c"
 target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-w64-windows-gnu"
 
-@a = dso_local global i32 1, align 4
+@a = dso_local constant i32 1, align 4
 @b = dso_local global i32 0, align 4
-@d = dso_local global i8 97, align 1
+@d = dso_local global [2 x i8] c"ab", align 1
+@g = dso_local constant [2 x i32] [i32 1, i32 2], align 4
+@x = dso_local global [3 x i8] c"ab\00", align 1
 @f = dso_local constant i32 1, align 4
+@z = dso_local global i8 0, align 1
+
+; Function Attrs: noinline nounwind optnone uwtable
+define dso_local i32 @foo(ptr noundef %0, ptr noundef %1) #0 {
+  %3 = alloca ptr, align 8
+  %4 = alloca ptr, align 8
+  store ptr %0, ptr %3, align 8
+  store ptr %1, ptr %4, align 8
+  ret i32 1
+}
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @main() #0 {
@@ -14,12 +26,16 @@ define dso_local i32 @main() #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   %4 = alloca i32, align 4
+  %5 = alloca i32, align 4
+  %6 = alloca i32, align 4
+  %7 = alloca i32, align 4
   store i32 0, ptr %1, align 4
-  store i32 -1, ptr %3, align 4
-  %5 = load i32, ptr @a, align 4
-  %6 = load i32, ptr @b, align 4
-  %7 = add nsw i32 %5, %6
-  store i32 %7, ptr %4, align 4
+  store i32 4, ptr %2, align 4
+  store i32 5, ptr %3, align 4
+  store i32 7, ptr %4, align 4
+  store i32 8, ptr %5, align 4
+  store i32 9, ptr %6, align 4
+  store i32 10, ptr %7, align 4
   ret i32 0
 }
 

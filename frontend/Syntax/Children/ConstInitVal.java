@@ -1,13 +1,14 @@
 package Frontend.Syntax.Children;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
 
 public class ConstInitVal {
     // ConstInitVal → ConstExp | '{' [ ConstExp { ',' ConstExp } ] '}' | StringConst
-    static ArrayList<Integer> ConstInitValAnalysis() {
+    static ArrayList<Integer> ConstInitValAnalysis(int size) {
         ArrayList<Integer> values = new ArrayList<>();
 
         if (Tools.LookNextTK().tk.equals("STRCON")) {
@@ -15,7 +16,7 @@ public class ConstInitVal {
             for (char c : t.str.toCharArray()) {
                 values.add((int) c);
             }
-            
+
             CompUnit.count++;
         } else if (Tools.LookNextTK().tk.equals("LBRACE")) { // {
             CompUnit.count++; // {
@@ -32,6 +33,10 @@ public class ConstInitVal {
         }
 
         Tools.WriteLine(Syntax.NodeType.ConstInitVal, Tools.GetNowTK().id);
+        
+        if (values.size() < size) {
+            values.addAll(Collections.nCopies(size - values.size(), 0));
+        }
         return values;
     }
 }

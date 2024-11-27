@@ -1,5 +1,8 @@
 package Frontend.Syntax.Children;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 import Frontend.ErrorLog;
 import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
@@ -36,6 +39,14 @@ public class VarDef {
                 if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
                     CompUnit.count++;
                     va.valueExp = InitVal.InitValAnalysis();
+                }
+            }
+
+            if (va.initValues == null) {
+                if (va.arrSize != 0)
+                    va.initValues = new ArrayList<>(Collections.nCopies(va.arrSize, 0));
+                else {
+                    va.initValues = new ArrayList<>(Collections.nCopies(1, 0));
                 }
             }
         }

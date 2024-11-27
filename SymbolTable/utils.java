@@ -73,7 +73,7 @@ public class utils {
         SymTab recordSymtab = curSymTab;// 先跳回上一级符号表，加入函数相关信息
         curSymTab = curSymTab.lastSymTab;
 
-        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber);
+        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, curSymTab.id);
         curSymTab.curSymTab.put(name, symbol);
 
         curSymTab = recordSymtab; // 再跳回去
@@ -87,7 +87,8 @@ public class utils {
      * @param size  //数组长度
      * @param value //值
      */
-    public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value, ArrayList<ArrayList<Token>> valueExp) {
+    public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value,
+            ArrayList<ArrayList<Token>> valueExp) {
         Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, value, valueExp);
         curSymTab.curSymTab.put(name, symbol);
     }

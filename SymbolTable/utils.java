@@ -69,11 +69,11 @@ public class utils {
      * @param paramNumber // 参数个数
      */
     public static void addFuncSymbol(String name, FuncTypes returnType, ArrayList<VarTypes> paramTypes,
-            int paramNumber) {
+            int paramNumber, int offset) {
         SymTab recordSymtab = curSymTab;// 先跳回上一级符号表，加入函数相关信息
         curSymTab = curSymTab.lastSymTab;
 
-        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, curSymTab.id);
+        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, curSymTab.id, offset);
         curSymTab.curSymTab.put(name, symbol);
 
         curSymTab = recordSymtab; // 再跳回去

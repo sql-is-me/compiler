@@ -20,10 +20,14 @@ public class M_utils {
     public static SymTab cur_symTab = global_symTab;
 
     /** Token合集 */
-    public static ArrayList<Token> tokens = (ArrayList<Token>) Lexer.tokens;
+    public static ArrayList<Token> allTokens = (ArrayList<Token>) Lexer.tokens;
 
     /** Token ptr */
     public static int pos = 0;
+
+    public static void findFuncPosinTokens() {
+
+    }
 
     public static void addGlobalVarandFunc() {
         LinkedHashMap<String, Symbol> currentSymTab = global_symTab.curSymTab;
@@ -142,6 +146,23 @@ public class M_utils {
     public static String returnBodyCode(int beginRegNO, FuncSymbol funcSymbol) {
         SymTab funcSymTab = findFuncSymTab(funcSymbol.symTabID);
         StringBuilder sb = new StringBuilder();
+
+        pos = funcSymbol.offset + 2; // ( + 2
+
+        int level = 1;
+        while (level == 0 && allTokens.get(pos).str != "}") {
+            if (allTokens.get(pos).str.equals("{")) {
+                level++;
+            } else if (allTokens.get(pos).str.equals("}")) {
+                level--;
+            } else {
+
+            }
+
+            if (level == 0) {
+                break;
+            }
+        }
 
         return sb.toString();
     }

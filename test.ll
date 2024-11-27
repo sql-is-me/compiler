@@ -36,6 +36,7 @@ define dso_local i32 @main() #0 {
   store i32 8, ptr %5, align 4
   store i32 9, ptr %6, align 4
   store i32 10, ptr %7, align 4
+  store i32 11, ptr %7, align 4
   ret i32 0
 }
 

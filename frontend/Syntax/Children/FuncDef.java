@@ -29,6 +29,7 @@ public class FuncDef {
             fp.paramNumber = 0;
         }
 
+        fp.offset = CompUnit.count + 1; // )
         Tools.AddFuncSymbol(fp, isFuncRepeat);
 
         if (!Tools.LookNextTK().tk.equals("RPARENT")) { // 缺)

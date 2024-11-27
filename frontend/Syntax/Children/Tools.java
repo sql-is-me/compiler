@@ -81,7 +81,7 @@ public class Tools {
 
     public static void AddFuncSymbol(FuncPart fp, boolean isFuncRepeat) { // wait for add more parameter
         if (!isFuncRepeat) {
-            utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber);
+            utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber, fp.offset);
         }
     }
 
@@ -134,7 +134,7 @@ public class Tools {
                         break;
                     }
                 }
-                ArrayList<Token> subExp = GetExpfromIndex(i, j - 2); // FIXME: 有没有可能这里会出现()的情况？
+                ArrayList<Token> subExp = GetExpfromIndex(i, j - 2);
 
                 temp = calConstExp(subExp);
                 if (needMinus) {

@@ -1,12 +1,14 @@
 package SymbolTable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import Frontend.Lexer.Lexer.Token;
 
 public class VarSymbol extends Symbol {
     public VarTypes type; // ConstInt ConstChar Int Char IntArray CharArray ConstIntArray ConstCharArray
     public ArrayList<Integer> value; // Save value, if not array,just get 0 index
+    public ArrayList<Boolean> valueisDetermined; // 判断对应值是否已经确认
     public int size; // 数组长度
     public ArrayList<ArrayList<Token>> valueExp; // 值表达式
     public boolean zeroinitializer;
@@ -20,6 +22,7 @@ public class VarSymbol extends Symbol {
         this.type = type;
         this.size = size;
         this.value = value;
+        this.valueisDetermined = new ArrayList<Boolean>(Collections.nCopies(size, false));
         this.valueExp = valueExp;
         this.zeroinitializer = zeroinitializer;
         this.stackRegID = -1;

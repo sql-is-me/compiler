@@ -13,229 +13,10 @@ import SymbolTable.utils;
 import SymbolTable.VarSymbol.VarTypes;
 
 public class M_utils {
-    /** 全局符号表 */
-    public static SymTab global_symTab = utils.globalSymTab;
-
-    /** 当前符号表 */
-    public static SymTab cur_symTab = global_symTab;
-
-    /** Token合集 */
-    public static ArrayList<Token> allTokens = (ArrayList<Token>) Lexer.tokens;
-
-    /** Token ptr */
-    public static int pos = 0;
+    
 
     public static void findFuncPosinTokens() {
         // TODO: 查找token位置
-    }
-
-    public static void addGlobalVarandFunc() {
-        LinkedHashMap<String, Symbol> currentSymTab = global_symTab.curSymTab;
-
-        for (Map.Entry<String, Symbol> entry : currentSymTab.entrySet()) {
-            Symbol symbol = entry.getValue();
-
-            if (symbol instanceof VarSymbol) {
-                VarSymbol varSymbol = (VarSymbol) symbol;
-                if (varSymbol.value == null) {
-                    varSymbol.value = calExpsValue(varSymbol.valueExp);
-                }
-                MidCodeGenerate.addLinetoAns(returnGlobalVarsCode(varSymbol));
-            } else {
-                FuncSymbol funcSymbol = (FuncSymbol) symbol;
-                MidCodeGenerate.addLinetoAns(returnFuncsCode(funcSymbol));
-            }
-        }
-    }
-
-    /**
-     * 全局变量代码生成
-     *
-     * @param symbol
-     * @return
-     */
-    public static String returnGlobalVarsCode(VarSymbol symbol) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("@" + symbol.name + " = dso_local ");
-
-        if (symbol.type.equals(VarTypes.ConstInt) || (symbol.type.equals(VarTypes.ConstChar))
-                || (symbol.type.equals(VarTypes.ConstIntArray))
-                || (symbol.type.equals(VarTypes.ConstCharArray))) {
-            sb.append("constant ");
-        } else if (symbol.type.equals(VarTypes.Int) || (symbol.type.equals(VarTypes.Char))
-                || (symbol.type.equals(VarTypes.IntArray))
-                || (symbol.type.equals(VarTypes.CharArray))) {
-            sb.append("global ");
-        }
-
-        if (symbol.type.equals(VarTypes.ConstInt) || (symbol.type.equals(VarTypes.Int))) {
-            sb.append("i32 ");
-        } else if (symbol.type.equals(VarTypes.ConstChar) || (symbol.type.equals(VarTypes.Char))) {
-            sb.append("i8 ");
-        } else if (symbol.type.equals(VarTypes.ConstIntArray) || (symbol.type.equals(VarTypes.IntArray))) {
-            sb.append("[" + symbol.size + "x i32 ]");
-
-            if (symbol.zeroinitializer) {
-                sb.append("zeroinitializer\n");
-            } else {
-                sb.append(" [");
-                for (int i = 0; i < symbol.size; i++) {
-                    sb.append("i32 " + symbol.value.get(i));
-                    if (i != symbol.size - 1) {
-                        sb.append(", ");
-                    } else {
-                        sb.append("] + '\n");
-                    }
-                }
-            }
-
-        } else if (symbol.type.equals(VarTypes.ConstCharArray) || (symbol.type.equals(VarTypes.CharArray))) {
-            sb.append("[" + symbol.size + "x i8 ] ");
-
-            if (symbol.zeroinitializer) {
-                sb.append("zeroinitializer\n");
-            } else {
-                sb.append("c\"");
-                for (int i = 0; i < symbol.size; i++) {
-                    sb.append("i8 " + symbol.value.get(i));
-                    if (i != symbol.size - 1) {
-                        sb.append(", ");
-                    } else {
-                        sb.append("\" + '\n");
-                    }
-                }
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * 函数代码生成
-     * 
-     * @param funcSymbol
-     * @return
-     */
-    public static String returnFuncsCode(FuncSymbol funcSymbol) {
-        RegisterManager regManager = new RegisterManager(funcSymbol.id);
-        int ret_regNo;
-        StringBuilder sb = new StringBuilder();
-        sb.append("define dso_local ");
-
-        if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.IntFunc)) {
-            sb.append("i32 ");
-        } else if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.CharFunc)) {
-            sb.append("i8 ");
-        } else if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.VoidFunc)) {
-            sb.append("void ");
-        }
-
-        sb.append("@" + funcSymbol.name + "(");
-
-        for (VarSymbol.VarTypes paramstype : funcSymbol.paramTypes) {
-            if (paramstype.equals(VarSymbol.VarTypes.Int)) {
-                sb.append("i32 ");
-            } else if (paramstype.equals(VarSymbol.VarTypes.Char)) {
-                sb.append("i8 ");
-            } else if (paramstype.equals(VarSymbol.VarTypes.IntArray)
-                    || paramstype.equals(VarSymbol.VarTypes.CharArray)) {
-                sb.append("ptr ");
-            }
-
-            sb.append("%" + regManager.regNO++);
-        }
-
-        sb.append(") {\n");
-        regManager.regNO++;// 出函数定义句，寄存器+1
-
-        // TODO : 函数内部体
-
-        if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.VoidFunc)) {
-            sb.append("ret void");
-        } else if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.IntFunc)) {
-            sb.append("ret i32 %" + ret_regNo);
-        } else if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.IntFunc)) {
-            sb.append("ret i8 %" + ret_regNo);
-        }
-        sb.append("\n}\n");
-        return sb.toString();
-    }
-
-    /**
-     * 函数体代码生成
-     *
-     * @param beginRegNO
-     * @param funcSymbol
-     * @return
-     */
-    public static int returnBodyCode(int beginRegNO, FuncSymbol funcSymbol) {
-        SymTab funcSymTab = findFuncSymTab(funcSymbol.symTabID);
-        int returnRegNO = -1;
-        StringBuilder sb = new StringBuilder();
-
-        pos = funcSymbol.offset + 2; // ( + 2
-
-        int level = 1;
-        while (level == 0 && allTokens.get(pos).str != "}") {
-            if (allTokens.get(pos).str.equals("{")) {
-                level++;
-            } else if (allTokens.get(pos).str.equals("}")) {
-                level--;
-            } else {
-                // TODO: 函数体的处理
-            }
-
-            if (level == 0) {
-                break;
-            }
-        }
-
-        return returnRegNO;
-    }
-
-    public static String DeclareLocalVariable(VarSymbol varSymbol, RegisterManager regManager) {
-        StringBuilder sb = new StringBuilder();
-
-        varSymbol.stackRegID = regManager.regNO; // 添加对应的寄存器号
-        sb.append("%" + regManager.regNO++ + " = alloca ");
-        if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)
-                || varSymbol.type.equals(VarSymbol.VarTypes.Char)
-                || varSymbol.type.equals(VarSymbol.VarTypes.ConstChar)) {
-            if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
-                sb.append("i32\n");
-            } else {
-                sb.append("i8\n");
-            }
-
-            //TODO: 局部变量初始化计算exp
-            
-
-        } else if (varSymbol.type.equals(VarSymbol.VarTypes.IntArray)
-                || varSymbol.type.equals(VarSymbol.VarTypes.CharArray)) {
-            if (varSymbol.type.equals(VarSymbol.VarTypes.IntArray)) {
-                sb.append("[" + varSymbol.size + "x i32 ]");
-            } else {
-                sb.append("[" + varSymbol.size + "x i8 ]");
-            }
-
-            // TODO: 数组初始化
-        }
-
-        return sb.toString();
-    }
-
-    public static String AssignmentStatement(VarSymbol varSymbol, ArrayList<Token> valueExp) { // TODO: 赋值语句
-        StringBuilder sb = new StringBuilder();
-        int valueRegNO;
-
-        // TODO
-
-        if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
-            sb.append("store " + "i32" + valueRegNO + ", " + varSymbol.stackRegID + ", " + "\n");
-        } else if (varSymbol.type.equals(VarSymbol.VarTypes.Char)) {
-            sb.append("store " + +varSymbol.stackRegID + " = ");
-        }
-        return sb.toString();
     }
 
     public static String DeclareString() { // TODO: 声明字符串常量
@@ -254,7 +35,7 @@ public class M_utils {
         ArrayList<Integer> values = new ArrayList<>();
 
         for (ArrayList<Token> exp : valueExp) {
-            values.add(calExpValue(exp));
+            values.add(calExpValue(exp)); // FIXME : WARNING
         }
         return values;
     }
@@ -268,10 +49,10 @@ public class M_utils {
     public static VarSymbol findVarfromSymTab(String ident) {
         Symbol symbol = null;
 
-        if (cur_symTab.curSymTab.containsKey(ident)) {
-            symbol = cur_symTab.curSymTab.get(ident);
+        if (MidCodeGenerate.cur_symTab.curSymTab.containsKey(ident)) {
+            symbol = MidCodeGenerate.cur_symTab.curSymTab.get(ident);
         } else {
-            SymTab tempSymTab = cur_symTab;
+            SymTab tempSymTab = MidCodeGenerate.cur_symTab;
             while (tempSymTab.lastSymTab != null) {
                 tempSymTab = tempSymTab.lastSymTab;
                 if (tempSymTab.curSymTab.containsKey(ident)) {
@@ -307,7 +88,7 @@ public class M_utils {
     public static SymTab findFuncSymTab(int funcSymTabID) {
         SymTab funcSymTab = null;
 
-        for (SymTab symTab : global_symTab.childSymTabs) {
+        for (SymTab symTab : MidCodeGenerate.global_symTab.childSymTabs) {
             if (symTab.id == funcSymTabID) {
                 funcSymTab = symTab;
                 break;
@@ -324,87 +105,103 @@ public class M_utils {
      * @return
      */
     public static FuncSymbol findFuncSymbolfromSymTab(String ident) {
-        Symbol symbol = global_symTab.curSymTab.get(ident);
+        Symbol symbol = MidCodeGenerate.global_symTab.curSymTab.get(ident);
         FuncSymbol funcSymbol = (FuncSymbol) symbol;
 
         return funcSymbol;
     }
 
-    public static int calExpValue(ArrayList<Token> exp) {
-        Stack<Character> signs = new Stack<>();
-        Stack<Integer> num = new Stack<>();
+    public static class Operands {
+        int type; // 0:const 1:var 2:子表达式
+        int value;
+        boolean isdetermind;
+        boolean needMinus;
+        int stackRegNO;
+    }
 
-        int temp = 0;
-        Character sign = ' ';
-        boolean needMinus = false;
+    public static int calExpValue(ArrayList<Token> exp) {
+        Deque<Operands> operands = new ArrayDeque<>();
+        Deque<String> operators = new ArrayDeque<>();
+
+        Operands temp = new Operands();
+        String op = "+";
 
         for (int i = 0; i < exp.size(); i++) {
             Token t = exp.get(i);
 
             if (t.tk.equals("INTCON") || t.tk.equals("CHARCON")) { // 常量
-                temp = Integer.valueOf(t.str);
-                if (needMinus) {
-                    temp = -temp;
-                    needMinus = false;
-                }
-                num.push(temp);
-                sign = ' ';
+                temp.type = 0;
+                temp.isdetermind = true;
+                temp.value = Integer.valueOf(t.str);
+                operands.addLast(temp);
+
+                op = " ";
+                temp.needMinus = false;
             }
 
             else if (t.str.equals("+") || t.str.equals("-") || t.str.equals("*") || t.str.equals("/")
                     || t.str.equals("%")) { // 运算符
-                if (t.str.charAt(0) == '-' && sign != ' ') {
-                    needMinus = true;
+                if (t.str.charAt(0) == '-' && op != " ") {
+                    temp.needMinus = true;
                 }
-                sign = t.str.charAt(0);
-                signs.push(sign);
-                // 非运算符需要在结尾将sign置为' '
+                op = t.str;
+                operators.addLast(op);
+                // 非运算符需要在结尾将op置为" "
+                // 并初始化temp.needMinus为false
             }
 
             else if (t.tk.equals("IDENFR")) { // 标识符
-                if (i < exp.size() && Tools.GetCountTK(i + 1).str != "[") {
-                    temp = getVarValueofIndex(findVarfromSymTab(t.str), 0);
-                    if (needMinus) {
-                        temp = -temp;
-                        needMinus = false;
-                    }
-                    num.push(temp);
-                } else if (i < exp.size() && Tools.GetCountTK(i + 1).str == "[") {
-                    int begin = i + 2;
-                    int level = 1;
-                    for (int j = begin; j < exp.size(); j++) {
-                        if (exp.get(j).str.equals("[")) {
-                            level++;
-                        } else if (exp.get(j).str.equals("]")) {
-                            level--;
-                        }
+                temp.type = 1; // var
+                if (i < exp.size() && Tools.GetCountTK(i + 1).str != "[") { // 常变量
+                    VarSymbol varSymbol = findVarfromSymTab(t.str);
 
-                        if (level == 0) {
-                            i = j;
-                            break;
-                        }
+                    if (varSymbol.valueisDetermined.get(0) == true) {
+                        temp.value = getVarValueofIndex(findVarfromSymTab(t.str), 0);
+                        temp.isdetermind = true;
+                    } else {
+                        temp.isdetermind = false;
+                        temp.stackRegNO = varSymbol.stackRegID;
                     }
-                    int end = i - 1;
 
-                    int index = calExpValue(Tools.GetExpfromIndex(begin, end));
-                    temp = getVarValueofIndex(findVarfromSymTab(t.str), index);
-                    if (needMinus) {
-                        temp = -temp;
-                        needMinus = false;
-                    }
-                    num.push(temp);
-                    sign = ' ';
+                    operands.addLast(temp);
+
+                    op = " ";
+                    temp.needMinus = false;
+                } else if (i < exp.size() && Tools.GetCountTK(i + 1).str == "[") { // 数组
+                    // int begin = i + 2;
+                    // int level = 1;
+                    // for (int j = begin; j < exp.size(); j++) {
+                    // if (exp.get(j).str.equals("[")) {
+                    // level++;
+                    // } else if (exp.get(j).str.equals("]")) {
+                    // level--;
+                    // }
+
+                    // if (level == 0) {
+                    // i = j;
+                    // break;
+                    // }
+                    // }
+                    // int end = i - 1;
+
+                    // int index = calExpValue(Tools.GetExpfromIndex(begin, end));
+                    // temp = getVarValueofIndex(findVarfromSymTab(t.str), index);
+                    // if (needMinus) {
+                    // temp = -temp;
+                    // needMinus = false;
+                    // }
+                    // num.push(temp);
+                    // sign = ' ';
                 } else if (i < exp.size() && Tools.GetCountTK(i + 1).str == "(") {
                     // FIXME: 调用函数
                 }
             }
 
             else if (t.str.equals("(")) { // 左括号
-                i++;
-                int j = i;
-                int level = 1;
-
-                while (j < exp.size()) {
+                temp.type = 2; // 子表达式
+                int begin = i + 1;
+                int end = begin;
+                for (int j = i + 1, level = 1; j < exp.size(); j++) { // 递归处理，获取对应位置
                     if (exp.get(j).str.equals("(")) {
                         level++;
                     } else if (exp.get(j).str.equals(")")) {
@@ -412,28 +209,22 @@ public class M_utils {
                     }
 
                     if (level == 0) {
+                        end = j - 1;
+                        i = j;
                         break;
                     }
-
-                    j++;
                 }
 
-                temp = calExpValue(Tools.GetExpfromIndex(i, j - 1));
-                if (needMinus) {
-                    temp = -temp;
-                    needMinus = false;
-                }
-                num.push(temp);
-                i = j - 1;
-                sign = ' ';
+                temp.stackRegNO = calExpValue(Tools.GetExpfromIndex(begin, end));
+                temp.isdetermind = false;
+
+                op = " ";
+                temp.needMinus = false;
             }
         }
 
         // 检查表达式栈是否能够进行计算优化
-        int result = optimizeExpression(num, signs);
-        // FIXME: 优化表达式
-
-        return result;
+        return optimizeExpression(operands, operators);
     }
 
     /**
@@ -443,44 +234,64 @@ public class M_utils {
      * @param signs
      * @return
      */
-    public static int optimizeExpression(Stack<Integer> num, Stack<Character> signs) { // FIXME: 优化表达式
-        Stack<Integer> tempNum = new Stack<>();
-        Stack<Character> tempSigns = new Stack<>();
+    public static int optimizeExpression(Deque<Operands> operands, Deque<String> operations) { // FIXME: 优化表达式
+        Deque<Operands> tempOperands = new ArrayDeque<>();
+        Deque<String> tempOperations = new ArrayDeque<>();
+        Operands left, right;
+        String op;
 
-        // First pass: handle *, /, %
-        while (!signs.isEmpty()) {
-            char sign = signs.pop();
-            int right = num.pop();
-            int left = num.pop();
+        left = operands.pollFirst();
+        while (!operations.isEmpty()) {
+            op = operations.pollFirst();
 
-            if (sign == '*' || sign == '/' || sign == '%') {
-                int result = 0;
-                switch (sign) {
-                    case '*':
-                        result = left * right;
-                        break;
-                    case '/':
-                        result = left / right;
-                        break;
-                    case '%':
-                        result = left % right;
-                        break;
-                }
-                num.push(result); // Push the result back to num stack
+            if (op == "+" || op == "-") {
+                tempOperands.addLast(left);
+                tempOperations.addLast(op);
+                right = operands.pollFirst();
+                left = right;
             } else {
-                // If not *, /, %, save in temp stacks for later
-                num.push(left);
-                tempNum.push(right); // Save top of num stack to tempNum
-                tempSigns.push(sign);
+                right = operands.pollFirst();
+
+                // 如果左右操作数都已确定，进行计算
+                if (left.isdetermind && right.isdetermind) {
+                    int result;
+                    if (right.needMinus) {
+                        right.value = -right.value;
+                    }
+                    if (left.needMinus) {
+                        left.value = -left.value;
+                    }
+                    result = performOperation(left.value, right.value, op);
+
+                    Operands resultOperand = new Operands(); // 计算结果并标记为已确定
+                    resultOperand.needMinus = false;
+                    resultOperand.isdetermind = true;
+                    resultOperand.type = 2; // 子表达式
+
+                    left = resultOperand; // 将计算结果交给left
+                } else {
+                    // 如果有未确定的操作数，执行代码生成
+
+                    tempOperands_mul.addLast(left);
+                    left = right;
+                    tempOperations_mul.addLast(op);
+                }
             }
         }
+        // 将最后一个操作数添加到临时队列
+        tempOperands.addLast(left);
 
-        // Move remaining numbers and signs back to original stacks
-        while (!tempNum.isEmpty()) {
-            num.push(tempNum.pop());
-        }
-        while (!tempSigns.isEmpty()) {
-            signs.push(tempSigns.pop());
+        // 处理剩余的未确定操作数
+        while (!tempOperands.isEmpty()) {
+            Operand left = tempOperands.pollFirst();
+            Operand right = tempOperands.pollFirst();
+            String op = tempOperations.pollFirst();
+
+            // 此时 left 和 right 一定是未确定的操作数，无法直接计算
+            // 你可以选择将其重新放回队列或者等待它们在后续阶段被填充
+            operands.addFirst(left);
+            operands.addFirst(right);
+            operations.addFirst(op);
         }
 
         // Second pass: handle + and -
@@ -503,5 +314,19 @@ public class M_utils {
 
         // Final result will be the only number left in the num stack
         return num.pop();
+    }
+
+    // 执行运算
+    private static int performOperation(int left, int right, String op) {
+        switch (op) {
+            case "*":
+                return left * right;
+            case "/":
+                return left / right;
+            case "%":
+                return left % right;
+            default:
+                return 114514;
+        }
     }
 }

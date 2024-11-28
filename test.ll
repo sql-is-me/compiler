@@ -12,7 +12,7 @@ target triple = "x86_64-pc-windows-msvc19.11.0"
 define dso_local i32 @foo(i32 %0, i8 %1) #0 {
   %3 = alloca i8, align 1
   %4 = alloca i32, align 4
-  %5 = alloca i32, align 4        ;x
+  %5 = alloca i32, align 4
   store i8 %1, i8* %3, align 1
   store i32 %0, i32* %4, align 4
   store i32 0, i32* %5, align 4
@@ -26,8 +26,9 @@ define dso_local i32 @main() #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   store i32 0, i32* %1, align 4
-  %4 = load i32, i32* @b, align 4
-  %5 = add nsw i32 1, %4
+  store i32 2, i32* %2, align 4
+  %4 = load i32, i32* %2, align 4
+  %5 = add nsw i32 %4, 1
   store i32 %5, i32* %2, align 4
   %6 = load i8, i8* @z, align 1
   %7 = sext i8 %6 to i32

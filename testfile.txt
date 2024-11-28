@@ -1,15 +1,21 @@
+// #include "libsysy/libsysy.h"
 const int a = 1;
 int b = 0;
+char z;
 char d[2] = {'a', 'b'};
 const int g[2] = {1, 2};
 char x[3] = {'a', 'b'};
-
+char y[3];
 const int f = 1;
+
+int foo(int a[], char b[])
+{
+    return 1;
+}
+
 int main()
 {
-    int i;
-
-    const int e = -1;
-    int c = a + b;
+    int g = b;
+    int h = 'c';
     return 0;
 }

@@ -88,8 +88,8 @@ public class utils {
      * @param value //值
      */
     public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value,
-            ArrayList<ArrayList<Token>> valueExp) {
-        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, value, valueExp);
+            ArrayList<ArrayList<Token>> valueExp, boolean zeroinitializer) {
+        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, value, valueExp, zeroinitializer);
         curSymTab.curSymTab.put(name, symbol);
     }
 

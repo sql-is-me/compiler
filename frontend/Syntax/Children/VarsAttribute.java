@@ -10,6 +10,7 @@ public class VarsAttribute {
     int arrSize;
     ArrayList<Integer> initValues;
     ArrayList<ArrayList<Token>> valueExp;
+    boolean zeroinitializer = false;
 
     public VarsAttribute(String name) {
         this.name = name;

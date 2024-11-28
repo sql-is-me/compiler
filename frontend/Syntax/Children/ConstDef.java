@@ -47,6 +47,7 @@ public class ConstDef {
                 else {
                     va.initValues = new ArrayList<>(Collections.nCopies(1, 0));
                 }
+                va.zeroinitializer = true;
             }
         }
 

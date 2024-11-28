@@ -26,7 +26,7 @@ public class M_utils {
     public static int pos = 0;
 
     public static void findFuncPosinTokens() {
-
+        // TODO: 查找token位置
     }
 
     public static void addGlobalVarandFunc() {
@@ -48,6 +48,12 @@ public class M_utils {
         }
     }
 
+    /**
+     * 全局变量代码生成
+     *
+     * @param symbol
+     * @return
+     */
     public static String returnGlobalVarsCode(VarSymbol symbol) {
         StringBuilder sb = new StringBuilder();
 
@@ -68,31 +74,48 @@ public class M_utils {
         } else if (symbol.type.equals(VarTypes.ConstChar) || (symbol.type.equals(VarTypes.Char))) {
             sb.append("i8 ");
         } else if (symbol.type.equals(VarTypes.ConstIntArray) || (symbol.type.equals(VarTypes.IntArray))) {
-            sb.append("[" + symbol.size + "x i32 ] [");
+            sb.append("[" + symbol.size + "x i32 ]");
 
-            for (int i = 0; i < symbol.size; i++) {
-                sb.append("i32 " + symbol.value.get(i));
-                if (i != symbol.size - 1) {
-                    sb.append(", ");
-                } else {
-                    sb.append("] + '\n");
+            if (symbol.zeroinitializer) {
+                sb.append("zeroinitializer\n");
+            } else {
+                sb.append(" [");
+                for (int i = 0; i < symbol.size; i++) {
+                    sb.append("i32 " + symbol.value.get(i));
+                    if (i != symbol.size - 1) {
+                        sb.append(", ");
+                    } else {
+                        sb.append("] + '\n");
+                    }
                 }
             }
-        } else if (symbol.type.equals(VarTypes.ConstCharArray) || (symbol.type.equals(VarTypes.CharArray))) {
-            sb.append("[" + symbol.size + "x i8 ] c\"");
 
-            for (int i = 0; i < symbol.size; i++) {
-                sb.append("i8 " + symbol.value.get(i));
-                if (i != symbol.size - 1) {
-                    sb.append(", ");
-                } else {
-                    sb.append("\" + '\n");
+        } else if (symbol.type.equals(VarTypes.ConstCharArray) || (symbol.type.equals(VarTypes.CharArray))) {
+            sb.append("[" + symbol.size + "x i8 ] ");
+
+            if (symbol.zeroinitializer) {
+                sb.append("zeroinitializer\n");
+            } else {
+                sb.append("c\"");
+                for (int i = 0; i < symbol.size; i++) {
+                    sb.append("i8 " + symbol.value.get(i));
+                    if (i != symbol.size - 1) {
+                        sb.append(", ");
+                    } else {
+                        sb.append("\" + '\n");
+                    }
                 }
             }
         }
         return sb.toString();
     }
 
+    /**
+     * 函数代码生成
+     * 
+     * @param funcSymbol
+     * @return
+     */
     public static String returnFuncsCode(FuncSymbol funcSymbol) {
         RegisterManager regManager = new RegisterManager(funcSymbol.id);
         int ret_regNo;
@@ -125,7 +148,7 @@ public class M_utils {
         sb.append(") {\n");
         regManager.regNO++;// 出函数定义句，寄存器+1
 
-        // FIXME : 函数内部体
+        // TODO : 函数内部体
 
         if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.VoidFunc)) {
             sb.append("ret void");
@@ -139,12 +162,15 @@ public class M_utils {
     }
 
     /**
-     * 
+     * 函数体代码生成
      *
+     * @param beginRegNO
+     * @param funcSymbol
      * @return
      */
-    public static String returnBodyCode(int beginRegNO, FuncSymbol funcSymbol) {
+    public static int returnBodyCode(int beginRegNO, FuncSymbol funcSymbol) {
         SymTab funcSymTab = findFuncSymTab(funcSymbol.symTabID);
+        int returnRegNO = -1;
         StringBuilder sb = new StringBuilder();
 
         pos = funcSymbol.offset + 2; // ( + 2
@@ -156,7 +182,7 @@ public class M_utils {
             } else if (allTokens.get(pos).str.equals("}")) {
                 level--;
             } else {
-
+                // TODO: 函数体的处理
             }
 
             if (level == 0) {
@@ -164,10 +190,67 @@ public class M_utils {
             }
         }
 
+        return returnRegNO;
+    }
+
+    public static String DeclareLocalVariable(VarSymbol varSymbol, RegisterManager regManager) {
+        StringBuilder sb = new StringBuilder();
+
+        varSymbol.stackRegID = regManager.regNO; // 添加对应的寄存器号
+        sb.append("%" + regManager.regNO++ + " = alloca ");
+        if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)
+                || varSymbol.type.equals(VarSymbol.VarTypes.Char)
+                || varSymbol.type.equals(VarSymbol.VarTypes.ConstChar)) {
+            if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
+                sb.append("i32\n");
+            } else {
+                sb.append("i8\n");
+            }
+
+            //TODO: 局部变量初始化计算exp
+            
+
+        } else if (varSymbol.type.equals(VarSymbol.VarTypes.IntArray)
+                || varSymbol.type.equals(VarSymbol.VarTypes.CharArray)) {
+            if (varSymbol.type.equals(VarSymbol.VarTypes.IntArray)) {
+                sb.append("[" + varSymbol.size + "x i32 ]");
+            } else {
+                sb.append("[" + varSymbol.size + "x i8 ]");
+            }
+
+            // TODO: 数组初始化
+        }
+
         return sb.toString();
     }
 
-    public static ArrayList<Integer> calExpsValue(ArrayList<ArrayList<Token>> valueExp) {
+    public static String AssignmentStatement(VarSymbol varSymbol, ArrayList<Token> valueExp) { // TODO: 赋值语句
+        StringBuilder sb = new StringBuilder();
+        int valueRegNO;
+
+        // TODO
+
+        if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
+            sb.append("store " + "i32" + valueRegNO + ", " + varSymbol.stackRegID + ", " + "\n");
+        } else if (varSymbol.type.equals(VarSymbol.VarTypes.Char)) {
+            sb.append("store " + +varSymbol.stackRegID + " = ");
+        }
+        return sb.toString();
+    }
+
+    public static String DeclareString() { // TODO: 声明字符串常量
+        StringBuilder sb = new StringBuilder();
+
+        return sb.toString();
+    }
+
+    /**
+     * 计算多个表达式的值
+     *
+     * @param exp
+     * @return
+     */
+    public static ArrayList<Integer> calExpsValue(ArrayList<ArrayList<Token>> valueExp) { // FIXME： 计算多个表达式的值，配置不确定状态
         ArrayList<Integer> values = new ArrayList<>();
 
         for (ArrayList<Token> exp : valueExp) {
@@ -346,14 +429,21 @@ public class M_utils {
             }
         }
 
-        // 检查表达式栈是否能够进行计算
+        // 检查表达式栈是否能够进行计算优化
         int result = optimizeExpression(num, signs);
         // FIXME: 优化表达式
 
         return result;
     }
 
-    public static int optimizeExpression(Stack<Integer> num, Stack<Character> signs) {
+    /**
+     * 表达式优化
+     *
+     * @param num
+     * @param signs
+     * @return
+     */
+    public static int optimizeExpression(Stack<Integer> num, Stack<Character> signs) { // FIXME: 优化表达式
         Stack<Integer> tempNum = new Stack<>();
         Stack<Character> tempSigns = new Stack<>();
 

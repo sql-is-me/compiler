@@ -73,7 +73,8 @@ public class utils {
         SymTab recordSymtab = curSymTab;// 先跳回上一级符号表，加入函数相关信息
         curSymTab = curSymTab.lastSymTab;
 
-        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, curSymTab.id, offset);
+        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, recordSymtab.id,
+                offset);
         curSymTab.curSymTab.put(name, symbol);
 
         curSymTab = recordSymtab; // 再跳回去

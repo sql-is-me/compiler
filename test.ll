@@ -3,10 +3,9 @@ source_filename = "test.c"
 target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc19.11.0"
 
-@a = dso_local constant i32 1, align 4
+@a = dso_local constant i32 4, align 4
 @b = dso_local global i32 0, align 4
 @z = dso_local global i8 1, align 1
-@f = dso_local constant i32 1, align 4
 
 ; Function Attrs: noinline nounwind optnone uwtable
 define dso_local i32 @foo(i32 %0, i8 %1) #0 {
@@ -15,7 +14,7 @@ define dso_local i32 @foo(i32 %0, i8 %1) #0 {
   %5 = alloca i32, align 4
   store i8 %1, i8* %3, align 1
   store i32 %0, i32* %4, align 4
-  store i32 0, i32* %5, align 4
+  store i32 2, i32* %5, align 4
   %6 = load i32, i32* %5, align 4
   ret i32 %6
 }
@@ -26,13 +25,22 @@ define dso_local i32 @main() #0 {
   %2 = alloca i32, align 4
   %3 = alloca i32, align 4
   store i32 0, i32* %1, align 4
-  store i32 2, i32* %2, align 4
+  store i32 5, i32* %2, align 4
   %4 = load i32, i32* %2, align 4
-  %5 = add nsw i32 %4, 1
-  store i32 %5, i32* %2, align 4
-  %6 = load i8, i8* @z, align 1
-  %7 = sext i8 %6 to i32
-  store i32 %7, i32* %3, align 4
+  %5 = call i32 @foo(i32 1, i8 2)
+  %6 = srem i32 %4, %5
+  store i32 %6, i32* %2, align 4
+  %7 = load i32, i32* %2, align 4
+  %8 = add nsw i32 %7, 1
+  store i32 %8, i32* %2, align 4
+  %9 = load i8, i8* @z, align 1
+  %10 = sext i8 %9 to i32
+  store i32 %10, i32* %3, align 4
+  %11 = load i8, i8* @z, align 1
+  %12 = sext i8 %11 to i32
+  %13 = add nsw i32 %12, 97
+  %14 = trunc i32 %13 to i8
+  store i8 %14, i8* @z, align 1
   ret i32 0
 }
 

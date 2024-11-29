@@ -4,23 +4,28 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import Frontend.Lexer.Lexer;
 import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Children.Tools;
+import Midend.M_utils.Operands;
 import SymbolTable.FuncSymbol;
 import SymbolTable.SymTab;
 import SymbolTable.Symbol;
 import SymbolTable.VarSymbol;
 import SymbolTable.VarSymbol.VarTypes;
 import SymbolTable.utils;
+import SymbolTable.FuncSymbol.FuncTypes;
 
 public class MidCodeGenerate {
     /** 存储中端代码 */
     public static ArrayList<String> midcode = new ArrayList<>();
 
     public static void generateMidCode() {
+        addLibFunc();
         addGlobalVarandFunc();
     }
 
@@ -57,6 +62,38 @@ public class MidCodeGenerate {
     /** Token ptr */
     public static int pos = 0;
 
+    /** 寄存器号 */
+    public static int regNO = 0;
+
+    /** 记录寄存器号 */
+    public static int recoderRegNum;
+
+    /**
+     * 添加库函数至全局符号表末尾
+     * 
+     */
+    public static void addLibFunc() {
+        Symbol getint = new FuncSymbol(global_symTab.id, "getint", FuncTypes.IntFunc, new ArrayList<VarTypes>(), 0, -1,
+                0);
+        global_symTab.curSymTab.put("getint", getint);
+
+        Symbol getchar = new FuncSymbol(global_symTab.id, "getchar", FuncTypes.CharFunc, new ArrayList<VarTypes>(), 0,
+                -1, 0);
+        global_symTab.curSymTab.put("getint", getchar);
+
+        Symbol putint = new FuncSymbol(global_symTab.id, "putint", FuncTypes.VoidFunc,
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1, 0);
+        global_symTab.curSymTab.put("putint", putint);
+
+        Symbol putch = new FuncSymbol(global_symTab.id, "putch", FuncTypes.VoidFunc,
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1, 0);
+        global_symTab.curSymTab.put("putch", putch);
+
+        Symbol putstr = new FuncSymbol(global_symTab.id, "putstr", FuncTypes.VoidFunc,
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.CharArray)), 1, -1, 0);
+        global_symTab.curSymTab.put("putch", putstr);
+    }
+
     /*
      * 全局变量和函数代码生成
      */
@@ -69,7 +106,7 @@ public class MidCodeGenerate {
             if (symbol instanceof VarSymbol) {
                 VarSymbol varSymbol = (VarSymbol) symbol;
                 if (varSymbol.value == null) {
-                    varSymbol.value = M_utils.calExpsValue(varSymbol.valueExp);
+                    varSymbol.value = M_utils.calExpsValue(varSymbol, varSymbol.valueExp);
                 }
                 MidCodeGenerate.addLinetoAns(returnGlobalVarsCode(varSymbol));
             } else {
@@ -148,9 +185,11 @@ public class MidCodeGenerate {
      * @return
      */
     public static String returnFuncsCode(FuncSymbol funcSymbol) {
-        RegisterManager regManager = new RegisterManager(funcSymbol.id);
-        int ret_regNo;
         StringBuilder sb = new StringBuilder();
+        recoderRegNum = regNO;
+        regNO = 0;
+        int ret_regNo;
+
         sb.append("define dso_local ");
 
         if (funcSymbol.returnType.equals(FuncSymbol.FuncTypes.IntFunc)) {
@@ -173,12 +212,13 @@ public class MidCodeGenerate {
                 sb.append("ptr ");
             }
 
-            sb.append("%" + regManager.regNO++);
+            sb.append("%" + regNO++);
         }
 
         sb.append(") {\n");
-        regManager.regNO++;// 出函数定义句，寄存器+1
+        regNO++;// 出函数定义句，寄存器+1
 
+        M_utils.findFuncPosinTokens(funcSymbol);
         // TODO : 函数内部体
         // ret_regNo = returnBodyCode(regManager.regNO, funcSymbol);
 
@@ -190,6 +230,9 @@ public class MidCodeGenerate {
             sb.append("ret i8 %" + ret_regNo);
         }
         sb.append("\n}\n");
+
+        regNO = recoderRegNum;
+
         return sb.toString();
     }
 
@@ -200,12 +243,10 @@ public class MidCodeGenerate {
      * @param funcSymbol
      * @return
      */
-    public static Pair returnBodyCode(int beginRegNO, FuncSymbol funcSymbol) {
-        SymTab funcSymTab = M_utils.findFuncSymTab(funcSymbol.symTabID);
+    public static Pair generateBodyCode(int beginRegNO, FuncSymbol funcSymbol_f) {
+        SymTab funcSymTab = M_utils.findFuncSymTab(funcSymbol_f.mySymTabId);
         int returnRegNO = -1;
         StringBuilder sb = new StringBuilder();
-
-        pos = funcSymbol.offset + 2; // ( + 2
 
         int level = 1;
         while (level == 0 && allTokens.get(pos).str != "}") {
@@ -214,14 +255,87 @@ public class MidCodeGenerate {
             } else if (allTokens.get(pos).str.equals("}")) {
                 level--;
             } else {
-                // TODO: 函数体的处理
+                Token t = Tools.GetCountTK(pos);
+                if (t.tk.equals("IDENFR")) {
+                    pos++;
+                    if (Tools.GetCountTK(pos).str.equals("=")) {
+                        VarSymbol varSymbol = (VarSymbol) funcSymTab.curSymTab.get(t.str);
+                        // TODO: 赋值语句
+
+                    } else { // 函数调用
+                        FuncSymbol funcSymbol = M_utils.findFuncSymbolfromSymTab(t.str);
+                        M_utils.FuncRParams funcRParams = new M_utils.FuncRParams();
+                        funcRParams.size = funcSymbol.paramNumber;
+
+                        pos += 2; // ( + 1
+                        callFunc(funcSymbol_f, funcRParams);
+                    }
+
+                } else if (t.tk.equals("CONSTTK")) {
+                    pos++;
+                } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) {
+                    pos++;
+                } else if () {
+                    pos++;
+                } else if (t.tk.equals("RETURNTK")) {
+                    pos++;
+                }
             }
 
             if (level == 0) {
                 break;
             }
+            pos++;
         }
         return new Pair(returnRegNO, sb.toString());
+    }
+
+    public static int callFunc(FuncSymbol funcSymbol, M_utils.FuncRParams funcRParams) {
+        int begin, end;
+
+        begin = pos;
+        for (int count = funcRParams.size; count != 0; pos++, begin = pos) {
+            if (count == 1 || Tools.GetCountTK(pos).str.equals(",")) {
+                if (count == 1) {
+                    M_utils.findEndofScope();
+                    end = pos - 2;// );
+                } else {
+                    count--;
+                    end = pos - 1;
+                }
+
+                ArrayList<Token> expTokens = Tools.GetExpfromIndex(begin, end);
+                Operands operand = M_utils.calExpValue(expTokens);
+                if (operand.kind == 0) // 常值
+                {
+                    funcRParams.value.add(operand.value);
+                    funcRParams.isConst.add(true);
+                    funcRParams.type.add(operand.type);
+                }
+
+                else if (operand.kind == 1) { // var
+                    if (operand.varSymbol.needAssignVReg) {
+                        M_utils.AssignValueRegister(operand.varSymbol);
+                        M_utils.generateLoadCode_assign(operand.varSymbol);
+
+                        funcRParams.value.add(operand.varSymbol.valueRegID);
+                        funcRParams.isConst.add(false);
+                    } else {
+                        funcRParams.value.add(operand.varSymbol.valueRegID);
+                        funcRParams.isConst.add(false);
+                    }
+
+                    funcRParams.type.add(operand.type);
+                }
+
+                else if (operand.kind == 2) { // 子表达式
+                    funcRParams.value.add(operand.retRegNO);
+                    funcRParams.isConst.add(false);
+                }
+            }
+        }
+
+        return M_utils.generateCallFuncCode(funcSymbol, funcRParams);
     }
 
     /**
@@ -231,11 +345,11 @@ public class MidCodeGenerate {
      * @param regManager
      * @return
      */
-    public static String DeclareLocalVariable(VarSymbol varSymbol, RegisterManager regManager) {
+    public static String DeclareLocalVariable(VarSymbol varSymbol) {
         StringBuilder sb = new StringBuilder();
 
-        varSymbol.stackRegID = regManager.regNO; // 添加对应的寄存器号
-        sb.append("%" + regManager.regNO++ + " = alloca ");
+        varSymbol.stackRegID = regNO; // 添加对应的寄存器号
+        sb.append("%" + regNO++ + " = alloca ");
         if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)
                 || varSymbol.type.equals(VarSymbol.VarTypes.Char)
                 || varSymbol.type.equals(VarSymbol.VarTypes.ConstChar)) {
@@ -263,23 +377,24 @@ public class MidCodeGenerate {
 
     public static String AssignmentStatement(VarSymbol varSymbol, ArrayList<Token> valueExp) { // TODO: 赋值语句
         StringBuilder sb = new StringBuilder();
-        int valueRegNO;
+        int valueRegNO = varSymbol.valueRegID;
 
-        // TODO
-
-        if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
-            sb.append("store " + "i32" + valueRegNO + ", " + varSymbol.stackRegID + ", " + "\n");
-        } else if (varSymbol.type.equals(VarSymbol.VarTypes.Char)) {
-            sb.append("store " + +varSymbol.stackRegID + " = ");
+        if (varSymbol.tableId == 0) { // 全局变量
+            if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
+                sb.append("store " + "i32 %" + valueRegNO + ", i32* @" + varSymbol.stackRegID + "\n");
+            } else if (varSymbol.type.equals(VarSymbol.VarTypes.Char)
+                    || varSymbol.type.equals(VarSymbol.VarTypes.ConstChar)) {
+                sb.append("store " + "i8 %" + valueRegNO + ", i8* @" + varSymbol.stackRegID + "\n");
+            }
+        } else {
+            if (varSymbol.type.equals(VarSymbol.VarTypes.Int) || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
+                sb.append("store " + "i32 %" + valueRegNO + ", i32* %" + varSymbol.name + "\n");
+            } else if (varSymbol.type.equals(VarSymbol.VarTypes.Char)
+                    || varSymbol.type.equals(VarSymbol.VarTypes.ConstChar)) {
+                sb.append("store " + "i8 %" + valueRegNO + ", i8* %" + varSymbol.name + "\n");
+            }
         }
+
         return sb.toString();
-    }
-
-    public static Pair generateExpCode() {
-        StringBuilder sb = new StringBuilder();
-        int regNO = -1;
-
-        
-        return new Pair(regNO, sb.toString());
     }
 }

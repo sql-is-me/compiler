@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
+import Frontend.Syntax.utils;
 
 public class Exp {
     static ArrayList<Token> ExpAnalysis() {
@@ -15,6 +16,7 @@ public class Exp {
         int end = CompUnit.count; // 记录Exp结束
 
         expTokenList = Tools.GetExpfromIndex(begin, end);
+        utils.addExp(expTokenList);
 
         Tools.WriteLine(Syntax.NodeType.Exp, Tools.GetNowTK().id);
 

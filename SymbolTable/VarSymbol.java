@@ -26,6 +26,7 @@ public class VarSymbol extends Symbol {
         this.valueExp = valueExp;
         this.zeroinitializer = zeroinitializer;
         this.stackRegID = -1;
+        this.needAssignVReg = true; // FIXME:修复相关逻辑
     }
 
     public enum VarTypes {

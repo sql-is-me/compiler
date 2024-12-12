@@ -6,8 +6,8 @@ import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 
 public class VarDef {
-    static ThreePart VarDefAnalysis() {
-        ThreePart tp = new ThreePart(null, false, null);
+    static VarPart VarDefAnalysis() {
+        VarPart vp = new VarPart(null, false, null, -1);
         Token token = Tools.LookNextTK();
 
         if (token.tk.equals("IDENFR")) {
@@ -15,14 +15,15 @@ public class VarDef {
 
             utils.JudgeRepeat(Tools.GetNowTK());
 
-            tp.name = Tools.GetNowTK().str;
+            vp.name = Tools.GetNowTK().str;
+            vp.offset = CompUnit.count;
 
             token = Tools.LookNextTK();
             if (token.tk.equals("ASSIGN")) { // =
                 CompUnit.count++;
                 InitVal.InitValAnalysis();
             } else if (token.tk.equals("LBRACK")) { // [
-                tp.isArray = true;
+                vp.isArray = true;
                 CompUnit.count++;
                 ConstExp.ConstExpAnalysis();
 
@@ -42,6 +43,6 @@ public class VarDef {
 
         Tools.WriteLine(Syntax.NodeType.VarDef, Tools.GetNowTK().id);
 
-        return tp;
+        return vp;
     }
 }

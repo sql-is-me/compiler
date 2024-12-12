@@ -9,19 +9,20 @@ import SymbolTable.VarSymbol.VarTypes;
 public class FuncFParam {
     static VarTypes FuncFParamAnalysis() {
         String btype = BType.BTypeAnalysis();
-        ThreePart tp = new ThreePart(null, false, null);
+        VarPart vp = new VarPart(null, false, null, -1);
 
         Token token = Tools.LookNextTK();
         if (token.tk.equals("IDENFR")) { // ident
+            vp.offset = CompUnit.count;
             CompUnit.count++;
 
             utils.JudgeRepeat(Tools.GetNowTK());
 
-            tp.name = token.str;
+            vp.name = token.str;
 
             if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++;
-                tp.isArray = true;
+                vp.isArray = true;
 
                 if (!Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     Token temp = Tools.GetNowTK();
@@ -32,11 +33,11 @@ public class FuncFParam {
             }
         }
 
-        Tools.AddVarSymbol(false, btype, tp);
+        Tools.AddVarSymbol(false, btype, vp);
 
         Tools.WriteLine(Syntax.NodeType.FuncFParam, Tools.GetNowTK().id);
 
-        if (tp.isArray) {
+        if (vp.isArray) {
             if (btype.equals("Int")) {
                 return VarTypes.IntArray;
             } else {

@@ -6,14 +6,7 @@ import Frontend.Lexer.Lexer.Token;
 import Frontend.Syntax.Syntax;
 
 public class Exp {
-    static void ExpAnalysis() {
-
-        AddExp.AddExpAnalysis();
-
-        Tools.WriteLine(Syntax.NodeType.Exp, Tools.GetNowTK().id);
-    }
-
-    static ArrayList<Token> ExpAnalysis(boolean returnArrayList) {
+    static ArrayList<Token> ExpAnalysis() {
         ArrayList<Token> expTokenList = new ArrayList<>(); // 记录exp开始
         int count = CompUnit.count + 1; // 记录Exp开始
 

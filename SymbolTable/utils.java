@@ -73,7 +73,7 @@ public class utils {
         SymTab recordSymtab = curSymTab;// 先跳回上一级符号表，加入函数相关信息
         curSymTab = curSymTab.lastSymTab;
 
-        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber);
+        Symbol symbol = new FuncSymbol(curSymTab.id, name, returnType, paramTypes, paramNumber, recordSymtab.id);
         curSymTab.curSymTab.put(name, symbol);
 
         curSymTab = recordSymtab; // 再跳回去
@@ -87,8 +87,8 @@ public class utils {
      * @param size  //数组长度
      * @param value //值
      */
-    public static void addVarSymbol(String name, VarTypes type, int size, ArrayList<Integer> value) {
-        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, value);
+    public static void addVarSymbol(String name, VarTypes type, int size, int offset) {
+        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, offset);
         curSymTab.curSymTab.put(name, symbol);
     }
 
@@ -451,39 +451,6 @@ public class utils {
         }
 
         return type;
-    }
-
-    /**
-     * 查找当前name的值
-     *
-     * @param name 名字
-     * 
-     * @return ArrayList<Integer>类型的value
-     *         若非数组，则取第一个值即可
-     *         若表中无该名字符号，则返回null
-     */
-    public static ArrayList<Integer> ReturnValue(String name) {
-        Symbol symbol;
-        ArrayList<Integer> values = null;
-
-        if (JudgeIdenfrExistNow(name)) {
-            symbol = curSymTab.curSymTab.get(name);
-            if (symbol instanceof VarSymbol) {
-                VarSymbol varSymbol = (VarSymbol) symbol;
-                values = varSymbol.value;
-            }
-        } else {
-            if ((symbol = GetIdenfrfromBefore(name)) != null) {
-                if (symbol instanceof VarSymbol) {
-                    VarSymbol varSymbol = (VarSymbol) symbol;
-                    values = varSymbol.value;
-                }
-            } else {
-                values = null;
-            }
-        }
-
-        return values;
     }
 
     /**

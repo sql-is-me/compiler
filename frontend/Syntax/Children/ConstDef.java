@@ -6,24 +6,25 @@ import Frontend.Syntax.Syntax;
 import SymbolTable.utils;
 
 public class ConstDef {
-    static ThreePart ConstDefAnalysis() {
-        ThreePart tp = new ThreePart(null, false, null);
+    static VarPart ConstDefAnalysis() {
+        VarPart vp = new VarPart(null, false, null, -1);
 
         if (Tools.LookNextTK().tk.equals("IDENFR")) {
             CompUnit.count++;
 
             utils.JudgeRepeat(Tools.GetNowTK());
 
-            tp.name = Tools.GetNowTK().str;
+            vp.name = Tools.GetNowTK().str;
+            vp.offset = CompUnit.count;
 
             if (Tools.LookNextTK().tk.equals("ASSIGN")) { // =
                 CompUnit.count++;
                 ConstInitVal.ConstInitValAnalysis();
             } else if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++; // [
-                tp.isArray = true;
+                vp.isArray = true;
 
-                ConstExp.ConstExpAnalysis();
+                vp.sizeExp = ConstExp.ConstExpAnalysis();
 
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     CompUnit.count++;
@@ -41,6 +42,6 @@ public class ConstDef {
 
         Tools.WriteLine(Syntax.NodeType.ConstDef, Tools.GetNowTK().id);
 
-        return tp;
+        return vp;
     }
 }

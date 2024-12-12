@@ -15,12 +15,12 @@ public class FuncRParams {
         ArrayList<Token> expTokenList;
         Pair pair = new Pair(null, null);
 
-        expTokenList = Exp.ExpAnalysis(true);
+        expTokenList = Exp.ExpAnalysis();
         funcParamsTypes.add(VarTypes.valueOf(utils.JudgeExpType(expTokenList)));
 
         while (Tools.LookNextTK().tk.equals("COMMA")) { // ,
             CompUnit.count++;
-            expTokenList = Exp.ExpAnalysis(true);
+            expTokenList = Exp.ExpAnalysis();
             funcParamsTypes.add(VarTypes.valueOf(utils.JudgeExpType(expTokenList)));
             funcRParamsNumber++;
         }

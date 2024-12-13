@@ -12,6 +12,7 @@ import SymbolTable.VarSymbol;
 import Operands.ConstOp;
 import Operands.FuncOp;
 import Operands.Operands;
+import Operands.RegOp;
 import Operands.VarOp;
 
 public class utils {
@@ -29,7 +30,7 @@ public class utils {
         throw new RuntimeException("Symbol " + name + " not found");
     }
 
-    public static Operands calExp(ArrayList<Token> exp) {
+    public static Operands calExp(ArrayList<Token> exp, boolean isGlobalInit) {
         Deque<Operands> operands = new ArrayDeque<>();
         Deque<Character> ops = new ArrayDeque<>();
 
@@ -61,7 +62,30 @@ public class utils {
 
                 if (symbol instanceof VarSymbol) {
                     VarSymbol varSymbol = (VarSymbol) symbol;
-                    Operands temp = new VarOp(varSymbol, needNegative);
+                    Operands temp;
+                    if (exp.get(i + 1).str.equals("[")) { // 数组位置处理
+                        i += 2;// [
+
+                        int level = 1;
+                        int begin = i;
+                        while (level != 0) {
+                            if (exp.get(i).tk.equals("[")) {
+                                level++;
+                            } else if (exp.get(i).str.equals("]")) {
+                                level--;
+                                if (level == 0) {
+                                    break;
+                                }
+                            }
+                            i++;
+                        }
+                        ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
+                        Operands tempOp = calExp(posExp, isGlobalInit);
+                        temp = new VarOp(varSymbol, tempOp, needNegative);
+                    } else {
+                        temp = new VarOp(varSymbol, new ConstOp(-1, false), needNegative);
+                    }
+
                     operands.addLast(temp);
                 } else {
                     FuncSymbol funcSymbol = (FuncSymbol) symbol;
@@ -108,7 +132,7 @@ public class utils {
                 ArrayList<Token> subExp = GetSubExpfromIndex(begin, j - 1, exp);
                 i = j;
 
-                Operands temp = calExp(subExp);
+                Operands temp = calExp(subExp, isGlobalInit);
                 operands.addLast(temp);
 
                 op = ' ';
@@ -116,10 +140,10 @@ public class utils {
             }
         }
 
-        return processCal(operands, ops);
+        return processCal(operands, ops, isGlobalInit);
     }
 
-    public static Operands processCal(Deque<Operands> operands, Deque<Character> ops) {
+    public static Operands processCal(Deque<Operands> operands, Deque<Character> ops, boolean isGlobalInit) {
         Deque<Operands> operands2 = new ArrayDeque<>();
         Deque<Character> ops2 = new ArrayDeque<>();
         Character op = ' ';
@@ -149,20 +173,55 @@ public class utils {
     }
 
     public static Operands readyforTransExpCode(Operands left, Operands right, Character op) {
-        if (left instanceof ConstOp && right instanceof ConstOp) { // 常值直接计算返回即可
-            int left_c, right_c;
+        if (left instanceof ConstOp) {
+            int left_c;
             if (left.needNegative) {
                 left_c = -((ConstOp) left).value;
             } else {
                 left_c = ((ConstOp) left).value;
             }
-            if (right.needNegative) {
-                right_c = ((ConstOp) right).value;
-            } else {
-                right_c = ((ConstOp) right).value;
-            }
+            if (right instanceof ConstOp) { // 常值直接计算返回即可
+                int right_c;
+                if (right.needNegative) {
+                    right_c = ((ConstOp) right).value;
+                } else {
+                    right_c = ((ConstOp) right).value;
+                }
 
-            return new ConstOp(ConstCal(left_c, right_c, op), false);
+                return new ConstOp(ConstCal(left_c, right_c, op), false);
+            } else if (right instanceof VarOp) { // 常值与VarOp混合计算，返回VarOp
+                Register reg = regMap.get(((VarOp) right).varSymbol);
+                int right_reg;
+                if (((VarOp) right).pos instanceof ConstOp) { // 位偏移是个常量
+                    int pos = ((ConstOp) ((VarOp) right).pos).value;
+
+                    if (reg.haveConstValue(pos)) { // 右侧是个常量
+                        int right_c = reg.getConstValue(pos); // 直接获取reg表中的对应值
+                        return readyforTransExpCode(left, new ConstOp(right_c, right.needNegative), op);
+                    } else {
+                        if (reg.haveValueReg(pos)) { // 有值寄存器
+                            right_reg = reg.getValueReg(pos);
+                        } else {
+                            if (reg.haveStackReg(pos)) { // 有栈寄存器
+                                right_reg = reg.getStackReg(pos);
+                            } else {
+
+                            }
+                        }
+                    }
+
+                } else { // 位偏移是个寄存器
+
+                }
+
+                int retReg = CodeGenerater.CreatCalExp(true, left_c, false, right_reg, op);
+                return new RegOp(retReg, false);
+
+            }
+        }
+
+        if (left instanceof VarOp) {
+
         }
 
         // TODO:

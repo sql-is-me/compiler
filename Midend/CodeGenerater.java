@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Stack;
 
 import Operands.Operands;
 import SymbolTable.FuncSymbol;
@@ -28,14 +27,12 @@ public class CodeGenerater {
         llcode.add(0, code + "\n");
     }
 
-    
-
     public static void addLibFuncs() {
         addCodeatLast("declare i32 @getint()");
         addCodeatLast("declare i32 @getchar()");
         addCodeatLast("declare void @putint(i32)");
         addCodeatLast("declare void @putch(i32)");
-        addCodeatLast("declare void @putstr(i8*)");
+        addCodeatLast("declare void @putstr(i8*)\n");
     }
 
     /**
@@ -69,23 +66,27 @@ public class CodeGenerater {
      * @param size  数组大小
      * @param value 值
      */
-    public static void declareGloArr(String name, int type, int size, ArrayList<Integer> value) {
+    public static void declareGloArr(String name, int type, int size, ArrayList<Integer> value,
+            boolean needInitializer) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("@" + name + " = dso_local global ");
 
         if (type == 32) {
-            sb.append("[" + size + " x i32] [");
+            sb.append("[" + size + " x i32] ");
         } else if (type == 8) {
-            sb.append("[" + size + " x i8] [");
+            sb.append("[" + size + " x i8] ");
         }
+        if (needInitializer) {
+            sb.append("zeroinitializer");
+        } else {
+            for (Integer v : value) {
+                sb.append("[i" + type + " " + v + ", ");
+            }
 
-        for (Integer v : value) {
-            sb.append("i" + type + " " + v + ", ");
+            sb.deleteCharAt(sb.length() - 1);// 删除最后一个" "
+            sb.setCharAt(sb.length() - 1, ']');
         }
-
-        sb.deleteCharAt(sb.length() - 1);// 删除最后一个" "
-        sb.setCharAt(sb.length() - 1, ']');
 
         addCodeatLast(sb.toString());
     }
@@ -229,6 +230,10 @@ public class CodeGenerater {
 
         addCodeatLast(sb.toString());
         return retRegNO;
+    }
+
+    public static void CreatStoreCode(Integer regNO, Integer addrNO, Integer type) { // TODO: store
+        StringBuilder sb = new StringBuilder();
     }
 
 }

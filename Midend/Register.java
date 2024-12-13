@@ -10,7 +10,7 @@ public class Register {
     Boolean isArray;
     Integer pointerReg; // 数组指针寄存器
 
-    public Register(int size, boolean isArray) {// TODO:尝试中端优化，未使用的符号不分配寄存器
+    public Register(int size, boolean isArray, int type) {
         if (size == -1) {
             size = 1;
         }
@@ -21,22 +21,48 @@ public class Register {
         this.pointerReg = -1;
         if (isArray) {
             this.isArray = true;
+            allocPointerReg(size, type);
         } else {
             this.isArray = false;
+            allocStackReg(type);
         }
     }
 
     /**
      * 分配对应栈寄存器
      * 
-     * @param sReg
-     * @param pos  pos为-1时，分配第一个栈寄存器
+     * @param type 32 int 8 char
      */
-    public void allocStackReg(int sReg, int pos) {
-        if (pos == -1) {
-            pos = 0;
+    private void allocStackReg(int type) {
+        int sReg = CodeGenerater.CreatAllocCode(0, type);
+        stackReg.set(0, sReg);
+    }
+
+    /**
+     * 分配对应指针寄存器
+     * 
+     * @param size
+     * @param type 32 int 8 char
+     */
+    private void allocPointerReg(int size, int type) {
+        pointerReg = CodeGenerater.CreatAllocCode(size, type);
+    }
+
+    /* —————————————————————————————————————————————————————————————————————————— */
+
+    /**
+     * 获取对应位置栈寄存器编号
+     * 
+     * @param pos pos为-1时，获取第一个栈寄存器编号
+     * @return
+     */
+    public int getStackReg(int pos) {
+        if (stackReg.get(pos) != -1) {
+            return stackReg.get(pos);
         }
-        stackReg.add(pos, sReg);
+
+        
+        return stackReg.get(pos);
     }
 
     /**
@@ -49,20 +75,7 @@ public class Register {
         if (pos == -1)
             pos = 0;
 
-        return stackReg.get(pos) != -1;
-    }
-
-    /**
-     * 获取对应位置栈寄存器编号
-     * 
-     * @param pos pos为-1时，获取第一个栈寄存器编号
-     * @return
-     */
-    public int getStackReg(int pos) {
-        if (pos == -1)
-            pos = 0;
-
-        return stackReg.get(pos);
+        return;
     }
 
     /**

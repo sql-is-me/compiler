@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 
+import Operands.ConstOp;
 import Operands.Operands;
+import Operands.RegOp;
 import SymbolTable.FuncSymbol;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.VarSymbol.VarTypes;
@@ -118,26 +120,26 @@ public class CodeGenerater {
     }
 
     public static Integer CreatCalExp(boolean leftisConst, Integer left, boolean rightisConst, Integer right,
-            String op) {
+            Character op) {
         StringBuilder sb = new StringBuilder();
         Integer retRegNO = utils.getRegNum();
 
         sb.append("%" + retRegNO + " = ");
 
         switch (op) {
-            case "*":
+            case '*':
                 sb.append("mul ");
                 break;
-            case "/":
+            case '/':
                 sb.append("sdiv ");
                 break;
-            case "%":
+            case '%':
                 sb.append("srem ");
                 break;
-            case "+":
+            case '+':
                 sb.append("add ");
                 break;
-            case "-":
+            case '-':
                 sb.append("sub ");
                 break;
             default:
@@ -161,8 +163,24 @@ public class CodeGenerater {
         return retRegNO;
     }
 
-    public static Integer CreatCallFunc(FuncSymbol funcSymbol, ArrayList<Integer> params, ArrayList<Boolean> isConst) { // FIXME:
-                                                                                                                        // 调用前需做类型转换
+    public static Integer CreatNegativeCode(Integer vReg) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+
+        sb.append("%" + retRegNO + " = mul i32 -1, %" + vReg);
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    /**
+     * 创建函数调用代码
+     * 
+     * @param funcSymbol
+     * @param params
+     * @return
+     */
+    public static Integer CreatCallFunc(FuncSymbol funcSymbol, ArrayList<Operands> params) {
         StringBuilder sb = new StringBuilder();
         Integer retRegNO = utils.getRegNum();
 
@@ -176,19 +194,27 @@ public class CodeGenerater {
         }
 
         sb.append("@" + funcSymbol.name + "(");
+        Operands t;
         for (int i = 0; i < params.size(); i++) {
+            t = params.get(i);
             if (funcSymbol.paramTypes.get(i) == VarTypes.Int) {
-                if (isConst.get(i)) {
-                    sb.append("i32 " + params.get(i));
-                } else {
-                    sb.append("i32 %" + params.get(i));
-                }
+                sb.append("i32 ");
+            } else if (funcSymbol.paramTypes.get(i) == VarTypes.Char) {
+                sb.append("i8 ");
+            } else if (funcSymbol.paramTypes.get(i) == VarTypes.IntArray) {
+                sb.append("i32* %");
+            } else if (funcSymbol.paramTypes.get(i) == VarTypes.CharArray) {
+                sb.append("i8* %");
+            }
+
+            if (t instanceof ConstOp) {
+                sb.append(((ConstOp) t).value);
             } else {
-                if (isConst.get(i)) {
-                    sb.append("i8 " + params.get(i));
-                } else {
-                    sb.append("i8 %" + params.get(i));
+                if ((t.type == 32 && funcSymbol.paramTypes.get(i) == VarTypes.Char)
+                        || t.type == 8 && funcSymbol.paramTypes.get(i) == VarTypes.Int) {
+                    t = CodeGenerater.CreatTransTypeCode(t);
                 }
+                sb.append("%" + ((RegOp) t).regNo);
             }
 
             if (i != params.size() - 1) {
@@ -196,8 +222,6 @@ public class CodeGenerater {
             } else {
                 sb.append(")");
             }
-
-            // TODO: 函数调用,需要记录在函数体中改变的全局变量，并修改对应的寄存器
         }
 
         return retRegNO;
@@ -210,21 +234,29 @@ public class CodeGenerater {
      * @param type 32：int 8：char
      * @return
      */
-    public static Integer CreatAllocCode(Integer size, Integer type) {
+    public static Integer CreatAllocCode(Integer size, Integer type, Boolean isArrPointerInParams) {
         StringBuilder sb = new StringBuilder();
         Integer retRegNO = utils.getRegNum();
 
-        if (size == 0) {
+        if (isArrPointerInParams) {
             if (type == 32) {
-                sb.append("%" + retRegNO + " = alloca i32");
+                sb.append("%" + retRegNO + " = alloca i32*");
             } else {
-                sb.append("%" + retRegNO + " = alloca i8");
+                sb.append("%" + retRegNO + " = alloca i8*");
             }
         } else {
-            if (type == 32) {
-                sb.append("%" + retRegNO + " = alloca [" + size + " x i32]");
+            if (size == 0) {
+                if (type == 32) {
+                    sb.append("%" + retRegNO + " = alloca i32");
+                } else {
+                    sb.append("%" + retRegNO + " = alloca i8");
+                }
             } else {
-                sb.append("%" + retRegNO + " = alloca [" + size + " x i8]");
+                if (type == 32) {
+                    sb.append("%" + retRegNO + " = alloca [" + size + " x i32]");
+                } else {
+                    sb.append("%" + retRegNO + " = alloca [" + size + " x i8]");
+                }
             }
         }
 
@@ -232,8 +264,145 @@ public class CodeGenerater {
         return retRegNO;
     }
 
-    public static void CreatStoreCode(Integer regNO, Integer addrNO, Integer type) { // TODO: store
+    public static Integer CreatLoadCode(Integer type, Boolean isGlobal, String sReg) {
         StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+
+        if (isGlobal) {
+            if (type == 32) {
+                sb.append("%" + retRegNO + " = load i32, i32* @" + sReg);
+            } else {
+                sb.append("%" + retRegNO + " = load i8, i8* @" + sReg);
+            }
+        } else {
+            if (type == 32) {
+                sb.append("%" + retRegNO + " = load i32, i32* %" + sReg);
+            } else {
+                sb.append("%" + retRegNO + " = load i8, i8* %" + sReg);
+            }
+        }
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    public static void CreatStoreCode_simple(Integer type, Boolean isConst, Integer vReg, Boolean isGlobal,
+            String sReg) {
+        StringBuilder sb = new StringBuilder();
+
+        if (isGlobal) {
+            if (isConst) {
+                if (type == 32) {
+                    sb.append("store i32 " + vReg + ", i32* @" + sReg);
+                } else {
+                    sb.append("store i8 " + vReg + ", i8* @" + sReg);
+                }
+            } else {
+                if (type == 32) {
+                    sb.append("store i32 %" + vReg + ", i32* @" + sReg);
+                } else {
+                    sb.append("store i8 %" + vReg + ", i8* @" + sReg);
+                }
+            }
+        } else {
+            if (isConst) {
+                if (type == 32) {
+                    sb.append("store i32 " + vReg + ", i32* %" + sReg);
+                } else {
+                    sb.append("store i8 " + vReg + ", i8* %" + sReg);
+                }
+            } else {
+                if (type == 32) {
+                    sb.append("store i32 %" + vReg + ", i32* %" + sReg);
+                } else {
+                    sb.append("store i8 %" + vReg + ", i8* %" + sReg);
+                }
+            }
+        }
+
+        addCodeatLast(sb.toString());
+    }
+
+    public static void CreatStoreCode_Arr(Integer type, Integer sReg, Boolean isGlobal, String pReg) {
+        StringBuilder sb = new StringBuilder();
+
+        if (isGlobal) {
+            if (type == 32) {
+                sb.append("store i32* %" + sReg + ", i32** @" + pReg);
+            } else {
+                sb.append("store i8* %" + sReg + ", i8** @" + pReg);
+            }
+        } else {
+            if (type == 32) {
+                sb.append("store i32* %" + sReg + ", i32** %" + pReg);
+            } else {
+                sb.append("store i8* %" + sReg + ", i8** %" + pReg);
+            }
+        }
+
+        addCodeatLast(sb.toString());
+    }
+
+    public static Integer CreatGetelementptrCode(Integer size, Integer type, Boolean posisReg, Integer pos,
+            Boolean isGlobalArray,
+            String pointerReg) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+        sb.append("%" + retRegNO + " = getelementptr inbounds ");
+
+        if (!isGlobalArray) { // 非全局数组
+            if (size == 0) { // 函数调用时，不需要size
+                if (type == 32) {
+                    sb.append("i32, i32* %" + pointerReg + ", i32 ");
+                } else {
+                    sb.append("i8, i8* %" + pointerReg + ", i8 ");
+                }
+            } else {
+                if (type == 32) {
+                    sb.append("[" + size + " x i32], [" + size + " x i32]* %" + pointerReg + ", i32 0, i32 ");
+                } else {
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* %" + pointerReg + ", i8 0, i8 ");
+                }
+            }
+        } else {
+            if (size == 0) { // 函数调用时，不需要size
+                if (type == 32) {
+                    sb.append("i32, i32* @" + pointerReg + ", i32 ");
+                } else {
+                    sb.append("i8, i8* @" + pointerReg + ", i8 ");
+                }
+            } else {
+                if (type == 32) {
+                    sb.append("[" + size + " x i32], [" + size + " x i32]* @" + pointerReg + ", i32 0, i32 ");
+                } else {
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* @" + pointerReg + ", i8 0, i8 ");
+                }
+            }
+        }
+
+        if (posisReg) {
+            sb.append(" %" + pos);
+        } else {
+            sb.append(pos);
+        }
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    public static Operands CreatTransTypeCode(Operands operands) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+
+        if (operands.type == 8) { // char to int
+            sb.append("%" + retRegNO + " = zext i8 %" + ((RegOp) operands).regNo + " to i32");
+            addCodeatLast(sb.toString());
+            return new RegOp(retRegNO, 32, operands.isArray, operands.needNegative);
+        } else { // int to char
+            sb.append("%" + retRegNO + " = trunc i32 %" + ((RegOp) operands).regNo + " to i8");
+            addCodeatLast(sb.toString());
+            return new RegOp(retRegNO, 8, operands.isArray, operands.needNegative);
+        }
     }
 
 }

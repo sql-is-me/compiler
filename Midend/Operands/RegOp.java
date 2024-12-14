@@ -1,10 +1,10 @@
 package Operands;
 
 public class RegOp extends Operands {
-    Integer regNo;
+    public Integer regNo;
 
-    public RegOp(Integer regNo, boolean needNegative) {
-        super(needNegative);
+    public RegOp(Integer regNo, Integer type, Boolean isArray, Boolean needNegative) {
+        super(type, isArray, needNegative);
         this.regNo = regNo;
     }
 }

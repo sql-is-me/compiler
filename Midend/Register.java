@@ -2,30 +2,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import Frontend.Pair;
+
 public class Register {
-    List<Integer> stackReg;
+    String pointerReg; // 数组指针寄存器
+    List<String> stackReg;
     List<Integer> valueReg;
     List<Integer> constValue;
 
+    int type;
+    Boolean isGlobal;
     Boolean isArray;
-    Integer pointerReg; // 数组指针寄存器
+    int size;
 
-    public Register(int size, boolean isArray, int type) {
-        if (size == -1) {
-            size = 1;
-        }
-
-        this.stackReg = new ArrayList<>(Collections.nCopies(size, -1));
+    public Register(int size, boolean isArray, int type, boolean isGlobal) {
+        this.stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
         this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
         this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
-        this.pointerReg = -1;
+        this.pointerReg = "-1";
+        this.type = type;
+        this.size = size;
         if (isArray) {
             this.isArray = true;
-            allocPointerReg(size, type);
+            allocPointerReg();
         } else {
             this.isArray = false;
-            allocStackReg(type);
+            allocStackReg();
         }
+        this.isGlobal = isGlobal;
     }
 
     /**
@@ -33,9 +37,9 @@ public class Register {
      * 
      * @param type 32 int 8 char
      */
-    private void allocStackReg(int type) {
-        int sReg = CodeGenerater.CreatAllocCode(0, type);
-        stackReg.set(0, sReg);
+    private void allocStackReg() {
+        Integer sReg = CodeGenerater.CreatAllocCode(0, type, false);
+        stackReg.set(0, sReg.toString());
     }
 
     /**
@@ -44,164 +48,110 @@ public class Register {
      * @param size
      * @param type 32 int 8 char
      */
-    private void allocPointerReg(int size, int type) {
-        pointerReg = CodeGenerater.CreatAllocCode(size, type);
+    private void allocPointerReg() {
+        if (size == -1) { // 为函数中参数数组指针，无法确定其长度
+            pointerReg = CodeGenerater.CreatAllocCode(size, type, true).toString();
+        } else {
+            pointerReg = CodeGenerater.CreatAllocCode(size, type, false).toString();
+        }
     }
 
     /* —————————————————————————————————————————————————————————————————————————— */
 
     /**
-     * 获取对应位置栈寄存器编号
+     * 获取值寄存器以用于计算
      * 
-     * @param pos pos为-1时，获取第一个栈寄存器编号
+     * @param pos
      * @return
      */
-    public int getStackReg(int pos) {
-        if (stackReg.get(pos) != -1) {
-            return stackReg.get(pos);
-        }
-
-        
-        return stackReg.get(pos);
-    }
-
-    /**
-     * 检验栈寄存器是否已经被分配
-     * 
-     * @param pos pos为-1时，检验第一个栈寄存器是否被分配
-     * @return
-     */
-    public boolean haveStackReg(int pos) {
-        if (pos == -1)
-            pos = 0;
-
-        return;
-    }
-
-    /**
-     * 分配对应数组指针寄存器
-     * 
-     * @param pReg
-     */
-    public void allocPointReg(int pReg) {
-        pointerReg = pReg;
-    }
-
-    /**
-     * 获取对应数组指针寄存器编号
-     * 
-     * @param pos pos为-1时，获取第一个栈寄存器编号
-     * @return
-     */
-    public int getPointReg() {
-        return pointerReg;
-    }
-
-    /**
-     * 初始化对应位置值寄存器
-     * 
-     * @param pos pos为-1时，初始化第一个值寄存器
-     */
-    public void initValueReg(int pos) {
+    public Pair getReg(int pos, int posReg) {
         if (pos == -1) {
             pos = 0;
+        } else if (pos == -2) {
+            Integer sReg = CodeGenerater.CreatGetelementptrCode(size, type, true, pos, isGlobal, pointerReg.toString());
+            Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+            return new Pair(false, vReg);
         }
 
+        if (haveConstValue(pos)) { // 有常值，直接取
+            return new Pair(true, constValue.get(pos));
+        } else if (haveStackReg(pos)) { // 有栈寄存器，尝试获取常值寄存器
+            return new Pair(false, getValueReg(pos));
+        } else { // 没有栈寄存器，需要先获取栈寄存器，再取值寄存器
+            getStackReg(pos);
+            return new Pair(false, getValueReg(pos));
+        }
+    }
+
+    /**
+     * 获取对应位置栈寄存器编号
+     * 
+     * @param pos
+     * @return
+     */
+    public String getStackReg(int pos) {
+        if (!stackReg.get(pos).equals("-1")) { // 已经分配过
+            return stackReg.get(pos);
+        } else { // 若未分配过，则进行分配
+            Integer sReg;
+            if (isArray) {
+                sReg = CodeGenerater.CreatGetelementptrCode(size, type, false, pos, isGlobal, pointerReg.toString());
+            } else {
+                sReg = CodeGenerater.CreatAllocCode(0, type, false);
+            }
+            stackReg.set(pos, sReg.toString());
+            return stackReg.get(pos);
+        }
+    }
+
+    public Integer getValueReg(int pos) {
+        if (haveValueReg(pos)) {
+            return valueReg.get(pos);
+        } else { // 有栈但无值
+            Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, stackReg.get(pos));
+            valueReg.set(pos, vReg);
+            return vReg;
+        }
+    }
+
+    public void initStackReg() { // 指针寄存器发生改变时使用
+        stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
+        valueReg = new ArrayList<>(Collections.nCopies(size, -1));
+        constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+    }
+
+    public void initValueReg(int pos) {
         valueReg.set(pos, -1);
     }
 
-    /**
-     * 初始化对应位置常值
-     * 
-     * @param pos pos为-1时，初始化第一个常值
-     */
     public void initConstValue(int pos) {
-        if (pos == -1) {
-            pos = 0;
-        }
-
         constValue.set(pos, Integer.MIN_VALUE);
     }
 
-    /**
-     * 分配对应值寄存器
-     * 
-     * @param vReg
-     * @param pos  pos为-1时，分配给第一个值寄存器
-     */
-    public void allocValueReg(int vReg, int pos) {
-        if (pos == -1) {
-            pos = 0;
-        }
-
-        initConstValue(pos);
-        valueReg.set(pos, vReg);
+    public boolean haveStackReg(int pos) {
+        return !stackReg.get(pos).equals("-1");
     }
 
-    /**
-     * 分配对应常值,并初始化值寄存器
-     * 
-     * @param vReg
-     * @param pos  pos为-1时，分配给第一个值寄存器
-     */
-    public void allocConstValue(int value, int pos) {
-        if (pos == -1) {
-            pos = 0;
-        }
-
-        constValue.set(pos, value);
-        initValueReg(pos);
-    }
-
-    /**
-     * 检验值寄存器是否已经被分配
-     * 
-     * @param pos pos为-1时，检验第一个值寄存器是否被分配
-     * @return
-     */
     public boolean haveValueReg(int pos) {
-        if (pos == -1)
-            pos = 0;
-
         return valueReg.get(pos) != -1;
     }
 
-    /**
-     * 检验是否有常值
-     * 
-     * @param pos pos为-1时，检验第一个位置是否有常值
-     * @return
-     */
     public boolean haveConstValue(int pos) {
-        if (pos == -1)
-            pos = 0;
-
         return constValue.get(pos) != Integer.MIN_VALUE;
     }
 
-    /**
-     * 获取对应位置值寄存器编号
-     * 
-     * @param pos pos为-1时，获取第一个值寄存器编号
-     * @return
-     */
-    public int getValueReg(int pos) {
-        if (pos == -1)
-            pos = 0;
-
-        return valueReg.get(pos);
+    public void storeReg_simple(int pos, boolean isConst, int v) {
+        if (isConst) {
+            constValue.set(pos, v);
+            initValueReg(pos);
+        } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
+            initValueReg(pos);
+        }
+        CodeGenerater.CreatStoreCode_simple(type, isConst, v, isGlobal, stackReg.get(pos));
     }
 
-    /**
-     * 获取对应位置常值
-     * 
-     * @param pos pos为-1时，获取第一个值寄存器编号
-     * @return
-     */
-    public int getConstValue(int pos) {
-        if (pos == -1)
-            pos = 0;
-
-        return constValue.get(pos);
+    public void storeReg_Arr(String sReg) { // 不会出现将数组指针赋给数组的情况
+        CodeGenerater.CreatStoreCode_Arr(type, Integer.parseInt(sReg), isGlobal, pointerReg);
+        // initStackReg();
     }
 }

@@ -62,8 +62,8 @@ public class Syntax {
         }
     }
 
-    public static void SyntaxAnalysis() { // 启动分析
+    public static int SyntaxAnalysis() { // 启动分析
         setParser(Frontend.Lexer.Lexer.tokens);
-        CompUnit.CompUnitAnalysis();
+        return CompUnit.CompUnitAnalysis();
     }
 }

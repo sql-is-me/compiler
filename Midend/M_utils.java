@@ -33,12 +33,6 @@ public class M_utils {
         }
     }
 
-    public static String DeclareString() { // TODO: 声明字符串常量
-        StringBuilder sb = new StringBuilder();
-
-        return sb.toString();
-    }
-
     /**
      * 计算多个表达式的值
      *
@@ -49,11 +43,18 @@ public class M_utils {
         ArrayList<Integer> values = new ArrayList<>();
         Operands temp = null;
 
+        if (valueExp == null) {
+            values.add(0);
+            return values;
+        }
+
         for (ArrayList<Token> exp : valueExp) {
             if (varSymbol.type.equals(VarTypes.ConstInt) || varSymbol.type.equals(VarTypes.ConstChar)) {
                 temp = calExpValue(exp);
+            } else {
+                temp = calExpValue(exp);
             }
-            temp = calExpValue(exp);
+
             if (temp.kind == 0) {
                 values.add(temp.value);
             } else if (temp.kind == 2) {
@@ -81,6 +82,43 @@ public class M_utils {
                 tempSymTab = tempSymTab.lastSymTab;
                 if (tempSymTab.curSymTab.containsKey(ident)) {
                     symbol = tempSymTab.curSymTab.get(ident);
+                    break;
+                }
+            }
+        }
+
+        VarSymbol varSymbol = (VarSymbol) symbol;
+        return varSymbol;
+    }
+
+    public static VarSymbol findDefinedVarfromSymTab(String ident) {
+        Symbol symbol = null;
+
+        if (MidCodeGenerate.cur_symTab.curSymTab.containsKey(ident)) {
+            symbol = MidCodeGenerate.cur_symTab.curSymTab.get(ident);
+
+            if (symbol instanceof FuncSymbol || ((VarSymbol) symbol).stackRegID == -1) {
+                SymTab tempSymTab = MidCodeGenerate.cur_symTab;
+                while (tempSymTab.lastSymTab != null) {
+                    tempSymTab = tempSymTab.lastSymTab;
+                    if (tempSymTab.curSymTab.containsKey(ident)) {
+                        symbol = tempSymTab.curSymTab.get(ident);
+                        if (symbol instanceof FuncSymbol || ((VarSymbol) symbol).stackRegID == -1) {
+                            continue;
+                        }
+                        break;
+                    }
+                }
+            }
+        } else {
+            SymTab tempSymTab = MidCodeGenerate.cur_symTab;
+            while (tempSymTab.lastSymTab != null) {
+                tempSymTab = tempSymTab.lastSymTab;
+                if (tempSymTab.curSymTab.containsKey(ident)) {
+                    symbol = tempSymTab.curSymTab.get(ident);
+                    if (symbol instanceof FuncSymbol || ((VarSymbol) symbol).stackRegID == -1) {
+                        continue;
+                    }
                     break;
                 }
             }
@@ -146,7 +184,21 @@ public class M_utils {
 
         public Operands() {
             varSymbol = null;
+            needMinus = false;
         }
+    }
+
+    public static void addMul_one(Deque<Operands> operands, Deque<String> operators, Operands operand) {
+        operators.addLast("*");
+        
+        Operands operands2 = new Operands();
+        operands2.kind = 0;
+        operands2.type = 0; // int
+        operands2.value = -1;
+        operands2.isdetermind = true;
+        operands2.needMinus = false;
+
+        operands.addLast(operands2);
     }
 
     public static Operands calExpValue(ArrayList<Token> exp) {
@@ -159,13 +211,19 @@ public class M_utils {
             Token t = exp.get(i);
             Operands temp = new Operands();
 
-            if (t.tk.equals("INTCON") || t.tk.equals("CHARCON")) { // 常量
+            if (t.tk.equals("INTCON") || t.tk.equals("CHRCON")) { // 常量
                 temp.kind = 0;
                 temp.type = 0; // int
-                temp.value = Integer.valueOf(t.str);
+                if (t.tk.equals("CHRCON")) {
+                    temp.value = (int) t.str.charAt(1);
+                } else {
+                    temp.value = Integer.valueOf(t.str);
+                }
+
                 temp.isdetermind = true;
                 if (needMinus) {
-                    temp.needMinus = true;
+                    addMul_one(operands, operators, temp);
+                    temp.needMinus = false;
                     needMinus = false;
                 } else {
                     temp.needMinus = false;
@@ -178,10 +236,15 @@ public class M_utils {
 
             else if (t.str.equals("+") || t.str.equals("-") || t.str.equals("*") || t.str.equals("/")
                     || t.str.equals("%")) { // 运算符
-                op = t.str;
-                if (op == "-" && op != " ") {
-                    needMinus = true;
+
+                if (t.str.equals("-") && !op.equals(" ")) {
+                    if (needMinus)
+                        needMinus = false;
+                    else {
+                        needMinus = true;
+                    }
                 } else {
+                    op = t.str;
                     operators.addLast(op);
                 }
 
@@ -189,10 +252,12 @@ public class M_utils {
                 // 并初始化temp.needMinus为false
             }
 
-            else if (t.tk.equals("IDENFR")) { // 标识符
+            else if (t.tk.equals("IDENFR") || t.tk.equals("GETINTTK") || t.tk.equals("GETCHARTK")) { // 标识符
                 temp.kind = 1; // var
-                if (i < exp.size() && (Tools.GetCountTK(i + 1).str != "[" || Tools.GetCountTK(i + 1).str != "(")) { // 常变量
-                    VarSymbol varSymbol = findVarfromSymTab(t.str);
+                if (i == exp.size() - 1
+                        || (i < exp.size() - 1
+                                && (!exp.get(i + 1).str.equals("[") && !exp.get(i + 1).str.equals("(")))) { // 常变量
+                    VarSymbol varSymbol = findDefinedVarfromSymTab(t.str);
                     temp.varSymbol = varSymbol;
 
                     if (varSymbol.valueisDetermined.get(0) == true) {
@@ -208,7 +273,8 @@ public class M_utils {
                     }
 
                     if (needMinus) {
-                        temp.needMinus = true;
+                        addMul_one(operands, operators, temp);
+                        temp.needMinus = false;
                         needMinus = false;
                     } else {
                         temp.needMinus = false;
@@ -217,53 +283,50 @@ public class M_utils {
                     operands.addLast(temp);
 
                     op = " ";
-                } else if (i < exp.size() && Tools.GetCountTK(i + 1).str == "[") { // 数组
-                    // int begin = i + 2;
-                    // int level = 1;
-                    // for (int j = begin; j < exp.size(); j++) {
-                    // if (exp.get(j).str.equals("[")) {
-                    // level++;
-                    // } else if (exp.get(j).str.equals("]")) {
-                    // level--;
-                    // }
-
-                    // if (level == 0) {
-                    // i = j;
-                    // break;
-                    // }
-                    // }
-                    // int end = i - 1;
-
-                    // int index = calExpValue(Tools.GetExpfromIndex(begin, end));
-                    // temp = getVarValueofIndex(findVarfromSymTab(t.str), index);
-                    // if (needMinus) {
-                    // temp = -temp;
-                    // needMinus = false;
-                    // }
-                    // num.push(temp);
-                    // sign = ' ';
-                } else if (i < exp.size() && Tools.GetCountTK(i + 1).str == "(") {
+                } else if (i < exp.size() && exp.get(i + 1).str.equals("(")) { // FIXME: 函数调用
                     FuncSymbol funcSymbol = findFuncSymbolfromSymTab(t.str);
                     M_utils.FuncRParams funcRParams = new M_utils.FuncRParams();
                     funcRParams.size = funcSymbol.paramNumber;
 
-                    MidCodeGenerate.pos += 2;// ( + 1
-                    temp.retRegNO = MidCodeGenerate.callFunc(funcSymbol, funcRParams);
+                    i += 2;// ( + 1
+                    ArrayList<Token> expTokens = new ArrayList<>();
+                    for (int j = i, level = 1; j < exp.size(); j++) {
+                        if (exp.get(j).str.equals(")")) {
+                            level--;
+                        } else if (exp.get(j).str.equals("(")) {
+                            level++;
+                        }
+
+                        if (level == 0) {
+                            i = j;
+                            break;
+                        }
+                        expTokens.add(exp.get(j));
+                    }
+                    temp.retRegNO = MidCodeGenerate.callFunc(funcSymbol, funcRParams, expTokens);
                     if (funcSymbol.returnType == FuncTypes.IntFunc) {
                         temp.type = 0;
                     } else { // char
                         temp.type = 1;
                     }
-                    temp.needMinus = false;
+                    if (needMinus) {
+                        addMul_one(operands, operators, temp);
+                        temp.needMinus = false;
+                        needMinus = false;
+                    } else {
+                        temp.needMinus = false;
+                    }
                     temp.isdetermind = true;
                     temp.kind = 2; // 子表达式
+
+                    operands.addLast(temp);
+                    op = " ";
                 }
             }
 
             else if (t.str.equals("(")) { // 左括号
                 // temp.kind = 2; // 子表达式
-                int begin = i + 1;
-                int end = begin;
+                ArrayList<Token> subExp = new ArrayList<>();
                 for (int j = i + 1, level = 1; j < exp.size(); j++) { // 递归处理，获取对应位置
                     if (exp.get(j).str.equals("(")) {
                         level++;
@@ -272,15 +335,16 @@ public class M_utils {
                     }
 
                     if (level == 0) {
-                        end = j - 1;
                         i = j;
                         break;
                     }
+                    subExp.add(exp.get(j));
                 }
 
-                temp = calExpValue(Tools.GetExpfromIndex(begin, end));
+                temp = calExpValue(subExp);
                 if (needMinus) {
-                    temp.needMinus = true;
+                    addMul_one(operands, operators, temp);
+                    temp.needMinus = false;
                     needMinus = false;
                 } else {
                     temp.needMinus = false;
@@ -290,6 +354,9 @@ public class M_utils {
 
                 op = " ";
             }
+        }
+        if (exp.size() == 0) {
+            return null;
         }
 
         // 检查表达式栈是否能够进行计算优化
@@ -313,7 +380,7 @@ public class M_utils {
         while (!operations.isEmpty()) {
             op = operations.pollFirst();
 
-            if (op == "+" || op == "-") {
+            if (op.equals("+") || op.equals("-")) {
                 tempOperands.addLast(left);
                 tempOperations.addLast(op);
                 right = operands.pollFirst();
@@ -327,24 +394,26 @@ public class M_utils {
                     int right_value;
                     int left_value;
 
-                    if (right.varSymbol == null) {
-                        right_value = right.value;
-                    } else {
-                        right_value = right.value;
-                    }
-                    if (left.varSymbol == null) {
-                        left_value = left.value;
-                    } else {
-                        left_value = left.value;
-                    }
+                    // if (right.varSymbol == null) {
+                    // right_value = right.value;
+                    // } else {
+                    // right_value = right.value;
+                    // }
+                    // if (left.varSymbol == null) {
+                    // left_value = left.value;
+                    // } else {
+                    // left_value = left.value;
+                    // }
 
-                    if (right.needMinus) {
-                        right_value = -right_value;
-                    }
-                    if (left.needMinus) {
-                        left_value = -left_value;
-                    }
-                    result = performOperation(left_value, right_value, op);
+                    // if (right.needMinus) {
+                    // right_value = -right_value;
+                    // right.needMinus = false;
+                    // }
+                    // if (left.needMinus) {
+                    // left_value = -left_value;
+                    // left.needMinus = false;
+                    // }
+                    result = performOperation(left.value, right.value, op);
 
                     Operands resultOperand = new Operands(); // 计算结果并标记为已确定
                     resultOperand.needMinus = false;
@@ -357,6 +426,7 @@ public class M_utils {
                 } else {
                     // 如果有未确定的操作数，执行代码生成
                     Operands resultOperand = new Operands();
+
                     resultOperand.retRegNO = generateExpCode(left, right, op);
                     resultOperand.needMinus = false;
                     resultOperand.isdetermind = true;
@@ -382,29 +452,31 @@ public class M_utils {
                 int right_value;
                 int left_value;
 
-                if (right.varSymbol == null) {
-                    right_value = right.value;
-                } else {
-                    right_value = right.value;
-                }
-                if (left.varSymbol == null) {
-                    left_value = left.value;
-                } else {
-                    left_value = left.value;
-                }
+                // if (right.varSymbol == null) {
+                // right_value = right.value;
+                // } else {
+                // right_value = right.value;
+                // }
+                // if (left.varSymbol == null) {
+                // left_value = left.value;
+                // } else {
+                // left_value = left.value;
+                // }
 
-                if (right.needMinus) {
-                    right_value = -right_value;
-                }
-                if (left.needMinus) {
-                    left_value = -left_value;
-                }
-                result = performOperation(left_value, right_value, op);
+                // if (right.needMinus) {
+                // right_value = -right_value;
+                // right.needMinus = false;
+                // }
+                // if (left.needMinus) {
+                // left_value = -left_value;
+                // left.needMinus = false;
+                // }
+                result = performOperation(left.value, right.value, op);
 
                 Operands resultOperand = new Operands(); // 计算结果并标记为已确定
                 resultOperand.needMinus = false;
                 resultOperand.isdetermind = true;
-                resultOperand.kind = 2; // 子表达式
+                resultOperand.kind = 0; // 常值
                 resultOperand.type = 0; // int
                 resultOperand.value = result;
 
@@ -412,6 +484,15 @@ public class M_utils {
             } else {
                 // 如果有未确定的操作数，执行代码生成
                 Operands resultOperand = new Operands();
+
+                // if (right.needMinus == true) {
+                // right.needMinus = false;
+                // if (op.equals("-"))
+                // op = "+";
+                // else
+                // op = "-";
+                // }
+
                 resultOperand.retRegNO = generateExpCode(left, right, op);
                 resultOperand.needMinus = false;
                 resultOperand.isdetermind = true;
@@ -419,6 +500,12 @@ public class M_utils {
                 resultOperand.type = 0; // int
 
                 left = resultOperand; // 将计算结果交给left
+            }
+        }
+        if (left.kind == 1) {
+            if (left.varSymbol.needAssignVReg) {
+                AssignValueRegister(left.varSymbol);
+                left.retRegNO = left.varSymbol.valueRegID;
             }
         }
 
@@ -445,73 +532,68 @@ public class M_utils {
 
     public static int generateExpCode(Operands left, Operands right, String op) {
         StringBuilder sb = new StringBuilder();
-        int retRegNO = MidCodeGenerate.regNO++;
 
-        sb.append("% " + retRegNO + " = ");
+        if (left.isdetermind && !right.isdetermind) {
+            if (right.varSymbol != null && right.varSymbol.needAssignVReg) {
+                AssignValueRegister(right.varSymbol);
+            }
+
+            if (left.kind == 0) { // const
+                sb.append("i32 %" + JudgeCalisInt(right) + ", " + left.value + "\n");
+            } else if (left.kind == 1) { // var // FIXME: 数组,left还需要下标
+                sb.append("i32 %" + JudgeCalisInt(right) + ", " + left.varSymbol.value.get(0) + "\n");
+            } else {
+                sb.append("i32 %" + JudgeCalisInt(right) + ", %" + left.retRegNO + "\n");
+            }
+
+        } else if (right.isdetermind && !left.isdetermind) {
+            if (left.varSymbol != null && left.varSymbol.needAssignVReg) {
+                AssignValueRegister(left.varSymbol);
+            }
+
+            if (right.kind == 0) { // const
+                sb.append("i32 %" + JudgeCalisInt(left) + ", " + right.value + "\n");
+            } else if (right.kind == 1) { // var // FIXME: 数组,left还需要下标
+                sb.append("i32 %" + JudgeCalisInt(left) + ", " + right.varSymbol.value.get(0) + "\n");
+            } else {
+                sb.append("i32 %" + JudgeCalisInt(left) + ", %" + right.retRegNO + "\n");
+            }
+
+        } else {
+            if (right.varSymbol != null && right.varSymbol.needAssignVReg) {
+                AssignValueRegister(right.varSymbol);
+            }
+            if (left.varSymbol != null && left.varSymbol.needAssignVReg) {
+                AssignValueRegister(left.varSymbol);
+            }
+            sb.append("i32 %" + JudgeCalisInt(left) + ", %" + JudgeCalisInt(right) + "\n");
+        }
+
+        int retRegNO = MidCodeGenerate.regNO++;
 
         switch (op) {
             case "*":
-                sb.append("mul ");
+                sb.insert(0, "%" + retRegNO + " = " + "mul ");
                 break;
 
             case "/":
-                sb.append("sdiv ");
+                sb.insert(0, "%" + retRegNO + " = " + "sdiv ");
                 break;
 
             case "%":
-                sb.append("srem ");
+                sb.insert(0, "%" + retRegNO + " = " + "srem ");
                 break;
 
             case "+":
-                sb.append("add ");
+                sb.insert(0, "%" + retRegNO + " = " + "add ");
                 break;
 
             case "-":
-                sb.append("sub ");
+                sb.insert(0, "%" + retRegNO + " = " + "sub ");
                 break;
 
             default:
                 break;
-        }
-
-        if (left.isdetermind && !right.isdetermind) {
-            if (right.varSymbol.needAssignVReg) {
-                AssignValueRegister(right.varSymbol);
-                generateLoadCode_assign(right.varSymbol);
-            }
-
-            if (left.kind == 0) { // const
-                sb.append("i32 %" + right.varSymbol.valueRegID + ", " + left.value + "\n");
-            } else if (left.kind == 1) { // var // FIXME: 数组,left还需要下标
-                sb.append("i32 %" + right.varSymbol.valueRegID + ", " + left.varSymbol.value.get(0) + "\n");
-            } else {
-                sb.append("i32 %" + right.varSymbol.valueRegID + ", i32 %" + left.retRegNO + "\n");
-            }
-
-        } else if (right.isdetermind && !left.isdetermind) {
-            if (left.varSymbol.needAssignVReg) {
-                AssignValueRegister(left.varSymbol);
-                generateLoadCode_assign(left.varSymbol);
-            }
-
-            if (right.kind == 0) { // const
-                sb.append("i32 %" + left.varSymbol.valueRegID + ", " + right.value + "\n");
-            } else if (right.kind == 1) { // var // FIXME: 数组,left还需要下标
-                sb.append("i32 %" + left.varSymbol.valueRegID + ", " + right.varSymbol.value.get(0) + "\n");
-            } else {
-                sb.append("i32 %" + left.varSymbol.valueRegID + ", i32 %" + right.retRegNO + "\n");
-            }
-
-        } else {
-            if (right.varSymbol.needAssignVReg) {
-                AssignValueRegister(right.varSymbol);
-                generateLoadCode_assign(right.varSymbol);
-            }
-            if (left.varSymbol.needAssignVReg) {
-                AssignValueRegister(left.varSymbol);
-                generateLoadCode_assign(left.varSymbol);
-            }
-            sb.append("i32 %" + left.varSymbol.valueRegID + ", " + right.varSymbol.valueRegID + "\n");
         }
 
         MidCodeGenerate.addLinetoAns(sb.toString());
@@ -534,6 +616,7 @@ public class M_utils {
         int regNO = MidCodeGenerate.regNO++;
         varSymbol.valueRegID = regNO;
         varSymbol.needAssignVReg = false;
+        generateLoadCode_assign(varSymbol);
     }
 
     /**
@@ -555,7 +638,12 @@ public class M_utils {
         } else {
             // FIXME: 数组
         }
-        sb.append("%" + varSymbol.stackRegID + "\n");
+
+        if (varSymbol.stackRegID == -1) {
+            sb.append("@" + varSymbol.name + "\n");
+        } else {
+            sb.append("%" + varSymbol.stackRegID + "\n");
+        }
 
         MidCodeGenerate.addLinetoAns(sb.toString());
     }
@@ -587,50 +675,133 @@ public class M_utils {
         public ArrayList<Integer> type; // 0 int 1 char //FIXME:数组
         public ArrayList<Integer> value;
         public ArrayList<Boolean> isConst; // 如果是常量，直接取值
+
+        public FuncRParams() {
+            size = 0;
+            type = new ArrayList<>();
+            value = new ArrayList<>();
+            isConst = new ArrayList<>();
+        }
     }
 
     public static int generateCallFuncCode(FuncSymbol funcSymbol, FuncRParams funcRParams) {
         StringBuilder sb = new StringBuilder();
         int retRegNO;
 
+        for (int i = 0; i < funcSymbol.paramNumber; i++) {
+            if (funcSymbol.paramTypes.get(i) == VarTypes.Int) {
+                sb.append("i32 ");
+                if (funcRParams.isConst.get(i)) {
+                    sb.append(funcRParams.value.get(i));
+                } else {
+                    if (funcRParams.type.get(i) == 0) {
+                        sb.append("%" + funcRParams.value.get(i));
+                    } else {
+                        sb.append("%" + transTypetoInt(funcRParams.value.get(i)));
+                    }
+                }
+            } else {
+                sb.append("i8 ");
+                if (funcRParams.isConst.get(i)) {
+                    sb.append(funcRParams.value.get(i));
+                } else {
+                    if (funcRParams.type.get(i) == 1) {
+                        sb.append("%" + funcRParams.value.get(i));
+                    } else {
+                        sb.append("%" + transTypetoChar(funcRParams.value.get(i)));
+                    }
+                }
+            }
+
+            if (i != funcSymbol.paramNumber - 1) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append(") \n");
+
+        StringBuilder tsb = new StringBuilder();
         if (funcSymbol.returnType == FuncTypes.VoidFunc) {
             retRegNO = -1;
         } else {
             retRegNO = MidCodeGenerate.regNO++;
         }
 
-        sb.append("%" + retRegNO + " = ");
-
-        sb.append("call ");
-        if (funcSymbol.returnType == FuncTypes.IntFunc) {
-            sb.append("i32 ");
-        } else if (funcSymbol.returnType == FuncTypes.CharFunc) {
-            sb.append("i8 ");
+        if (funcSymbol.returnType == FuncTypes.VoidFunc) {
+            tsb.append("call void ");
         } else {
-            sb.append("void ");
-        }
-        sb.append("@" + funcSymbol.name + "(");
-
-        for (int i = 0; i < funcSymbol.paramNumber; i++) {
-            if (funcRParams.type.get(i) == 0) {
-                sb.append("i32 ");
-            } else if (funcRParams.type.get(i) == 1) {
-                sb.append("i8 ");
-            }
-
-            if (funcRParams.isConst.get(i)) {
-                sb.append(funcRParams.value.get(i));
-            } else {
-                sb.append("%" + funcRParams.value.get(i));
-            }
-
-            if (i != funcSymbol.paramNumber - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(")");
+            tsb.append("%" + retRegNO + " = call ");
+            if (funcSymbol.returnType == FuncTypes.IntFunc) {
+                tsb.append("i32 ");
+            } else if (funcSymbol.returnType == FuncTypes.CharFunc) {
+                tsb.append("i8 ");
             }
         }
+
+        tsb.append("@" + funcSymbol.name + "(");
+
+        MidCodeGenerate.addLinetoAns(tsb.toString() + sb.toString());
+
         return retRegNO;
     }
 
+    public static void jumpinChildSymTab() {
+        int index = MidCodeGenerate.cur_symTab.childSymTabs.indexOf(MidCodeGenerate.recordSymTab);
+        if (index == -1 || index == MidCodeGenerate.cur_symTab.childSymTabs.size() - 1) {
+            MidCodeGenerate.cur_symTab = MidCodeGenerate.cur_symTab.childSymTabs.get(0);
+        } else {
+            MidCodeGenerate.cur_symTab = MidCodeGenerate.cur_symTab.childSymTabs.get(index + 1);
+        }
+    }
+
+    public static void jumpoutChildSymTab() {
+        MidCodeGenerate.recordSymTab = MidCodeGenerate.cur_symTab;
+        MidCodeGenerate.cur_symTab = MidCodeGenerate.cur_symTab.lastSymTab;
+    }
+
+    public static void AssignGlobalVars(FuncSymbol funcSymbol) {
+        for (String s : funcSymbol.needAssignValueReg) {
+            if (MidCodeGenerate.global_symTab.curSymTab.containsKey(s)) {
+                Symbol symbol = MidCodeGenerate.global_symTab.curSymTab.get(s);
+                if (symbol instanceof VarSymbol) {
+                    VarSymbol varSymbol = (VarSymbol) symbol;
+                    varSymbol.needAssignVReg = true;
+                }
+            }
+        }
+    }
+
+    public static int transTypetoChar(int valueRegID) {
+        StringBuilder sb = new StringBuilder();
+        int retRegNO = MidCodeGenerate.regNO++;
+        sb.append("%" + retRegNO + " = ");
+        sb.append("trunc i32 %" + valueRegID + " to i8\n");
+
+        MidCodeGenerate.addLinetoAns(sb.toString());
+        return retRegNO;
+    }
+
+    public static int transTypetoInt(int valueRegID) {
+        StringBuilder sb = new StringBuilder();
+        int retRegNO = MidCodeGenerate.regNO++;
+        sb.append("%" + retRegNO + " = ");
+        sb.append("zext i8 %" + valueRegID + " to i32\n");
+
+        MidCodeGenerate.addLinetoAns(sb.toString());
+        return retRegNO;
+    }
+
+    public static int JudgeCalisInt(Operands op) {
+        if (op.kind == 1) {
+            if (op.type == 1) {
+                return transTypetoInt(op.varSymbol.valueRegID);
+            } else {
+                return op.varSymbol.valueRegID;
+            }
+        } else if (op.kind == 2) {
+            return op.retRegNO;
+        } else {
+            return op.value;
+        }
+    }
 }

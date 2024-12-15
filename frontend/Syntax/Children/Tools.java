@@ -52,13 +52,13 @@ public class Tools {
                     if (va.isArray) {
                         utils.addVarSymbol(va.name, VarTypes.ConstIntArray, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
                     } else {
-                        utils.addVarSymbol(va.name, VarTypes.ConstInt, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
+                        utils.addVarSymbol(va.name, VarTypes.ConstInt, 1, va.initValues, va.valueExp,va.zeroinitializer);
                     }
                 } else {
                     if (va.isArray) {
                         utils.addVarSymbol(va.name, VarTypes.ConstCharArray, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
                     } else {
-                        utils.addVarSymbol(va.name, VarTypes.ConstChar, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
+                        utils.addVarSymbol(va.name, VarTypes.ConstChar, 1, va.initValues, va.valueExp,va.zeroinitializer);
                     }
                 }
             } else {
@@ -66,13 +66,13 @@ public class Tools {
                     if (va.isArray) {
                         utils.addVarSymbol(va.name, VarTypes.IntArray, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
                     } else {
-                        utils.addVarSymbol(va.name, VarTypes.Int, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
+                        utils.addVarSymbol(va.name, VarTypes.Int, 1, va.initValues, va.valueExp,va.zeroinitializer);
                     }
                 } else {
                     if (va.isArray) {
                         utils.addVarSymbol(va.name, VarTypes.CharArray, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
                     } else {
-                        utils.addVarSymbol(va.name, VarTypes.Char, va.arrSize, va.initValues, va.valueExp,va.zeroinitializer);
+                        utils.addVarSymbol(va.name, VarTypes.Char, 1, va.initValues, va.valueExp,va.zeroinitializer);
                     }
                 }
             }

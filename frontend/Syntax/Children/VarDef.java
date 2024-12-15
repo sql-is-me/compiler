@@ -43,12 +43,14 @@ public class VarDef {
             }
 
             if (va.initValues == null) {
-                if (va.arrSize != 0)
+                if (va.arrSize != 0) {
                     va.initValues = new ArrayList<>(Collections.nCopies(va.arrSize, 0));
-                else {
-                    va.initValues = new ArrayList<>(Collections.nCopies(1, 0));
+                    va.zeroinitializer = true;
+                } else {
+                    // va.initValues = new ArrayList<>(Collections.nCopies(1, 0));
+                    va.initValues = new ArrayList<>();
                 }
-                va.zeroinitializer = true;
+
             }
         }
 

@@ -16,7 +16,7 @@ public class Compiler {
             Lexer.lexer(filebr);
             // WriteLexerAns.WriteAnswer(Lexer.tokens);
 
-            Syntax.SyntaxAnalysis();
+            int mainOffset = Syntax.SyntaxAnalysis();
             // WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
 
             Symbol.VisitAllSymbolTable();
@@ -25,7 +25,7 @@ public class Compiler {
             if (ErrorLog.someThingWrong()) {
                 ErrorLog.WriteErrorLogs();// 输出错误日志
             } else {
-                MidCodeGenerate.generateMidCode();
+                MidCodeGenerate.generateMidCode(mainOffset);
                 MidCodeGenerate.printfCodetoLL();
             }
 

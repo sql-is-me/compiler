@@ -1,21 +1,23 @@
-// #include "libsysy/libsysy.h"
-const int a = 1;
-int b = 0;
-char z;
-char d[2] = {'a', 'b'};
-const int g[2] = {1, 2};
-char x[3] = {'a', 'b'};
-char y[3];
-const int f = 1;
-
-int foo(int a[], char b[])
-{
-    return 1;
+char int2char(int x) {
+    return x + '0';
+}
+int char2int(char y) {
+    return y - '0';
+}
+int add(int a, int b) {
+    return (a + b);
 }
 
-int main()
-{
-    int g = b;
-    int h = 'c';
+int main() {
+    int a, b, c;
+    a = getint();
+    b = getint();
+    c = -a + b + add(a, b);
+    printf("%d\n", c);
+    char d, e;
+    d = getchar();
+    a = char2int(d);
+    e = int2char(a);
+    printf("%c-%d-%c\n", d, a, e);
     return 0;
 }

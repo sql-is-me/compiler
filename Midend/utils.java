@@ -11,6 +11,7 @@ import SymbolTable.SymTab;
 import SymbolTable.Symbol;
 import SymbolTable.VarSymbol;
 import SymbolTable.FuncSymbol.FuncTypes;
+import SymbolTable.VarSymbol.VarTypes;
 import Operands.ConstOp;
 import Operands.FuncOp;
 import Operands.Operands;
@@ -429,15 +430,24 @@ public class utils {
         return regNum++;
     }
 
-    public static void addSymboltoRegMap(VarSymbol varSymbol) { // TODO:向寄存器表中添加对应符号寄存器，需初始化分配栈
-        // Register reg;
-        // if (varSymbol.size == 1) {
-        // reg = new Register(varSymbol.size, false);
-        // } else {
-        // reg = new Register(varSymbol.size, true);
-        // reg.allocPointReg(CodeGenerater.CreatAllocCode(regNum_Record, regNum));
-        // }
-        // regMap.put(varSymbol, reg);
+    public static void addSymboltoRegMap(VarSymbol varSymbol, Boolean isGlobal) {
+        Boolean isArray = false;
+        Integer type = 32;
+
+        if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
+                || varSymbol.type.equals(VarTypes.ConstIntArray) || varSymbol.type.equals(VarTypes.ConstCharArray)) {
+            isArray = true;
+        }
+
+        if (varSymbol.type.equals(VarTypes.Char) || varSymbol.type.equals(VarTypes.ConstChar)
+                || varSymbol.type.equals(VarTypes.CharArray)
+                || varSymbol.type.equals(VarTypes.ConstCharArray)) {
+            type = 8;
+        }
+
+        Register reg = new Register(varSymbol.size, isArray, type, isGlobal);
+
+        regMap.put(varSymbol, reg);
     }
 
 }

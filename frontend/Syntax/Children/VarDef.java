@@ -25,7 +25,7 @@ public class VarDef {
             } else if (token.tk.equals("LBRACK")) { // [
                 vp.isArray = true;
                 CompUnit.count++;
-                ConstExp.ConstExpAnalysis();
+                vp.sizeExp = ConstExp.ConstExpAnalysis();
 
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     CompUnit.count++;

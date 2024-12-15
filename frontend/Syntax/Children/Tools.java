@@ -48,10 +48,15 @@ public class Tools {
      */
     public static void AddVarSymbol(boolean isConst, String btype, VarPart vp) { // wait for add more parameter
         if (!utils.GetRepeat()) {
-            int size = 1;
+            int size = 0;
 
             if (vp.isArray) {// 处理ConstExp
-                size = calConstExp(vp.sizeExp);
+                if (vp.sizeExp == null) { // 函数传递的参数
+                    size = -1;
+                } else {
+                    size = calConstExp(vp.sizeExp);
+                }
+
             }
 
             if (isConst) {

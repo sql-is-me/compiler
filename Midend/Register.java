@@ -16,6 +16,9 @@ public class Register {
     int size;
 
     public Register(int size, boolean isArray, int type, boolean isGlobal) {
+        if (size == 0) {
+            size = 1;
+        }
         this.stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
         this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
         this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));

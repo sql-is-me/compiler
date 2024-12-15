@@ -23,7 +23,6 @@ public class ConstDef {
             } else if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++; // [
                 vp.isArray = true;
-
                 vp.sizeExp = ConstExp.ConstExpAnalysis();
 
                 if (Tools.LookNextTK().tk.equals("RBRACK")) { // ]

@@ -100,6 +100,8 @@ public class IterateTK {
     }
 
     public static void GloVarandArr(VarSymbol varSymbol) {
+        utils.addSymboltoRegMap(varSymbol, true);
+
         pos = varSymbol.offset;
 
         if (varSymbol.size == 0) { // 非数组
@@ -165,7 +167,7 @@ public class IterateTK {
     public static ArrayList<Token> getVarInitExp(Integer pos) {
         ArrayList<Token> initExp = new ArrayList<>();
         Token t = getPosToken(pos);
-        
+
         while (!t.str.equals(";")) {
             initExp.add(getPosToken(pos));
 

@@ -23,7 +23,7 @@ public class FuncFParam {
             if (Tools.LookNextTK().tk.equals("LBRACK")) { // [
                 CompUnit.count++;
                 vp.isArray = true;
-
+                // vp.sizeExp = null;
                 if (!Tools.LookNextTK().tk.equals("RBRACK")) { // ]
                     Token temp = Tools.GetNowTK();
                     ErrorLog.makelog_error(temp.line, 'k');

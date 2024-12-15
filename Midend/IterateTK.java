@@ -280,7 +280,7 @@ public class IterateTK {
                 if (reg.isArray) {
                     reg.storeReg_Arr(i.toString());
                 } else {
-                    reg.storeReg_simple(0, false, i);
+                    reg.storeReg_simple(false, 0, false, i);
                 }
             }
 
@@ -328,10 +328,6 @@ public class IterateTK {
 
                 } else if (t.tk.equals("FORTK")) {
 
-                } else if (t.tk.equals("BREAKTK")) {
-
-                } else if (t.tk.equals("CONTINUETK")) {
-
                 } else if (t.tk.equals("RETURNTK")) {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
@@ -350,7 +346,62 @@ public class IterateTK {
                         }
                     }
                 } else { // LVal '=' Exp ';' && [Exp] ';'
+                    int assignPos = 0;
+                    ArrayList<Token> exp = new ArrayList<>();
+                    while (!t.str.equals(";")) {
 
+                        t = getNowToken();
+
+                        if (t.str.equals("=")) {
+                            assignPos = pos;
+                        }
+                        exp.add(t);
+                        pos++;
+                    }
+
+                    if (assignPos == 0) { // 单Exp
+                        utils.calExp(exp, true); // 计算即可，不需要做额外处理
+                    } else {
+                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos, exp);
+                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos, exp.size(), exp);
+                        Operands operands = utils.calExp(Exp, false);
+
+                        VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
+                        Register reg = utils.regMap.get(varSymbol);
+
+                        if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
+                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                            Operands posOp = utils.calExp(posExp, false);
+
+                            int posV, vORvReg;
+                            boolean posisConst = false, valueIsConst = false;
+                            if (posOp instanceof ConstOp) {
+                                posisConst = true;
+                                posV = ((ConstOp) posOp).value;
+                            } else {
+                                posV = ((RegOp) posOp).regNo;
+                            }
+                            if (operands instanceof ConstOp) {
+                                valueIsConst = true;
+                                vORvReg = ((ConstOp) operands).value;
+                            } else {
+                                vORvReg = ((RegOp) operands).regNo;
+                            }
+
+                            reg.storeReg_simple(posisConst, posV, valueIsConst, vORvReg);
+                        } else { // 变量赋值
+                            int vORvReg;
+                            boolean valueIsConst = false;
+                            if (operands instanceof ConstOp) {
+                                valueIsConst = true;
+                                vORvReg = ((ConstOp) operands).value;
+                            } else {
+                                vORvReg = ((RegOp) operands).regNo;
+                            }
+
+                            reg.storeReg_simple(true, 0, valueIsConst, vORvReg);
+                        }
+                    }
                 }
             }
         }
@@ -387,7 +438,7 @@ public class IterateTK {
                     isConst = false;
                 }
 
-                reg.storeReg_simple(0, isConst, valueORvReg);
+                reg.storeReg_simple(false, 0, isConst, valueORvReg);
             }
 
         } else { // 数组
@@ -411,9 +462,9 @@ public class IterateTK {
                                 operands = utils.JudgeOperandsType(operands, 8);
                             }
 
-                            reg.storeReg_simple(i, false, ((RegOp) operands).regNo);
+                            reg.storeReg_simple(false, i, false, ((RegOp) operands).regNo);
                         } else {
-                            reg.storeReg_simple(i, true, ((ConstOp) operands).value);
+                            reg.storeReg_simple(false, i, true, ((ConstOp) operands).value);
                         }
 
                         i++;
@@ -421,7 +472,7 @@ public class IterateTK {
                 } else { // 字符串常量
                     String strConst = getNowToken().str;
                     for (int i = 0; i < strConst.length(); i++) {
-                        reg.storeReg_simple(i, true, (int) strConst.charAt(i));
+                        reg.storeReg_simple(false, i, true, (int) strConst.charAt(i));
                     }
                 }
             } else {

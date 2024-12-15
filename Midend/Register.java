@@ -105,7 +105,7 @@ public class Register {
         } else if (haveStackReg(pos)) { // 有栈寄存器，尝试获取常值寄存器
             return new Pair(false, getValueReg(pos));
         } else { // 没有栈寄存器，需要先获取栈寄存器，再取值寄存器
-            getStackReg(pos);
+            getStackReg(false, pos);
             return new Pair(false, getValueReg(pos));
         }
     }
@@ -113,21 +113,31 @@ public class Register {
     /**
      * 获取对应位置栈寄存器编号
      * 
+     * @param isReg
      * @param pos
      * @return
      */
-    public String getStackReg(int pos) {
-        if (!stackReg.get(pos).equals("-1")) { // 已经分配过
-            return stackReg.get(pos);
-        } else { // 若未分配过，则进行分配
-            Integer sReg;
-            if (isArray) {
-                sReg = CodeGenerater.CreatGetelementptrCode(size, type, false, pos, isGlobal, pointerReg.toString());
-            } else {
-                sReg = CodeGenerater.CreatAllocCode(0, type, false);
+    public String getStackReg(boolean isReg, int pos) {
+        if (!isReg) {
+            if (!stackReg.get(pos).equals("-1")) { // 已经分配过
+                return stackReg.get(pos);
+            } else { // 若未分配过，则进行分配
+                Integer sReg;
+                if (isArray) {
+                    sReg = CodeGenerater.CreatGetelementptrCode(size, type, false, pos, isGlobal,
+                            pointerReg.toString());
+                } else {
+                    sReg = CodeGenerater.CreatAllocCode(0, type, false);
+                }
+                stackReg.set(pos, sReg.toString());
+                return sReg.toString();
             }
-            stackReg.set(pos, sReg.toString());
-            return stackReg.get(pos);
+        } else {
+            Integer sReg;
+            initAllConstandValueReg();
+
+            sReg = CodeGenerater.CreatGetelementptrCode(size, type, true, pos, isGlobal, pointerReg.toString());
+            return sReg.toString();
         }
     }
 
@@ -166,14 +176,19 @@ public class Register {
         return constValue.get(pos) != Integer.MIN_VALUE;
     }
 
-    public void storeReg_simple(int pos, boolean isConst, int vORvReg) {
-        if (isConst) {
-            constValue.set(pos, vORvReg);
-            initValueReg(pos);
-        } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
-            initValueReg(pos);
+    public void storeReg_simple(boolean posisConst, int pos, boolean isConst, int vORvReg) {
+        if (!posisConst) {
+            if (isConst) {
+                constValue.set(pos, vORvReg);
+                initValueReg(pos);
+            } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
+                initValueReg(pos);
+            }
+            CodeGenerater.CreatStoreCode_simple(type, isConst, vORvReg, isGlobal, stackReg.get(pos));
+        } else { // pos的值是一个寄存器
+            String sReg = getStackReg(true, pos);
+            CodeGenerater.CreatStoreCode_simple(type, isConst, vORvReg, isGlobal, sReg);
         }
-        CodeGenerater.CreatStoreCode_simple(type, isConst, vORvReg, isGlobal, stackReg.get(pos));
     }
 
     public void storeReg_Arr(String sReg) { // 不会出现将数组指针赋给数组的情况

@@ -242,8 +242,7 @@ public class utils {
                 }
 
                 if (rightRegOp.type == 8) { // 类型转换i32
-                    CodeGenerater.CreatTransTypeCode(rightRegOp);
-                    rightRegOp = new RegOp(rightRegOp.regNo, 32, rightRegOp.isArray, rightRegOp.needNegative);
+                    rightRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(rightRegOp);
                 }
 
                 Integer retReg = CodeGenerater.CreatCalExp(true, left_c, false, rightRegOp.regNo, op);
@@ -258,8 +257,7 @@ public class utils {
             }
 
             if (leftRegOp.type == 8) { // 类型转换i32
-                CodeGenerater.CreatTransTypeCode(leftRegOp);
-                leftRegOp = new RegOp(leftRegOp.regNo, 32, leftRegOp.isArray, leftRegOp.needNegative);
+                leftRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(leftRegOp);
             }
 
             if (right instanceof ConstOp) { // 常值与RegOp计算，返回RegOp
@@ -281,8 +279,7 @@ public class utils {
                 }
 
                 if (rightRegOp.type == 8) { // 类型转换i32
-                    CodeGenerater.CreatTransTypeCode(rightRegOp);
-                    rightRegOp = new RegOp(rightRegOp.regNo, 32, rightRegOp.isArray, rightRegOp.needNegative);
+                    rightRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(rightRegOp);
                 }
 
                 Integer retReg = CodeGenerater.CreatCalExp(false, leftRegOp.regNo, false, rightRegOp.regNo, op);
@@ -354,6 +351,26 @@ public class utils {
     }
 
     /**
+     * 获取size或pos的Exp
+     * 
+     * @param begin
+     * @return a:]的下一位
+     */
+    public static Pair GetExpofSizeorPos(int begin) {
+        int i = begin;
+        int level = 1;
+        while (level != 0) {
+            if (IterateTK.token.get(i).tk.equals("["))
+                level++;
+            else if (IterateTK.token.get(i).tk.equals("]")) {
+                level--;
+            }
+            i++;
+        }
+        return new Pair(i, GetExpfromIndex(begin, i - 2)); // i: ]的下一位
+    }
+
+    /**
      * 通过下标获取当前EXP的子Exp
      * 
      * @param begin
@@ -401,6 +418,18 @@ public class utils {
         }
 
         return params;
+    }
+
+    public static Operands JudgeOperandsType(Operands operands, int type) {
+        if (operands instanceof ConstOp) {
+            return operands;
+        } else {// RegOp
+            RegOp regOp = (RegOp) operands;
+            if (regOp.type != type) {
+                operands = CodeGenerater.CreatTransTypeCode(operands);
+            }
+            return operands;
+        }
     }
 
     /* ————————————————————————————————————————————————————————————————————— */

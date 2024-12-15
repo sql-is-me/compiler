@@ -4,8 +4,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Stack;
 
+import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Children.Tools;
 import Operands.ConstOp;
+import Operands.Operands;
+import Operands.RegOp;
 import SymbolTable.FuncSymbol;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.SymTab;
@@ -250,7 +254,16 @@ public class IterateTK {
         initFParams(funcSymbol.paramNumber); // 初始化分配
         pos = funcSymbol.offset + 1; // 跳到{ 的下一个Token
 
-        FuncBody();
+        int retType;
+        if (funcSymbol.returnType == FuncTypes.CharFunc) {
+            retType = 8;
+        } else if (funcSymbol.returnType == FuncTypes.IntFunc) {
+            retType = 32;
+        } else {
+            retType = 0;
+        }
+
+        FuncBody(retType);
 
         CodeGenerater.CreatFuncEndCode();
         stepOutfromChildSymTab();
@@ -280,8 +293,148 @@ public class IterateTK {
         }
     }
 
-    public static void FuncBody() {
+    public static void FuncBody(int retType) {
+        int level = 1; // 层次
+        for (;; pos++) {
+            if (token.get(pos).str.equals("{")) {
+                level++;
+                stepIntoChildSymTab();
+            } else if (token.get(pos).str.equals("}")) {
+                stepOutfromChildSymTab();
+                level--;
+                if (level == 0) {
+                    break;
+                }
+            } else {
+                Token t = getNowToken();
+                if (t.str.equals(";")) {// 遇见分号跳过
+                    continue;
+                } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) { // 变量声明
+                    pos++; // identifier
+                    t = getNowToken();
+                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    declareLocalVarandArr(varSymbol);
+                    findEndofScope(); // 跳到句子尾部
+                } else if (t.tk.equals("CONSTTK")) { // 常量声明
+                    pos += 2; // identifier
+                    t = getNowToken();
+                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    declareLocalVarandArr(varSymbol);
+                    findEndofScope(); // 跳到句子尾部
+                } else if (t.tk.equals("IDENFR")) {
 
+                } else if (t.tk.equals("PRINTFTK")) {
+
+                } else if (t.tk.equals("IFTK")) {
+
+                } else if (t.tk.equals("ELSETK")) {
+
+                } else if (t.tk.equals("FORTK")) {
+
+                } else if (t.tk.equals("BREAKTK")) {
+
+                } else if (t.tk.equals("CONTINUETK")) {
+
+                } else if (t.tk.equals("RETURNTK")) {
+                    if (retType == 0) {
+                        CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
+                    } else {
+                        int begin = pos + 1; // retExp
+                        findEndofScope();
+                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos);
+                        Operands operands = utils.calExp(retExp, false);
+
+                        operands = utils.JudgeOperandsType(operands, retType);
+
+                        if (operands instanceof ConstOp) {
+                            CodeGenerater.CreatReturnCode(retType, false, ((ConstOp) operands).value);
+                        } else {
+                            CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    public static void declareLocalVarandArr(VarSymbol varSymbol) {
+        Register reg = utils.addSymboltoRegMap(varSymbol, false);
+
+        pos = varSymbol.offset;
+        if (!getNowToken().str.equals("[")) { // 非数组
+            Operands operands;
+            pos++;
+
+            if (getNowToken().str.equals("=")) {// 有初始赋值
+                pos++;
+                ArrayList<Token> initExp = getVarInitExp(pos);
+                operands = utils.calExp(initExp, false);
+            } else { // ; 无初始赋值
+                operands = null;
+            }
+
+            if (operands != null) { // 有初始赋值
+                boolean isConst;
+                int valueORvReg;
+
+                if (operands instanceof ConstOp) {
+                    valueORvReg = ((ConstOp) operands).value;
+                    isConst = true;
+                } else {
+                    operands = utils.JudgeOperandsType(operands, reg.type);
+
+                    valueORvReg = ((RegOp) operands).regNo;
+                    isConst = false;
+                }
+
+                reg.storeReg_simple(0, isConst, valueORvReg);
+            }
+
+        } else { // 数组
+            pos = (Integer) utils.GetExpofSizeorPos(pos).a;
+
+            if (getNowToken().str.equals("=")) { // 有初始化
+                pos++;
+
+                if (getNowToken().str.equals("{")) { // 数组初始化
+                    pos++;
+                    ArrayList<ArrayList<Token>> initExps = getArrInitExp(pos);
+                    int i = 0;
+                    for (ArrayList<Token> initExp : initExps) {
+                        Operands operands = utils.calExp(initExp, true);
+                        if (operands instanceof RegOp) {
+                            if (varSymbol.type.equals(VarTypes.IntArray)
+                                    || varSymbol.type.equals(VarTypes.ConstIntArray)) { // 类型判断
+                                operands = utils.JudgeOperandsType(operands, 32);
+                            } else if (varSymbol.type.equals(VarTypes.CharArray)
+                                    || varSymbol.type.equals(VarTypes.ConstCharArray)) {
+                                operands = utils.JudgeOperandsType(operands, 8);
+                            }
+
+                            reg.storeReg_simple(i, false, ((RegOp) operands).regNo);
+                        } else {
+                            reg.storeReg_simple(i, true, ((ConstOp) operands).value);
+                        }
+
+                        i++;
+                    }
+                } else { // 字符串常量
+                    String strConst = getNowToken().str;
+                    for (int i = 0; i < strConst.length(); i++) {
+                        reg.storeReg_simple(i, true, (int) strConst.charAt(i));
+                    }
+                }
+            } else {
+                // 无初始化
+            }
+        }
+    }
+
+    public static void findEndofScope() {
+        while (!getNowToken().str.equals(";")) {
+            pos++;
+        }
     }
 
 }

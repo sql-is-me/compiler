@@ -458,6 +458,23 @@ public class CodeGenerater {
         utils.quitFuncBody();
     }
 
+    public static void CreatReturnCode(int retType, boolean isConst, int valueORvReg) {
+        StringBuilder sb = new StringBuilder();
+        if (retType == 0) { // void
+            sb.append("ret void");
+        } else {
+            sb.append("ret i" + retType + " ");
+
+            if (isConst) {
+                sb.append(valueORvReg);
+            } else {
+                sb.append("%" + valueORvReg);
+            }
+        }
+
+        addCodeatLast(sb.toString());
+    }
+
     /*
      * —————————————————————————————————————————————————————————————————————————————
      */

@@ -4,9 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Stack;
 
-import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
-import Frontend.Syntax.Children.Tools;
 import Operands.ConstOp;
 import Operands.Operands;
 import Operands.RegOp;
@@ -321,10 +319,9 @@ public class IterateTK {
                     VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
                     findEndofScope(); // 跳到句子尾部
-                } else if (t.tk.equals("IDENFR")) {
-
                 } else if (t.tk.equals("PRINTFTK")) {
-
+                    pos += 2; // ( strConst
+                    processPrintf();
                 } else if (t.tk.equals("IFTK")) {
 
                 } else if (t.tk.equals("ELSETK")) {
@@ -352,6 +349,8 @@ public class IterateTK {
                             CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
                         }
                     }
+                } else { // LVal '=' Exp ';' && [Exp] ';'
+
                 }
             }
         }
@@ -426,9 +425,84 @@ public class IterateTK {
                     }
                 }
             } else {
-                // 无初始化
+                // 无初始化,不管
             }
         }
+    }
+
+    public static void processPrintf() {
+        Token t = getNowToken();
+        String str = t.str;
+
+        int begin = pos + 2; // , Exp
+        findEndofScope();
+
+        ArrayList<Token> printfExp = utils.GetExpfromIndex(begin, pos - 1);
+        ArrayList<Operands> paramsOperands = calPrintfExp(printfExp);
+
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        int type;
+
+        for (int i = 0; i < str.length(); i++) {
+            char currentChar = str.charAt(i);
+
+            if (currentChar == '%' && i < str.length() - 1) {
+                char nextChar = str.charAt(i + 1);
+                if (nextChar == 'd' || nextChar == 'c') {
+                    if (nextChar == 'c') {
+                        type = 8;
+                    } else {
+                        type = 32;
+                    }
+                    i++;
+
+                    CodeGenerater.CreatPrintfStringCode(sb.toString());
+
+                    Operands tempOp = utils.JudgeOperandsType(paramsOperands.get(count), type); // 类型转换
+                    CodeGenerater.CreatPrintfOperandsCode(type, tempOp);
+                    count++;
+                } else {
+                    sb.append(currentChar);
+                }
+            } else {
+                sb.append(currentChar);
+            }
+        }
+
+        CodeGenerater.CreatPrintfStringCode(sb.toString());
+    }
+
+    public static ArrayList<Operands> calPrintfExp(ArrayList<Token> exp) {
+        ArrayList<Operands> printfOps = new ArrayList<>();
+        ArrayList<ArrayList<Token>> Exps = new ArrayList<>();
+        int level = 0;
+
+        for (int i = 0; i < exp.size(); i++) {
+            Token t = exp.get(i);
+            int begin = i;
+
+            while ((!t.str.equals(",") || level > 0)) {
+                if (t.tk.equals("(")) {
+                    level++;
+                } else if (t.tk.equals(")")) {
+                    level--;
+                }
+                i++;
+
+                if (i == exp.size()) {
+                    break;
+                }
+            }
+            Exps.add(utils.GetSubExpfromIndex(begin, i - 1, exp));
+        }
+
+        for (ArrayList<Token> Exp : Exps) {
+            Operands operands = utils.calExp(Exp, false);
+            printfOps.add(operands);
+        }
+
+        return printfOps;
     }
 
     public static void findEndofScope() {

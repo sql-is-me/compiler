@@ -112,11 +112,12 @@ public class CodeGenerater {
      * @param str
      * @return 字符串名
      */
-    public static String CreatGloStr(int length, String str) {
+    public static String CreatGloStr(String str, int length) {
         StringBuilder sb = new StringBuilder();
-        String name = ".str." + strNum++;
 
-        sb.append("@" + name + " = private unnamed_addr constant [");
+        String name = "@.str." + strNum++;
+
+        sb.append(name + " = private unnamed_addr constant [");
 
         sb.append(length + " x i8] c\"");
 
@@ -470,6 +471,44 @@ public class CodeGenerater {
             } else {
                 sb.append("%" + valueORvReg);
             }
+        }
+
+        addCodeatLast(sb.toString());
+    }
+
+    public static void CreatPrintfOperandsCode(int type, Operands operands) {
+        StringBuilder sb = new StringBuilder();
+
+        if (operands instanceof ConstOp) {
+            ConstOp constOp = (ConstOp) operands;
+            if (type == 32) {
+                sb.append("call void @putint(i32 " + constOp.value + ")");
+            } else {
+                sb.append("call void @putch(i32 " + constOp.value + ")");
+            }
+        } else {
+            RegOp regOp = (RegOp) operands;
+            if (type == 32) {
+                sb.append("call void @putint(i32 %" + regOp.regNo + ")");
+            } else {
+                sb.append("call void @putch(i32 %" + regOp.regNo + ")");
+            }
+        }
+
+        addCodeatLast(sb.toString());
+    }
+
+    public static void CreatPrintfStringCode(String str) {
+        StringBuilder sb = new StringBuilder();
+        int length = str.length();
+
+        if (length == 1) { // 防止在添加了\0前仅有一个字符
+            CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), false));
+            return;
+        } else {
+            String name = CreatGloStr(str, length);
+            sb.append("call void @putstr(i8* getelementptr inbounds ([" + length
+                    + " x i8], [" + length + " x i8]* " + name + ", i64 0, i64 0)");
         }
 
         addCodeatLast(sb.toString());

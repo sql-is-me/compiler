@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import Operands.ConstOp;
@@ -11,13 +14,19 @@ public class CodeGenerater {
     /** llcode代码 */
     public static ArrayList<String> llcode = new ArrayList<String>();
 
+    public static Boolean needTab = false;
+
     /**
      * 新加入一行代码
      * 
      * @param code
      */
     public static void addCodeatLast(String code) {
-        llcode.add(code + "\n");
+        if (needTab) {
+            llcode.add("\t" + code + "\n");
+        } else {
+            llcode.add(code + "\n");
+        }
     }
 
     /**
@@ -92,8 +101,6 @@ public class CodeGenerater {
 
         addCodeatLast(sb.toString());
     }
-
-    /* _____________________________________________________ */
 
     /** 字符串计数器，用以防止字符串重复 */
     private static int strNum = 1;
@@ -344,8 +351,7 @@ public class CodeGenerater {
     }
 
     public static Integer CreatGetelementptrCode(Integer size, Integer type, Boolean posisReg, Integer pos,
-            Boolean isGlobalArray,
-            String pointerReg) {
+            Boolean isGlobalArray, String pointerReg) {
         StringBuilder sb = new StringBuilder();
         Integer retRegNO = utils.getRegNum();
         sb.append("%" + retRegNO + " = getelementptr inbounds ");
@@ -405,4 +411,67 @@ public class CodeGenerater {
         }
     }
 
+    public static void CreatFuncHeadCode(FuncSymbol funcSymbol) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("define dso_local ");
+
+        if (funcSymbol.returnType == FuncTypes.IntFunc) {
+            sb.append("i32 ");
+        } else if (funcSymbol.returnType == FuncTypes.CharFunc) {
+            sb.append("i8 ");
+        } else if (funcSymbol.returnType == FuncTypes.VoidFunc) {
+            sb.append("void ");
+        }
+
+        sb.append("@" + funcSymbol.name + "(");
+
+        utils.enterFuncBody();
+
+        for (int i = 0; i < funcSymbol.paramTypes.size(); i++) {
+            VarTypes vt = funcSymbol.paramTypes.get(i);
+            if (vt == VarTypes.Int) {
+                sb.append("i32 ");
+            } else if (vt == VarTypes.Char) {
+                sb.append("i8 ");
+            } else if (vt == VarTypes.IntArray) {
+                sb.append("i32* %");
+            } else if (vt == VarTypes.CharArray) {
+                sb.append("i8* %");
+            }
+
+            sb.append("%" + utils.getRegNum());
+
+            if (i < funcSymbol.paramTypes.size() - 1) {
+                sb.append(", ");
+            } else {
+                sb.append(") {");
+            }
+        }
+
+        addCodeatLast(sb.toString());
+        utils.setNeedTabTrue();
+    }
+
+    public static void CreatFuncEndCode() {
+        utils.setNeedTabFalse();
+        addCodeatLast("}");
+        utils.quitFuncBody();
+    }
+
+    /*
+     * —————————————————————————————————————————————————————————————————————————————
+     */
+
+    /**
+     * 输出所有中间代码
+     */
+    public static void printfAllMidCodes() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("llvm_ir.txt"))) {
+            for (String s : llcode) {
+                bw.write(s);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

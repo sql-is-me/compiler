@@ -93,7 +93,7 @@ public class Tools {
 
     public static void AddFuncSymbol(FuncPart fp, boolean isFuncRepeat) { // wait for add more parameter
         if (!isFuncRepeat) {
-            utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber); // FIXME: fp参数修改
+            utils.addFuncSymbol(fp.name, fp.returnType, fp.paramTypes, fp.paramNumber, fp.offset);
         }
     }
 

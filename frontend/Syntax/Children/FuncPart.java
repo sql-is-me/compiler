@@ -10,11 +10,13 @@ public class FuncPart {
     FuncTypes returnType;
     int paramNumber;
     ArrayList<VarTypes> paramTypes;
+    int offset;
 
-    public FuncPart(String name, FuncTypes returnType, int paramNumber, ArrayList<VarTypes> paramTypes) {
+    public FuncPart(String name, FuncTypes returnType, int paramNumber, ArrayList<VarTypes> paramTypes, int offset) {
         this.name = name;
         this.returnType = returnType;
         this.paramNumber = paramNumber;
         this.paramTypes = paramTypes;
+        this.offset = offset;
     }
 }

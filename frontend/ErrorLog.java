@@ -29,7 +29,10 @@ public class ErrorLog {
         errorlog.add(log);
     }
 
-    public static void WriteErrorLogs() {
+    public static Boolean WriteErrorLogs() {
+        if (errorlog.size() == 0)
+            return false;
+
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(errorfile))) {
             errorlog.sort((e1, e2) -> Integer.compare(e1.line, e2.line));
             for (ErrorLog error : errorlog) {
@@ -38,6 +41,8 @@ public class ErrorLog {
         } catch (IOException e) {
             System.err.println("could not open + " + errorfile);
         }
+
+        return true;
     }
 
     public static List<ErrorLog> GetErrorLog() {

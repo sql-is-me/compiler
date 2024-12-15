@@ -9,7 +9,7 @@ import SymbolTable.utils;
 
 public class FuncDef {
     static void FuncDefAnalysis() {
-        FuncPart fp = new FuncPart(null, null, 0, null);
+        FuncPart fp = new FuncPart(null, null, 0, null, 0);
 
         fp.returnType = FuncType.FuncTypeAnalysis();
         fp.name = Tools.LookNextTK().str; // get indent name
@@ -28,6 +28,7 @@ public class FuncDef {
             fp.paramTypes = new ArrayList<>();
             fp.paramNumber = 0;
         }
+        fp.offset = CompUnit.count + 2; // {
 
         Tools.AddFuncSymbol(fp, isFuncRepeat);
 

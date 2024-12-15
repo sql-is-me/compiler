@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Stack;
 
 import Frontend.Lexer.Lexer.Token;
 import Operands.ConstOp;
@@ -19,8 +20,8 @@ public class IterateTK {
     /** 当前符号表 */
     public static SymTab cur_symTab = global_symTab;
 
-    /** 子符号表No */
-    public static Integer childSymTabNo = 0;
+    /** 子符号表NO栈 */
+    public static Stack<Integer> childSymTabNOs = new Stack<>();
 
     /** 作为token集合方便遍历 */
     public static ArrayList<Token> token = (ArrayList<Token>) Frontend.Lexer.Lexer.tokens;
@@ -36,11 +37,35 @@ public class IterateTK {
         return token.get(position);
     }
 
+    public static void initChildSymTabNOs() {
+        childSymTabNOs.push(0);
+    }
+
+    public static void stepIntoChildSymTab() {
+        Integer childSymTabNo = childSymTabNOs.pop();
+        cur_symTab = cur_symTab.childSymTabs.get(childSymTabNo);
+        childSymTabNOs.push(childSymTabNo + 1);
+        childSymTabNOs.push(0);
+    }
+
+    public static void stepOutfromChildSymTab() {
+        cur_symTab = cur_symTab.lastSymTab;
+        childSymTabNOs.pop();
+    }
+
+    /**
+     * 开始生成中间代码
+     */
     public static void StartGenerateMidCode() {
+        // inits
         addLibFunc();
+        initChildSymTabNOs();
+
+        // 遍历
         GlobalSymbols();
 
-        // TODO: 生成中间代码
+        // 输出
+        CodeGenerater.printfAllMidCodes();
     }
 
     /**
@@ -49,27 +74,27 @@ public class IterateTK {
      */
     public static void addLibFunc() {
         Symbol main = new FuncSymbol(global_symTab.id, "main", FuncTypes.IntFunc, new ArrayList<VarTypes>(), 0,
-                -1);
+                -1, -1);
         global_symTab.curSymTab.put("main", main);
 
         Symbol getint = new FuncSymbol(global_symTab.id, "getint", FuncTypes.IntFunc, new ArrayList<VarTypes>(),
-                0, -1);
+                0, -1, -1);
         global_symTab.curSymTab.put("getint", getint);
 
         Symbol getchar = new FuncSymbol(global_symTab.id, "getchar", FuncTypes.IntFunc, new ArrayList<VarTypes>(), 0,
-                -1);
+                -1, -1);
         global_symTab.curSymTab.put("getchar", getchar);
 
         Symbol putint = new FuncSymbol(global_symTab.id, "putint", FuncTypes.VoidFunc,
-                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1);
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1, -1);
         global_symTab.curSymTab.put("putint", putint);
 
         Symbol putch = new FuncSymbol(global_symTab.id, "putch", FuncTypes.VoidFunc,
-                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1);
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.Int)), 1, -1, -1);
         global_symTab.curSymTab.put("putch", putch);
 
         Symbol putstr = new FuncSymbol(global_symTab.id, "putstr", FuncTypes.VoidFunc,
-                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.CharArray)), 1, -1);
+                new ArrayList<VarTypes>(Arrays.asList(VarSymbol.VarTypes.CharArray)), 1, -1, -1);
         global_symTab.curSymTab.put("putstr", putstr);
 
         CodeGenerater.addLibFuncs();
@@ -87,11 +112,9 @@ public class IterateTK {
             if (symbol instanceof VarSymbol) {
                 VarSymbol varSymbol = (VarSymbol) symbol;
                 GloVarandArr(varSymbol);
-
             } else {
                 FuncSymbol funcSymbol = (FuncSymbol) symbol;
-
-                // TODO:全局函数部分
+                GlobalFunc(funcSymbol);
                 if (funcSymbol.name.equals("main")) {
                     break;
                 }
@@ -217,6 +240,48 @@ public class IterateTK {
             initExps.add(initExp);
         }
         return initExps;
+    }
+
+    public static void GlobalFunc(FuncSymbol funcSymbol) {
+        stepIntoChildSymTab();
+        CodeGenerater.CreatFuncHeadCode(funcSymbol);
+
+        utils.getRegNum(); // 跳一个寄存器
+        initFParams(funcSymbol.paramNumber); // 初始化分配
+        pos = funcSymbol.offset + 1; // 跳到{ 的下一个Token
+
+        FuncBody();
+
+        CodeGenerater.CreatFuncEndCode();
+        stepOutfromChildSymTab();
+    }
+
+    public static void initFParams(int funcParamsCount) {
+        Integer i = 0;
+        if (funcParamsCount == 0) { // 无参直接返回
+            return;
+        }
+
+        for (Map.Entry<String, Symbol> entry : cur_symTab.curSymTab.entrySet()) {
+            Symbol symbol = entry.getValue();
+            if (symbol instanceof VarSymbol) {
+                Register reg = utils.addSymboltoRegMap((VarSymbol) symbol, false);
+                if (reg.isArray) {
+                    reg.storeReg_Arr(i.toString());
+                } else {
+                    reg.storeReg_simple(0, false, i);
+                }
+            }
+
+            i++;
+            if (i == funcParamsCount) {
+                break;
+            }
+        }
+    }
+
+    public static void FuncBody() {
+
     }
 
 }

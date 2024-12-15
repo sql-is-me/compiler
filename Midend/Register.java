@@ -16,12 +16,19 @@ public class Register {
     int size;
 
     public Register(int size, boolean isArray, int type, boolean isGlobal) {
-        if (size == 0) {
-            size = 1;
+        if (size != -1) { // 定长数组
+            if (size == 0) {
+                size = 1;
+            }
+            this.stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
+            this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
+            this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+        } else { // 不定长数组（函数参数）
+            this.stackReg = new ArrayList<>();
+            this.valueReg = new ArrayList<>();
+            this.constValue = new ArrayList<>();
         }
-        this.stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
-        this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
-        this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+
         this.pointerReg = "-1";
         this.type = type;
         this.size = size;
@@ -64,15 +71,32 @@ public class Register {
     /**
      * 获取值寄存器以用于计算
      * 
-     * @param pos
+     * @param pos    -2时代表是位置的值存储在一寄存器，直接生成代码即可
+     * @param posReg
      * @return
      */
     public Pair getReg(int pos, int posReg) {
+        if (size == -1) { // 函数参数的变长数组，无法确定len，故每次getReg直接进行代码生成，获取sReg和vReg
+            if (pos == -2) { // -2为一寄存器
+                Integer sReg = CodeGenerater.CreatGetelementptrCode(size, type, true, posReg, isGlobal,
+                        pointerReg.toString());
+                Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+                return new Pair(false, vReg);
+            } else { // pos为一常值
+                Integer sReg = CodeGenerater.CreatGetelementptrCode(size, type, false, pos, isGlobal,
+                        pointerReg.toString());
+                Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+                return new Pair(false, vReg);
+            }
+        }
+
         if (pos == -1) {
             pos = 0;
-        } else if (pos == -2) {
-            Integer sReg = CodeGenerater.CreatGetelementptrCode(size, type, true, pos, isGlobal, pointerReg.toString());
+        } else if (pos == -2) { // pos为寄存器时，清空所有值和常值寄存器
+            Integer sReg = CodeGenerater.CreatGetelementptrCode(size, type, true, posReg, isGlobal,
+                    pointerReg.toString());
             Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+            initAllConstandValueReg(); // 清空所有值和常值寄存器
             return new Pair(false, vReg);
         }
 
@@ -117,8 +141,7 @@ public class Register {
         }
     }
 
-    public void initStackReg() { // 指针寄存器发生改变时使用
-        stackReg = new ArrayList<>(Collections.nCopies(size, "-1"));
+    public void initAllConstandValueReg() { // 指针寄存器发生改变时使用;
         valueReg = new ArrayList<>(Collections.nCopies(size, -1));
         constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
     }
@@ -143,14 +166,14 @@ public class Register {
         return constValue.get(pos) != Integer.MIN_VALUE;
     }
 
-    public void storeReg_simple(int pos, boolean isConst, int v) {
+    public void storeReg_simple(int pos, boolean isConst, int vORvReg) {
         if (isConst) {
-            constValue.set(pos, v);
+            constValue.set(pos, vORvReg);
             initValueReg(pos);
         } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
             initValueReg(pos);
         }
-        CodeGenerater.CreatStoreCode_simple(type, isConst, v, isGlobal, stackReg.get(pos));
+        CodeGenerater.CreatStoreCode_simple(type, isConst, vORvReg, isGlobal, stackReg.get(pos));
     }
 
     public void storeReg_Arr(String sReg) { // 不会出现将数组指针赋给数组的情况

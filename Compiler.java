@@ -21,7 +21,9 @@ public class Compiler {
             Symbol.VisitAllSymbolTable();
             // WriteSymbolAns.WriteAnwser();
 
-            ErrorLog.WriteErrorLogs(); // 输出错误日志
+            if (!ErrorLog.WriteErrorLogs()) {// 输出错误日志
+                IterateTK.StartGenerateMidCode();
+            }
 
         } catch (FileNotFoundException fnfe) {
             System.err.println("file not found + " + fString);

@@ -415,10 +415,19 @@ public class utils {
 
     public static void enterFuncBody() {
         regNum_Record = regNum;
+        regNum = 0;
     }
 
     public static void quitFuncBody() {
         regNum = regNum_Record;
+    }
+
+    public static void setNeedTabTrue() {
+        CodeGenerater.needTab = true;
+    }
+
+    public static void setNeedTabFalse() {
+        CodeGenerater.needTab = false;
     }
 
     /**
@@ -430,7 +439,7 @@ public class utils {
         return regNum++;
     }
 
-    public static void addSymboltoRegMap(VarSymbol varSymbol, Boolean isGlobal) {
+    public static Register addSymboltoRegMap(VarSymbol varSymbol, Boolean isGlobal) {
         Boolean isArray = false;
         Integer type = 32;
 
@@ -448,6 +457,7 @@ public class utils {
         Register reg = new Register(varSymbol.size, isArray, type, isGlobal);
 
         regMap.put(varSymbol, reg);
+        return reg;
     }
 
 }

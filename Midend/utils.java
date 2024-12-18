@@ -3,6 +3,8 @@ package Midend;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
@@ -488,6 +490,15 @@ public class utils {
 
         IterateTK.cur_symTab.regMap.put(varSymbol, reg);
         return reg;
+    }
+
+    /**
+     * 初始化所有符号的所有valueReg和ConstValue寄存器
+     */
+    public static void initAllRegister() {
+        for (Map.Entry<VarSymbol, Register> entry : IterateTK.cur_symTab.regMap.entrySet()) {
+            entry.getValue().initAllConstandValueReg();
+        }
     }
 
 }

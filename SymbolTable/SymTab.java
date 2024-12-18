@@ -20,6 +20,6 @@ public class SymTab {
         this.lastSymTab = lastSymTab;
         this.curSymTab = new LinkedHashMap<String, Symbol>();
         this.childSymTabs = new ArrayList<SymTab>();
-        regMap = new HashMap<VarSymbol, Register>();
+        this.regMap = new HashMap<VarSymbol, Register>();
     }
 }

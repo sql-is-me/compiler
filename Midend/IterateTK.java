@@ -3,6 +3,7 @@ package Midend;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -51,6 +52,8 @@ public class IterateTK {
         cur_symTab = cur_symTab.childSymTabs.get(childSymTabNo);
         childSymTabNOs.push(childSymTabNo + 1);
         childSymTabNOs.push(0);
+        cur_symTab.regMap = new HashMap<>(cur_symTab.lastSymTab.regMap);
+        utils.initAllRegister();
     }
 
     public static void stepOutfromChildSymTab() {

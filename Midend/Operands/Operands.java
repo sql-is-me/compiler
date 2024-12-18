@@ -1,4 +1,4 @@
-package Operands;
+package Midend.Operands;
 
 public class Operands {
     public Boolean needNegative;

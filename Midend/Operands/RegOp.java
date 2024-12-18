@@ -1,4 +1,4 @@
-package Operands;
+package Midend.Operands;
 
 public class RegOp extends Operands {
     public Integer regNo;

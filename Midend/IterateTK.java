@@ -1,3 +1,5 @@
+package Midend;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -5,10 +7,11 @@ import java.util.Map;
 import java.util.Stack;
 
 import Frontend.Lexer.Lexer.Token;
-import Operands.ConstOp;
-import Operands.Operands;
-import Operands.RegOp;
+import Midend.Operands.ConstOp;
+import Midend.Operands.Operands;
+import Midend.Operands.RegOp;
 import SymbolTable.FuncSymbol;
+import SymbolTable.Register;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.SymTab;
 import SymbolTable.Symbol;
@@ -125,7 +128,7 @@ public class IterateTK {
     }
 
     public static void GloVarandArr(VarSymbol varSymbol) {
-        utils.addSymboltoRegMap(varSymbol, true);
+        utils.addSymboltoRegMap(varSymbol);
 
         pos = varSymbol.offset;
 
@@ -139,15 +142,18 @@ public class IterateTK {
                 ConstOp constOp = (ConstOp) utils.calExp(initExp, true);
                 value = constOp.value;
             } else { // ;
-                value = 0;
+                value = 0; // 初始化
             }
 
+            int type;
             if (varSymbol.type.equals(VarSymbol.VarTypes.Int)
                     || varSymbol.type.equals(VarSymbol.VarTypes.ConstInt)) {
-                CodeGenerater.declareGloVar(varSymbol.name, 32, value);
+                type = 32;
             } else {
-                CodeGenerater.declareGloVar(varSymbol.name, 8, value);
+                type = 8;
             }
+            CodeGenerater.declareGloVar(varSymbol.name, type, value);
+
         } else { // 数组
             ArrayList<Integer> values = new ArrayList<>(Collections.nCopies(varSymbol.size, 0));
             boolean needInitializer = false;
@@ -276,11 +282,11 @@ public class IterateTK {
         for (Map.Entry<String, Symbol> entry : cur_symTab.curSymTab.entrySet()) {
             Symbol symbol = entry.getValue();
             if (symbol instanceof VarSymbol) {
-                Register reg = utils.addSymboltoRegMap((VarSymbol) symbol, false);
+                Register reg = utils.addSymboltoRegMap((VarSymbol) symbol);
                 if (reg.isArray) {
-                    reg.storeReg_Arr(i.toString());
+                    reg.initStoreArrReg(i.toString());
                 } else {
-                    reg.storeReg_simple(false, 0, false, i);
+                    reg.storeReg(true, 0, false, i);
                 }
             }
 
@@ -367,7 +373,7 @@ public class IterateTK {
                         Operands operands = utils.calExp(Exp, false);
 
                         VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
-                        Register reg = utils.regMap.get(varSymbol);
+                        Register reg = cur_symTab.regMap.get(varSymbol);
 
                         if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
                             ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
@@ -388,7 +394,7 @@ public class IterateTK {
                                 vORvReg = ((RegOp) operands).regNo;
                             }
 
-                            reg.storeReg_simple(posisConst, posV, valueIsConst, vORvReg);
+                            reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
                         } else { // 变量赋值
                             int vORvReg;
                             boolean valueIsConst = false;
@@ -399,7 +405,7 @@ public class IterateTK {
                                 vORvReg = ((RegOp) operands).regNo;
                             }
 
-                            reg.storeReg_simple(true, 0, valueIsConst, vORvReg);
+                            reg.storeReg(true, 0, valueIsConst, vORvReg);
                         }
                     }
                 }
@@ -409,7 +415,7 @@ public class IterateTK {
     }
 
     public static void declareLocalVarandArr(VarSymbol varSymbol) {
-        Register reg = utils.addSymboltoRegMap(varSymbol, false);
+        Register reg = utils.addSymboltoRegMap(varSymbol);
 
         pos = varSymbol.offset;
         if (!getNowToken().str.equals("[")) { // 非数组
@@ -438,7 +444,7 @@ public class IterateTK {
                     isConst = false;
                 }
 
-                reg.storeReg_simple(false, 0, isConst, valueORvReg);
+                reg.storeReg(true, 0, isConst, valueORvReg);
             }
 
         } else { // 数组
@@ -462,9 +468,9 @@ public class IterateTK {
                                 operands = utils.JudgeOperandsType(operands, 8);
                             }
 
-                            reg.storeReg_simple(false, i, false, ((RegOp) operands).regNo);
+                            reg.storeReg(true, i, false, ((RegOp) operands).regNo);
                         } else {
-                            reg.storeReg_simple(false, i, true, ((ConstOp) operands).value);
+                            reg.storeReg(true, i, true, ((ConstOp) operands).value);
                         }
 
                         i++;
@@ -472,7 +478,7 @@ public class IterateTK {
                 } else { // 字符串常量
                     String strConst = getNowToken().str;
                     for (int i = 0; i < strConst.length(); i++) {
-                        reg.storeReg_simple(false, i, true, (int) strConst.charAt(i));
+                        reg.storeReg(true, i, true, (int) strConst.charAt(i));
                     }
                 }
             } else {
@@ -492,13 +498,19 @@ public class IterateTK {
         ArrayList<Operands> paramsOperands = calPrintfExp(printfExp);
 
         StringBuilder sb = new StringBuilder();
+        boolean escaping = false;
         int count = 0;
         int type;
 
         for (int i = 0; i < str.length(); i++) {
             char currentChar = str.charAt(i);
 
-            if (currentChar == '%' && i < str.length() - 1) {
+            if (escaping) { // 转义中
+                sb.append(currentChar);
+                escaping = false;
+            } else if (currentChar == '\\') { // 转义字符
+                escaping = true;
+            } else if (currentChar == '%' && i < str.length() - 1) {
                 char nextChar = str.charAt(i + 1);
                 if (nextChar == 'd' || nextChar == 'c') {
                     if (nextChar == 'c') {

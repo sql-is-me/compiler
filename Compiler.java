@@ -1,6 +1,7 @@
 import Frontend.ErrorLog;
 import Frontend.Lexer.*;
 import Frontend.Syntax.*;
+import Midend.IterateTK;
 import SymbolTable.Symbol;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

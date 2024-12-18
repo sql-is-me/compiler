@@ -13,6 +13,8 @@ import Frontend.Syntax.Syntax;
 import Frontend.Syntax.Syntax.NodeType;
 
 public class Tools {
+    public static Boolean inGlobal = true;
+
     public static Token GetCountTK(int count) {
         return CompUnit.words.get(count);
     }
@@ -62,29 +64,29 @@ public class Tools {
             if (isConst) {
                 if (btype.equals("Int")) {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstIntArray, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstIntArray, size, inGlobal, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstInt, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstInt, size, inGlobal, vp.offset);
                     }
                 } else {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstCharArray, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstCharArray, size, inGlobal, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstChar, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstChar, size, inGlobal, vp.offset);
                     }
                 }
             } else {
                 if (btype.equals("Int")) {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.IntArray, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.IntArray, size, inGlobal, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.Int, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.Int, size, inGlobal, vp.offset);
                     }
                 } else {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.CharArray, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.CharArray, size, inGlobal, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.Char, size, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.Char, size, inGlobal, vp.offset);
                     }
                 }
             }

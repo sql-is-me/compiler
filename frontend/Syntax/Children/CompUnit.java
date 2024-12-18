@@ -19,6 +19,10 @@ public class CompUnit {
                     && Tools.GetCountTK(CompUnit.count + 2).tk.equals("IDENFR")
                     && Tools.GetCountTK(CompUnit.count + 3).tk.equals("LPARENT")) { // Type ident (
 
+                if (Tools.inGlobal) { // 在第一次触发函数定义时，将全局变量标志置为false
+                    Tools.inGlobal = false;
+                }
+
                 FuncDef.FuncDefAnalysis();
             } else if ((token.tk.equals("INTTK") || token.tk.equals("CHARTK"))
                     && Tools.GetCountTK(CompUnit.count + 2).tk.equals("IDENFR")) { // Type ident

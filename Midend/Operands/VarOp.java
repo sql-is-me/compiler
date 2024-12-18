@@ -1,4 +1,4 @@
-package Operands;
+package Midend.Operands;
 
 import SymbolTable.VarSymbol;
 import SymbolTable.VarSymbol.VarTypes;

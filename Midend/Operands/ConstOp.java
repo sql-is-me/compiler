@@ -1,4 +1,4 @@
-package Operands;
+package Midend.Operands;
 
 public class ConstOp extends Operands {
     public int value;

@@ -1,11 +1,13 @@
+package Midend;
+
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import Operands.ConstOp;
-import Operands.Operands;
-import Operands.RegOp;
+import Midend.Operands.ConstOp;
+import Midend.Operands.Operands;
+import Midend.Operands.RegOp;
 import SymbolTable.FuncSymbol;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.VarSymbol.VarTypes;
@@ -294,7 +296,16 @@ public class CodeGenerater {
         return retRegNO;
     }
 
-    public static void CreatStoreCode_simple(Integer type, Boolean isConst, Integer vReg, Boolean isGlobal,
+    /**
+     * 创建store代码
+     * 
+     * @param type
+     * @param isConst  存储值是否为常量
+     * @param vReg
+     * @param isGlobal 是否为全局变量
+     * @param sReg
+     */
+    public static void CreatStoreCode(Integer type, Boolean isConst, Integer vReg, Boolean isGlobal,
             String sReg) {
         StringBuilder sb = new StringBuilder();
 
@@ -351,8 +362,8 @@ public class CodeGenerater {
         addCodeatLast(sb.toString());
     }
 
-    public static Integer CreatGetelementptrCode(Integer size, Integer type, Boolean posisReg, Integer pos,
-            Boolean isGlobalArray, String pointerReg) {
+    public static Integer CreatGetElementPtrCode_pReg(Integer size, Integer type, Boolean isGlobalArray,
+            String pointerReg) {
         StringBuilder sb = new StringBuilder();
         Integer retRegNO = utils.getRegNum();
         sb.append("%" + retRegNO + " = getelementptr inbounds ");
@@ -366,9 +377,9 @@ public class CodeGenerater {
                 }
             } else {
                 if (type == 32) {
-                    sb.append("[" + size + " x i32], [" + size + " x i32]* %" + pointerReg + ", i32 0, i32 ");
+                    sb.append("[" + size + " x i32], [" + size + " x i32]* %" + pointerReg + ", i32 0, i32 0");
                 } else {
-                    sb.append("[" + size + " x i8], [" + size + " x i8]* %" + pointerReg + ", i8 0, i8 ");
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* %" + pointerReg + ", i8 0, i8 0");
                 }
             }
         } else {
@@ -380,11 +391,26 @@ public class CodeGenerater {
                 }
             } else {
                 if (type == 32) {
-                    sb.append("[" + size + " x i32], [" + size + " x i32]* @" + pointerReg + ", i32 0, i32 ");
+                    sb.append("[" + size + " x i32], [" + size + " x i32]* @" + pointerReg + ", i32 0, i32 0");
                 } else {
-                    sb.append("[" + size + " x i8], [" + size + " x i8]* @" + pointerReg + ", i8 0, i8 ");
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* @" + pointerReg + ", i8 0, i8 0");
                 }
             }
+        }
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    public static Integer CreatGetElementPtrCode_sReg(Integer type, Boolean posisReg, Integer pos, String sReg) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+        sb.append("%" + retRegNO + " = getelementptr inbounds ");
+
+        if (type == 32) {
+            sb.append("i32, i32* %" + sReg + ", i32 ");
+        } else {
+            sb.append("i8, i8* %" + sReg + ", i8 ");
         }
 
         if (posisReg) {

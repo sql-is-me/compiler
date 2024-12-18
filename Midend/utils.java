@@ -1,22 +1,23 @@
+package Midend;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 
 import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
 import SymbolTable.FuncSymbol;
+import SymbolTable.Register;
 import SymbolTable.SymTab;
 import SymbolTable.Symbol;
 import SymbolTable.VarSymbol;
 import SymbolTable.FuncSymbol.FuncTypes;
 import SymbolTable.VarSymbol.VarTypes;
-import Operands.ConstOp;
-import Operands.FuncOp;
-import Operands.Operands;
-import Operands.RegOp;
-import Operands.VarOp;
+import Midend.Operands.ConstOp;
+import Midend.Operands.FuncOp;
+import Midend.Operands.Operands;
+import Midend.Operands.RegOp;
+import Midend.Operands.VarOp;
 
 public class utils {
 
@@ -312,20 +313,19 @@ public class utils {
      * @return ConstOp或RegOp
      */
     public static Operands handleVarOpInExp(VarOp varOp) {
+        Boolean posisReg = false;
         int pos;
-        int posReg = 0;
         if (varOp.pos instanceof ConstOp) {
             pos = ((ConstOp) varOp.pos).value;
         } else {
-            pos = -2; // 证明pos是一RegOp
-            posReg = ((RegOp) varOp.pos).regNo;
+            pos = ((RegOp) varOp.pos).regNo;
         }
-        Register reg = regMap.get(varOp.varSymbol);
+        Register reg = IterateTK.cur_symTab.regMap.get(varOp.varSymbol);
         if (reg == null) {
             throw new RuntimeException("未插入寄存器表");
         }
 
-        Pair ret = reg.getReg(pos, posReg);
+        Pair ret = reg.getValueReg(posisReg, pos);
         if ((Boolean) ret.a.equals(true)) { // 拿到的是一个常值
             return new ConstOp((Integer) ret.b, varOp.needNegative);
         } else { // 拿到了值寄存器
@@ -433,10 +433,6 @@ public class utils {
     }
 
     /* ————————————————————————————————————————————————————————————————————— */
-
-    /** 寄存器图 */
-    public static Map<VarSymbol, Register> regMap = new HashMap<>();
-
     /** 记录寄存器No */
     public static Integer regNum = 0;
     /** 记录在进入函数体时的全局寄存器No */
@@ -468,24 +464,29 @@ public class utils {
         return regNum++;
     }
 
-    public static Register addSymboltoRegMap(VarSymbol varSymbol, Boolean isGlobal) {
+    /**
+     * 向当前符号表中加入对应符号寄存器
+     * 
+     * @param varSymbol
+     * @return
+     */
+    public static Register addSymboltoRegMap(VarSymbol varSymbol) {
         Boolean isArray = false;
-        Integer type = 32;
-
         if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
                 || varSymbol.type.equals(VarTypes.ConstIntArray) || varSymbol.type.equals(VarTypes.ConstCharArray)) {
             isArray = true;
         }
 
+        Integer type = 32;
         if (varSymbol.type.equals(VarTypes.Char) || varSymbol.type.equals(VarTypes.ConstChar)
                 || varSymbol.type.equals(VarTypes.CharArray)
                 || varSymbol.type.equals(VarTypes.ConstCharArray)) {
             type = 8;
         }
 
-        Register reg = new Register(varSymbol.size, isArray, type, isGlobal);
+        Register reg = new Register(varSymbol, isArray, type);
 
-        regMap.put(varSymbol, reg);
+        IterateTK.cur_symTab.regMap.put(varSymbol, reg);
         return reg;
     }
 

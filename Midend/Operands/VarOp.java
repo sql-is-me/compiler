@@ -7,7 +7,7 @@ public class VarOp extends Operands {
     public VarSymbol varSymbol;
     public Operands pos;
 
-    public VarOp(VarSymbol varSymbol, Operands pos, boolean needNegative) {
+    public VarOp(VarSymbol varSymbol, Operands pos, boolean needNegative, boolean needNot) {
         Integer type = 0;
         Boolean isArray = false;
         if (varSymbol.type.equals(VarTypes.Int) || varSymbol.type.equals(VarTypes.ConstInt)) {
@@ -22,7 +22,7 @@ public class VarOp extends Operands {
             isArray = true;
         }
 
-        super(type, isArray, needNegative);
+        super(type, isArray, needNegative, needNot);
         this.varSymbol = varSymbol;
         this.pos = pos;
     }

@@ -309,6 +309,7 @@ public class IterateTK {
                 stepOutfromChildSymTab();
                 level--;
                 if (level == 0) {
+                    pos++;// }
                     break;
                 }
             } else {
@@ -331,9 +332,11 @@ public class IterateTK {
                     pos += 2; // ( strConst
                     processPrintf();
                 } else if (t.tk.equals("IFTK")) {
-                    ProcessIf();
+                    pos += 2; // if (
+                    ProcessIf(retType);
                 } else if (t.tk.equals("FORTK")) {
-
+                    pos += 2; // for (
+                    ProcessFor(retType);
                 } else if (t.tk.equals("RETURNTK")) {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
@@ -356,7 +359,6 @@ public class IterateTK {
                     int assignPos = 0;
                     ArrayList<Token> exp = new ArrayList<>();
                     while (!t.str.equals(";")) {
-
                         t = getNowToken();
 
                         if (t.str.equals("=")) {
@@ -367,7 +369,7 @@ public class IterateTK {
                     }
 
                     if (assignPos == 0) { // 单Exp
-                        utils.calExp(exp, true); // 计算即可，不需要做额外处理
+                        utils.calExp(exp, false); // 计算即可，不需要做额外处理
                     } else {
                         ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos, exp);
                         ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos, exp.size(), exp);
@@ -574,7 +576,7 @@ public class IterateTK {
         }
     }
 
-    public static void ProcessIf() {
+    public static void ProcessIf(int retType) {
         ArrayList<Token> condExp = new ArrayList<>();
 
         int level = 1;
@@ -593,25 +595,327 @@ public class IterateTK {
         }
         boolean haveElse = utils.JudgeElseBlock(pos);
 
-        utils.calOrExp(condExp, haveElse);
-        CodeGenerater.CreatIfBodyCode(CodeGenerater.thenLabels.pop());
+        utils.calOrExp(condExp, haveElse, true);
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.ifThenLabels.pop());
 
         stepIntoChildSymTab();
-
-        boolean sigleLine = false;
         pos++;
+        boolean singleLine = false;
         if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
-            sigleLine = true;
-        }
-        FuncBody(-1); // FIXME if单句
-
-        if (haveElse) {
-            CodeGenerater.CreatIfBodyCode(CodeGenerater.elseLabels.pop());
-            FuncBody(-1);
+            singleLine = true;
+        } else {
             pos++;
         }
 
-        CodeGenerater.CreatIfBodyCode(CodeGenerater.endLabels.pop());
+        StmtinForandIf(retType, singleLine);
+        stepOutfromChildSymTab();
+
+        if (haveElse) {
+            CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop());
+            pos += 2;// } else {
+            stepIntoChildSymTab();
+            FuncBody(-1);
+            stepOutfromChildSymTab();
+        }
+
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.ifEndLabels.pop());
     }
 
+    public static void ProcessFor(int retType) {
+        if (!getNowToken().str.equals(";")) {
+            int begin = pos;
+            while (!getNowToken().str.equals("=")) {
+                pos++;
+            }
+            ArrayList<Token> LVal = utils.GetExpfromIndex(begin, pos - 1);
+            begin = ++pos;
+            while (!getNowToken().str.equals(";")) {
+                pos++;
+            }
+            ArrayList<Token> Exp = utils.GetExpfromIndex(begin, pos - 1);
+            Operands operands = utils.calExp(Exp, false);
+
+            VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
+            Register reg = cur_symTab.regMap.get(varSymbol);
+
+            if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
+                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                Operands posOp = utils.calExp(posExp, false);
+
+                int posV, vORvReg;
+                boolean posisConst = false, valueIsConst = false;
+                if (posOp instanceof ConstOp) {
+                    posisConst = true;
+                    posV = ((ConstOp) posOp).value;
+                } else {
+                    posV = ((RegOp) posOp).regNo;
+                }
+                if (operands instanceof ConstOp) {
+                    valueIsConst = true;
+                    vORvReg = ((ConstOp) operands).value;
+                } else {
+                    vORvReg = ((RegOp) operands).regNo;
+                }
+
+                reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+            } else { // 变量赋值
+                int vORvReg;
+                boolean valueIsConst = false;
+                if (operands instanceof ConstOp) {
+                    valueIsConst = true;
+                    vORvReg = ((ConstOp) operands).value;
+                } else {
+                    vORvReg = ((RegOp) operands).regNo;
+                }
+
+                reg.storeReg(true, 0, valueIsConst, vORvReg);
+            }
+        }
+        pos++;
+
+        stepIntoChildSymTab();
+
+        Boolean haveCond = false;
+        Boolean haveChange = false;
+        ArrayList<Token> condExp = new ArrayList<>();
+        if (!getNowToken().str.equals(";")) { // 第二个参数
+            haveCond = true;
+            int begin = pos;
+            while (!getNowToken().str.equals(";")) {
+                pos++;
+            }
+
+            condExp = utils.GetExpfromIndex(begin, pos - 1);
+        }
+        pos++;
+
+        ArrayList<Token> changeExp = new ArrayList<>();
+        if (!getNowToken().str.equals(")")) { // 第3个参数
+            int begin = pos;
+            int level = 1;
+
+            while (true) {
+                Token t = getNowToken();
+                if (t.str.equals("(")) {
+                    level++;
+                } else if (t.str.equals(")")) {
+                    level--;
+                    if (level == 0) {
+                        changeExp = utils.GetExpfromIndex(begin, pos - 1);
+                        break;
+                    }
+                }
+            }
+        }
+        pos++;
+
+        CodeGenerater.CreatForFirstLabelCode(haveCond, haveChange);
+        if (haveCond) {
+            utils.calOrExp(condExp, false, false);
+        }
+
+        String forThenLabel = CodeGenerater.forThenLabels.pop();
+        CodeGenerater.CreatLabelTagCode(forThenLabel);
+
+        boolean singleLine = false;
+        if (!getNowToken().str.equals("{")) {
+            singleLine = true;
+        } else {
+            pos++;
+        }
+
+        StmtinForandIf(retType, singleLine);
+
+        if (haveChange) { // 有第三个参数
+            CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
+            CodeGenerater.CreatLabelTagCode(CodeGenerater.forChangeLabels.pop());
+
+            int p = 0;
+            for (int i = 0; i < changeExp.size(); i++) {
+                if (!changeExp.get(i).str.equals("=")) {
+                    i++;
+                } else {
+                    p = i;
+                }
+            }
+
+            ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, p - 1, changeExp);
+            p++;
+
+            ArrayList<Token> Exp = utils.GetSubExpfromIndex(p, changeExp.size() - 1, changeExp);
+            Operands operands = utils.calExp(Exp, false);
+
+            VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
+            Register reg = cur_symTab.regMap.get(varSymbol);
+
+            if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
+                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                Operands posOp = utils.calExp(posExp, false);
+
+                int posV, vORvReg;
+                boolean posisConst = false, valueIsConst = false;
+                if (posOp instanceof ConstOp) {
+                    posisConst = true;
+                    posV = ((ConstOp) posOp).value;
+                } else {
+                    posV = ((RegOp) posOp).regNo;
+                }
+                if (operands instanceof ConstOp) {
+                    valueIsConst = true;
+                    vORvReg = ((ConstOp) operands).value;
+                } else {
+                    vORvReg = ((RegOp) operands).regNo;
+                }
+
+                reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+            } else { // 变量赋值
+                int vORvReg;
+                boolean valueIsConst = false;
+                if (operands instanceof ConstOp) {
+                    valueIsConst = true;
+                    vORvReg = ((ConstOp) operands).value;
+                } else {
+                    vORvReg = ((RegOp) operands).regNo;
+                }
+
+                reg.storeReg(true, 0, valueIsConst, vORvReg);
+            }
+        }
+
+        if (haveCond) { // 跳转
+            CodeGenerater.CreatbrCode(CodeGenerater.forCondLabels.pop());
+        } else {
+            CodeGenerater.CreatbrCode(forThenLabel);
+        }
+
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());
+    }
+
+    public static void StmtinForandIf(int retType, boolean singleLine) {
+        for (int level = 1;; pos++) {
+            if (token.get(pos).str.equals("{")) {
+                level++;
+                stepIntoChildSymTab();
+            } else if (token.get(pos).str.equals("}")) {
+                stepOutfromChildSymTab();
+                level--;
+                if (level == 0) {
+                    pos++;// }
+                    break;
+                }
+            } else {
+                Token t = getNowToken();
+                if (t.str.equals(";")) {// 遇见分号跳过
+                    continue;
+                } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) { // 变量声明
+                    pos++; // identifier
+                    t = getNowToken();
+                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    declareLocalVarandArr(varSymbol);
+                    findEndofScope(); // 跳到句子尾部
+                } else if (t.tk.equals("CONSTTK")) { // 常量声明
+                    pos += 2; // identifier
+                    t = getNowToken();
+                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    declareLocalVarandArr(varSymbol);
+                    findEndofScope(); // 跳到句子尾部
+                } else if (t.tk.equals("PRINTFTK")) {
+                    pos += 2; // ( strConst
+                    processPrintf();
+                } else if (t.tk.equals("IFTK")) {
+                    pos += 2; // if (
+                    ProcessIf(retType);
+                } else if (t.tk.equals("FORTK")) {
+                    pos += 2; // for (
+                    ProcessFor(retType);
+                } else if (t.tk.equals("BREAKTK")) {
+                    pos++;// ;
+                    CodeGenerater.CreatbrCode(CodeGenerater.forEndLabels.peek());
+                } else if (t.tk.equals("CONTINUETK")) {
+                    pos++;// ;
+                    CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
+                } else if (t.tk.equals("RETURNTK")) {
+                    if (retType == 0) {
+                        CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
+                    } else {
+
+                        int begin = pos + 1; // retExp
+                        findEndofScope();
+                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos);
+                        Operands operands = utils.calExp(retExp, false);
+
+                        operands = utils.JudgeOperandsType(operands, retType);
+
+                        if (operands instanceof ConstOp) {
+                            CodeGenerater.CreatReturnCode(retType, false, ((ConstOp) operands).value);
+                        } else {
+                            CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
+                        }
+                    }
+                } else { // LVal '=' Exp ';' && [Exp] ';'
+                    int assignPos = 0;
+                    ArrayList<Token> exp = new ArrayList<>();
+                    while (!t.str.equals(";")) {
+                        t = getNowToken();
+
+                        if (t.str.equals("=")) {
+                            assignPos = pos;
+                        }
+                        exp.add(t);
+                        pos++;
+                    }
+
+                    if (assignPos == 0) { // 单Exp
+                        utils.calExp(exp, false); // 计算即可，不需要做额外处理
+                    } else {
+                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos, exp);
+                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos, exp.size(), exp);
+                        Operands operands = utils.calExp(Exp, false);
+
+                        VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
+                        Register reg = cur_symTab.regMap.get(varSymbol);
+
+                        if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
+                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                            Operands posOp = utils.calExp(posExp, false);
+
+                            int posV, vORvReg;
+                            boolean posisConst = false, valueIsConst = false;
+                            if (posOp instanceof ConstOp) {
+                                posisConst = true;
+                                posV = ((ConstOp) posOp).value;
+                            } else {
+                                posV = ((RegOp) posOp).regNo;
+                            }
+                            if (operands instanceof ConstOp) {
+                                valueIsConst = true;
+                                vORvReg = ((ConstOp) operands).value;
+                            } else {
+                                vORvReg = ((RegOp) operands).regNo;
+                            }
+
+                            reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+                        } else { // 变量赋值
+                            int vORvReg;
+                            boolean valueIsConst = false;
+                            if (operands instanceof ConstOp) {
+                                valueIsConst = true;
+                                vORvReg = ((ConstOp) operands).value;
+                            } else {
+                                vORvReg = ((RegOp) operands).regNo;
+                            }
+
+                            reg.storeReg(true, 0, valueIsConst, vORvReg);
+                        }
+                    }
+                }
+
+                if (singleLine) {
+                    findEndofScope();
+                    pos++; // ;
+                    return;
+                }
+            }
+        }
+    }
 }

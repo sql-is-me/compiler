@@ -4,9 +4,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Stack;
 
 import Frontend.Pair;
@@ -187,6 +184,18 @@ public class CodeGenerater {
         Integer retRegNO = utils.getRegNum();
 
         sb.append("%" + retRegNO + " = mul i32 -1, %" + vReg);
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    public static Integer CreatNotCode(Integer vReg) { // FIXME 逻辑非
+        StringBuilder sb = new StringBuilder();
+        Integer tempRegNO = utils.getRegNum();
+        Integer retRegNO = utils.getRegNum();
+
+        sb.append("%" + tempRegNO + " = icmp ne i32 %" + vReg + ", 0");
+        sb.append("% " + retRegNO + " = xor i1 %" + tempRegNO + ", 1");
 
         addCodeatLast(sb.toString());
         return retRegNO;
@@ -439,11 +448,11 @@ public class CodeGenerater {
         if (operands.type == 8) { // char to int
             sb.append("%" + retRegNO + " = zext i8 %" + ((RegOp) operands).regNo + " to i32");
             addCodeatLast(sb.toString());
-            return new RegOp(retRegNO, 32, operands.isArray, operands.needNegative);
+            return new RegOp(retRegNO, 32, operands.isArray, operands.needNegative, operands.needNot);
         } else { // int to char
             sb.append("%" + retRegNO + " = trunc i32 %" + ((RegOp) operands).regNo + " to i8");
             addCodeatLast(sb.toString());
-            return new RegOp(retRegNO, 8, operands.isArray, operands.needNegative);
+            return new RegOp(retRegNO, 8, operands.isArray, operands.needNegative, operands.needNot);
         }
     }
 
@@ -555,7 +564,7 @@ public class CodeGenerater {
         int length = str.length();
 
         if (length == 1) { // 防止在添加了\0前仅有一个字符
-            CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), false));
+            CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), false, false));
             return;
         } else {
             String name = CreatGloStr(str, length);
@@ -570,13 +579,17 @@ public class CodeGenerater {
      */
 
     static Integer ifCount = 0;
+    static Integer forCount = 0;
     static Integer count = 0;
-    static Deque<String> Tdeque = new LinkedList<>();
-    static Deque<String> Fdeque = new LinkedList<>();
 
-    public static Stack<String> thenLabels = new Stack<>();
+    public static Stack<String> ifThenLabels = new Stack<>();
     public static Stack<String> elseLabels = new Stack<>();
-    public static Stack<String> endLabels = new Stack<>();
+    public static Stack<String> ifEndLabels = new Stack<>();
+
+    public static Stack<String> forCondLabels = new Stack<>();
+    public static Stack<String> forThenLabels = new Stack<>();
+    public static Stack<String> forChangeLabels = new Stack<>();
+    public static Stack<String> forEndLabels = new Stack<>();
 
     public static String getLabelNow() {
         return "label." + count++;
@@ -584,19 +597,20 @@ public class CodeGenerater {
 
     public static void CreatIfFirstLabelCode(Boolean haveElse) {
         StringBuilder sb = new StringBuilder();
+        String ifTag = "if." + ifCount++;
 
-        sb.append("br label " + ifCount);
+        sb.append("br label %" + ifTag);
         addCodeatLast(sb.toString());
 
         sb = new StringBuilder();
-        sb.append("if." + ifCount++ + ":");
+        sb.append(ifTag + ":");
         addLabelCode(sb.toString());
 
-        thenLabels.push("then." + ifCount);
+        ifThenLabels.push("then." + ifTag);
         if (haveElse) {
-            elseLabels.push("else." + ifCount);
+            elseLabels.push("else." + ifTag);
         }
-        endLabels.push("end." + ifCount);
+        ifEndLabels.push("end." + ifTag);
     }
 
     public static Integer CreatcalCondExp(boolean leftisConst, Integer left, boolean rightisConst, Integer right,
@@ -679,11 +693,41 @@ public class CodeGenerater {
         }
     }
 
-    public static void CreatIfBodyCode(String label) {
+    public static void CreatLabelTagCode(String label) {
         StringBuilder sb = new StringBuilder();
 
         sb.append(label + ":");
         addLabelCode(sb.toString());
+    }
+
+    public static void CreatbrCode(String label) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("br label %" + label);
+        addLabelCode(sb.toString());
+    }
+
+    public static void CreatForFirstLabelCode(Boolean haveCond, Boolean haveChange) {
+        StringBuilder sb = new StringBuilder();
+        String forTag = "for." + forCount++;
+        String starter;
+        if (haveCond) {
+            starter = "cond." + forTag;
+            forCondLabels.push("cond." + forTag);
+
+            sb.append("br label %" + starter);
+            addCodeatLast(starter);
+            sb = new StringBuilder();
+
+            sb.append(starter + ":");
+            addLabelCode(sb.toString());
+        }
+        if (haveChange) {
+            forChangeLabels.push("change." + forTag);
+        }
+
+        forThenLabels.push("then." + forTag);
+        forEndLabels.push("end." + forTag);
     }
     /*
      * —————————————————————————————————————————————————————————————————————————————

@@ -3,8 +3,8 @@ package Midend;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
@@ -47,7 +47,7 @@ public class utils {
             Token t = exp.get(i);
 
             if (t.tk.equals("INTCON") || t.tk.equals("CHRCON")) { // 常量处理
-                Operands temp = new ConstOp(Integer.parseInt(t.str), needNegative);
+                Operands temp = new ConstOp((int) t.str.charAt(0), needNegative);
                 operands.addLast(temp);
 
                 op = ' ';
@@ -501,4 +501,201 @@ public class utils {
         }
     }
 
+    /* ————————————————————————————————————————————————————————————————————— */
+
+    public static ArrayList<ArrayList<Token>> Expsplits(ArrayList<Token> exps, String op) {
+        ArrayList<ArrayList<Token>> ret = new ArrayList<>();
+        int begin;
+
+        for (int i = 0; i < exps.size(); i++) {
+            begin = i;
+            if (exps.get(i).str.equals(op)) {
+                ret.add(GetSubExpfromIndex(begin, i - 1, exps));
+            }
+
+            if (i == exps.size() - 1) {
+                ret.add(GetSubExpfromIndex(begin, i, exps));
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * 判断是否有else块
+     * 
+     * @param pos 传入pos为if的Cond表达式的 )
+     * @return
+     */
+    public static boolean JudgeElseBlock(int pos) {
+        if (!IterateTK.getPosToken(pos + 1).str.equals("{")) { // if无{，仅有单行
+            pos = findEndofScope(pos);
+            if (!IterateTK.getPosToken(pos).tk.equals("ELSETK")) {
+                return true;
+            }
+            return false;
+        } else {// 有if块
+            pos += 2; // { 的下一位
+            int level = 1;
+            while (pos < IterateTK.token.size()) {
+                if (IterateTK.token.get(pos).tk.equals("{")) {
+                    level++;
+                } else if (IterateTK.token.get(pos).tk.equals("}")) {
+                    level--;
+                    if (level == 0) {
+                        if (IterateTK.getPosToken(pos + 1).tk.equals("ELSETK")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+                pos++;
+            }
+            throw new RuntimeException("if找else时未找到匹配的}");
+        }
+    }
+
+    public static int findEndofScope(int pos) {
+        while (!IterateTK.getPosToken(pos).str.equals(";")) {
+            pos++;
+        }
+        return pos;
+    }
+
+    public static void calOrExp(ArrayList<Token> orExps, Boolean haveElse) {
+        ArrayList<ArrayList<Token>> andExps = Expsplits(orExps, "||");
+        Pair p = null;
+
+        for (int i = 0; i < andExps.size(); i++) {
+            p = calAndExp(andExps.get(i));
+            if (i != andExps.size() - 1) {
+                CodeGenerater.CreatShortJumpCode_Or((String) p.b);
+            } else { // 最后一个，确定全false跳转位置，并再次生成跳转指令
+                if (haveElse) {
+                    CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.elseLabels.peek());
+                } else {
+                    CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.endLabels.peek());
+                }
+            }
+        }
+    }
+
+    public static Pair calAndExp(ArrayList<Token> andExp) {
+        ArrayList<ArrayList<Token>> eqExps = Expsplits(andExp, "&&");
+        String falseDest = null;
+        Pair p = null;
+
+        for (int i = 0; i < eqExps.size(); i++) {
+            Operands temp = calEqExp(eqExps.get(i));
+            int i1Reg = CodeGenerater.CreatTransi32toi1Code(temp);
+
+            if (i != eqExps.size() - 1) {
+                p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, falseDest);
+            } else { // 最后一个，此时or的第一个可以确定是true，故确定跳转位置
+                p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.thenLabels.peek(), falseDest);
+            }
+
+            falseDest = (String) p.b;
+        }
+
+        return p;
+    }
+
+    public static Operands callMidCodeGen(Operands left, Operands right, String relOp) {
+        int regNo;
+        boolean leftIsReg = false;
+        boolean rightIsReg = false;
+        int leftRegNo;
+        int rightRegNo;
+
+        if (left instanceof RegOp) {
+            leftIsReg = true;
+            leftRegNo = ((RegOp) left).regNo;
+        } else {
+            leftRegNo = ((ConstOp) left).value;
+        }
+        if (right instanceof RegOp) {
+            rightIsReg = true;
+            rightRegNo = ((RegOp) right).regNo;
+        } else {
+            rightRegNo = ((ConstOp) right).value;
+        }
+
+        if (left.type == 8) {
+            left = CodeGenerater.CreatTransTypeCode(left);
+        }
+        if (right.type == 8) {
+            right = CodeGenerater.CreatTransTypeCode(right);
+        }
+
+        regNo = CodeGenerater.CreatcalCondExp(leftIsReg, leftRegNo, rightIsReg, rightRegNo, relOp);
+        left = new RegOp(regNo, 32, false, false);
+        return left;
+    }
+
+    public static Operands calEqExp(ArrayList<Token> eqExp) {
+        ArrayList<ArrayList<Token>> relExps = new ArrayList<>();
+        Deque<String> ops = new ArrayDeque<>();
+        Deque<Operands> operands = new ArrayDeque<>();
+        int begin;
+
+        for (int i = 0; i < eqExp.size(); i++) {
+            begin = i;
+            if (eqExp.get(i).str.equals("==") || eqExp.get(i).str.equals("!=")) {
+                ops.addLast(eqExp.get(i).str);
+                relExps.add(GetSubExpfromIndex(begin, i - 1, eqExp));
+            }
+
+            if (i == eqExp.size() - 1) {
+                relExps.add(GetSubExpfromIndex(begin, i, eqExp));
+            }
+        }
+
+        for (ArrayList<Token> relExp : relExps) {
+            operands.addLast(calRelExp(relExp));
+        }
+
+        Operands left = operands.getFirst();
+        while (!ops.isEmpty()) {
+            Operands right = operands.getFirst();
+            String op = ops.getFirst();
+
+            left = callMidCodeGen(left, right, op);
+        }
+
+        return left;
+    }
+
+    public static Operands calRelExp(ArrayList<Token> relExp) {
+        ArrayList<ArrayList<Token>> commonExps = new ArrayList<>();
+        Deque<String> ops = new ArrayDeque<>();
+        Deque<Operands> operands = new ArrayDeque<>();
+        int begin;
+
+        for (int i = 0; i < relExp.size(); i++) {
+            begin = i;
+            if (relExp.get(i).str.equals("<") || relExp.get(i).str.equals(">")
+                    || relExp.get(i).str.equals("<=") || relExp.get(i).str.equals(">=")) {
+                ops.addLast(relExp.get(i).str);
+                commonExps.add(GetSubExpfromIndex(begin, i - 1, relExp));
+            }
+
+            if (i == relExp.size() - 1) {
+                commonExps.add(GetSubExpfromIndex(begin, i, relExp));
+            }
+        }
+
+        for (ArrayList<Token> commonExp : commonExps) {
+            operands.addLast(calExp(commonExp, false));
+        }
+
+        Operands left = operands.getFirst();
+        while (!ops.isEmpty()) {
+            Operands right = operands.getFirst();
+            String op = ops.getFirst();
+
+            left = callMidCodeGen(left, right, op);
+        }
+
+        return left;
+    }
 }

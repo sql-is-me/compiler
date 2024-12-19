@@ -301,8 +301,7 @@ public class IterateTK {
     }
 
     public static void FuncBody(int retType) {
-        int level = 1; // 层次
-        for (;; pos++) {
+        for (int level = 1;; pos++) {
             if (token.get(pos).str.equals("{")) {
                 level++;
                 stepIntoChildSymTab();
@@ -332,15 +331,14 @@ public class IterateTK {
                     pos += 2; // ( strConst
                     processPrintf();
                 } else if (t.tk.equals("IFTK")) {
-
-                } else if (t.tk.equals("ELSETK")) {
-
+                    ProcessIf();
                 } else if (t.tk.equals("FORTK")) {
 
                 } else if (t.tk.equals("RETURNTK")) {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
                     } else {
+
                         int begin = pos + 1; // retExp
                         findEndofScope();
                         ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos);
@@ -414,7 +412,6 @@ public class IterateTK {
                 }
             }
         }
-
     }
 
     public static void declareLocalVarandArr(VarSymbol varSymbol) {
@@ -575,6 +572,46 @@ public class IterateTK {
         while (!getNowToken().str.equals(";")) {
             pos++;
         }
+    }
+
+    public static void ProcessIf() {
+        ArrayList<Token> condExp = new ArrayList<>();
+
+        int level = 1;
+        int begin = pos;
+        while (pos < token.size()) {
+            Token t = getNowToken();
+            if (t.str.equals("(")) {
+                level++;
+            } else if (t.str.equals(")")) {
+                level--;
+                if (level == 0) {
+                    condExp = utils.GetExpfromIndex(begin, pos - 1);
+                    break;
+                }
+            }
+        }
+        boolean haveElse = utils.JudgeElseBlock(pos);
+
+        utils.calOrExp(condExp, haveElse);
+        CodeGenerater.CreatIfBodyCode(CodeGenerater.thenLabels.pop());
+
+        stepIntoChildSymTab();
+
+        boolean sigleLine = false;
+        pos++;
+        if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
+            sigleLine = true;
+        }
+        FuncBody(-1); // FIXME if单句
+
+        if (haveElse) {
+            CodeGenerater.CreatIfBodyCode(CodeGenerater.elseLabels.pop());
+            FuncBody(-1);
+            pos++;
+        }
+
+        CodeGenerater.CreatIfBodyCode(CodeGenerater.endLabels.pop());
     }
 
 }

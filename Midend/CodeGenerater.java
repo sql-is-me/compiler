@@ -4,7 +4,12 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Stack;
 
+import Frontend.Pair;
 import Midend.Operands.ConstOp;
 import Midend.Operands.Operands;
 import Midend.Operands.RegOp;
@@ -29,6 +34,10 @@ public class CodeGenerater {
         } else {
             llcode.add(code + "\n");
         }
+    }
+
+    public static void addLabelCode(String code) {
+        llcode.add(code + "\n");
     }
 
     /**
@@ -438,6 +447,23 @@ public class CodeGenerater {
         }
     }
 
+    public static Integer CreatTransi32toi1Code(Operands operands) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+
+        sb.append("%" + retRegNO + " = icmp ne i32 ");
+
+        if (operands instanceof ConstOp) {
+            sb.append(((ConstOp) operands).value);
+        } else {
+            sb.append("%" + ((RegOp) operands).regNo);
+        }
+
+        sb.append(", 0");
+
+        return retRegNO;
+    }
+
     public static void CreatFuncHeadCode(FuncSymbol funcSymbol) {
         StringBuilder sb = new StringBuilder();
         sb.append("define dso_local ");
@@ -539,7 +565,126 @@ public class CodeGenerater {
 
         addCodeatLast(sb.toString());
     }
+    /*
+     * —————————————————————————————————————————————————————————————————————————————
+     */
 
+    static Integer ifCount = 0;
+    static Integer count = 0;
+    static Deque<String> Tdeque = new LinkedList<>();
+    static Deque<String> Fdeque = new LinkedList<>();
+
+    public static Stack<String> thenLabels = new Stack<>();
+    public static Stack<String> elseLabels = new Stack<>();
+    public static Stack<String> endLabels = new Stack<>();
+
+    public static String getLabelNow() {
+        return "label." + count++;
+    }
+
+    public static void CreatIfFirstLabelCode(Boolean haveElse) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("br label " + ifCount);
+        addCodeatLast(sb.toString());
+
+        sb = new StringBuilder();
+        sb.append("if." + ifCount++ + ":");
+        addLabelCode(sb.toString());
+
+        thenLabels.push("then." + ifCount);
+        if (haveElse) {
+            elseLabels.push("else." + ifCount);
+        }
+        endLabels.push("end." + ifCount);
+    }
+
+    public static Integer CreatcalCondExp(boolean leftisConst, Integer left, boolean rightisConst, Integer right,
+            String op) {// %cmp = icmp eq i32 %a, %b ne
+        StringBuilder sb = new StringBuilder();
+        int retReg = utils.getRegNum();
+        sb.append("%" + retReg + " = icmp ");
+
+        if (op.equals("==")) {
+            sb.append("eq ");
+        } else if (op.equals("!=")) {
+            sb.append("ne ");
+        } else if (op.equals("<")) {
+            sb.append("slt ");
+        } else if (op.equals(">")) {
+            sb.append("sgt ");
+        } else if (op.equals("<=")) {
+            sb.append("sle ");
+        } else if (op.equals(">=")) {
+            sb.append("sge ");
+        }
+
+        if (leftisConst) {
+            sb.append("i32 " + left + ", ");
+        } else {
+            sb.append("i32 %" + left + ", ");
+        }
+
+        if (rightisConst) {
+            sb.append(right);
+        } else {
+            sb.append("%" + right);
+        }
+
+        addCodeatLast(sb.toString());
+
+        retReg = utils.getRegNum();
+        sb = new StringBuilder();
+        sb.append("%" + retReg + " = zext i1 %" + (retReg - 1) + " to i32");
+        addCodeatLast(sb.toString());
+
+        return retReg;
+    }
+
+    public static Pair CreatShortJumpCode_And(int i1Reg, String trueDest, String falseDest) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("br i1 %" + i1Reg + ", label %");
+
+        if (falseDest == null) {
+            falseDest = getLabelNow();
+        }
+        if (trueDest == null) {
+            trueDest = getLabelNow();
+
+            sb.append(trueDest + ", label %" + falseDest + '\n');
+            addCodeatLast(sb.toString());
+
+            sb = new StringBuilder();
+            sb.append(trueDest + ":");
+            addLabelCode(sb.toString());
+        } else {
+            sb.append(trueDest + ", label %" + falseDest + '\n');
+            addCodeatLast(sb.toString());
+        }
+
+        return new Pair(trueDest, falseDest);
+    }
+
+    public static void CreatShortJumpCode_Or(String falseDest) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(falseDest + ":");
+        addLabelCode(sb.toString());
+
+        if (falseDest != null) { // 跳转到else或者end
+            sb = new StringBuilder();
+            sb.append("br label %" + falseDest);
+            addCodeatLast(sb.toString());
+        }
+    }
+
+    public static void CreatIfBodyCode(String label) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(label + ":");
+        addLabelCode(sb.toString());
+    }
     /*
      * —————————————————————————————————————————————————————————————————————————————
      */

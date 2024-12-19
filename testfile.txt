@@ -1,8 +1,23 @@
-int a = 1;
-int b = a + 1;
-int c = b + func(a);
+char int2char(int x) {
+    return x + '0';
+}
+int char2int(char y) {
+    return y - '0';
+}
+int add(int a, int b) {
+    return (a + b);
+}
 
-int fun(int a)
-{
-    return 1;
+int main() {
+    int a, b, c;
+    a = getint();
+    b = getint();
+    c = -a + b + add(a, b);
+    printf("%d\n", c);
+    char d, e;
+    d = getchar();
+    a = char2int(d);
+    e = int2char(a);
+    printf("%c-%d-%c\n", d, a, e);
+    return 0;
 }

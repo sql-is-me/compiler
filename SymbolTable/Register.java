@@ -33,6 +33,7 @@ public class Register {
             this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
             this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
         } else { // 不定长数组（函数参数）
+            this.size = -1;
             this.valueReg = null;
             this.constValue = null;
         }
@@ -56,8 +57,6 @@ public class Register {
                     this.pointerReg = CodeGenerater.CreatAllocCode(size, type, true).toString();
                 } else {
                     this.pointerReg = CodeGenerater.CreatAllocCode(size, type, false).toString();
-                    this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg)
-                            .toString();
                 }
             } else {
                 Integer sReg = CodeGenerater.CreatAllocCode(0, type, false);
@@ -79,14 +78,18 @@ public class Register {
     public Pair getValueReg(boolean isReg, int pos) {
         if (size == -1) { // 函数参数的变长数组，无法确定len，故每次getReg直接进行代码生成，获取sReg和vReg
             Integer sReg = CodeGenerater.CreatGetElementPtrCode_sReg(type, isReg, pos, stackReg);
-            Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+            Integer vReg = CodeGenerater.CreatLoadCode(type, false, sReg.toString());
 
             return new Pair(false, vReg);
         }
 
-        if (isReg) { // pos为寄存器时
+        if (isArray && stackReg == "-1") { // 数组未分配栈寄存器，先分配
+            this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg).toString();
+        }
+
+        if (isReg) { // pos为寄存器时,一定是数组
             Integer sReg = CodeGenerater.CreatGetElementPtrCode_sReg(type, isReg, pos, stackReg);
-            Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, sReg.toString());
+            Integer vReg = CodeGenerater.CreatLoadCode(type, false, sReg.toString());
 
             return new Pair(false, vReg);
         } else { // pos 为常值
@@ -95,7 +98,14 @@ public class Register {
             } else if (haveValueReg(pos)) { // 获取值寄存器
                 return new Pair(false, valueReg.get(pos));
             } else {
-                Integer vReg = CodeGenerater.CreatLoadCode(type, isGlobal, stackReg);
+                Integer vReg;
+                if (isArray) {
+                    Integer sReg = CodeGenerater.CreatGetElementPtrCode_sReg(type, isReg, pos, stackReg);
+                    vReg = CodeGenerater.CreatLoadCode(type, false, sReg.toString());
+                } else {
+                    vReg = CodeGenerater.CreatLoadCode(type, isGlobal, stackReg);
+                }
+
                 valueReg.set(pos, vReg);
                 return new Pair(false, vReg);
             }
@@ -174,5 +184,13 @@ public class Register {
 
     public void initStoreArrReg(String sReg) { // 不会出现将数组指针赋给数组的情况
         CodeGenerater.CreatStoreCode_Arr(type, Integer.parseInt(sReg), isGlobal, pointerReg);
+        stackReg = CodeGenerater.CreatLoadCode_initArrParam(type, isGlobal, pointerReg).toString(); // 初始化数组参数(将数组指针赋给数组)
+    }
+
+    public String getArrPointer() {
+        if (stackReg == "-1") { // 数组未分配栈寄存器，先分配
+            stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg).toString();
+        }
+        return stackReg;
     }
 }

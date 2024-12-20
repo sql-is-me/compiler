@@ -99,8 +99,9 @@ public class CodeGenerater {
         if (needInitializer) {
             sb.append("zeroinitializer");
         } else {
+            sb.append("[");
             for (Integer v : value) {
-                sb.append("[i" + type + " " + v + ", ");
+                sb.append("i" + type + " " + v + ", ");
             }
 
             sb.deleteCharAt(sb.length() - 1);// 删除最后一个" "
@@ -122,7 +123,7 @@ public class CodeGenerater {
      */
     public static String CreatGloStr(String str, int length) {
         StringBuilder sb = new StringBuilder();
-        length++;
+
         String name = "@.str." + strNum++;
 
         sb.append(name + " = private unnamed_addr constant [");
@@ -235,9 +236,9 @@ public class CodeGenerater {
             } else if (funcSymbol.paramTypes.get(i) == VarTypes.Char) {
                 sb.append("i8 ");
             } else if (funcSymbol.paramTypes.get(i) == VarTypes.IntArray) {
-                sb.append("i32* %");
+                sb.append("i32* ");
             } else if (funcSymbol.paramTypes.get(i) == VarTypes.CharArray) {
-                sb.append("i8* %");
+                sb.append("i8* ");
             }
 
             if (t instanceof ConstOp) {
@@ -313,6 +314,20 @@ public class CodeGenerater {
             } else {
                 sb.append("%" + retRegNO + " = load i8, i8* %" + sReg);
             }
+        }
+
+        addCodeatLast(sb.toString());
+        return retRegNO;
+    }
+
+    public static Integer CreatLoadCode_initArrParam(Integer type, Boolean isGlobal, String pReg) {
+        StringBuilder sb = new StringBuilder();
+        Integer retRegNO = utils.getRegNum();
+
+        if (type == 32) {
+            sb.append("%" + retRegNO + " = load i32*, i32** %" + pReg);
+        } else {
+            sb.append("%" + retRegNO + " = load i8*, i8** %" + pReg);
         }
 
         addCodeatLast(sb.toString());
@@ -501,9 +516,9 @@ public class CodeGenerater {
             } else if (vt == VarTypes.Char) {
                 sb.append("i8 ");
             } else if (vt == VarTypes.IntArray) {
-                sb.append("i32* %");
+                sb.append("i32* ");
             } else if (vt == VarTypes.CharArray) {
-                sb.append("i8* %");
+                sb.append("i8* ");
             }
 
             sb.append("%" + utils.getRegNum());
@@ -571,6 +586,7 @@ public class CodeGenerater {
             CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), false, false));
             return;
         } else {
+            length++;
             String name = CreatGloStr(str, length);
             sb.append("call void @putstr(i8* getelementptr inbounds ([" + length
                     + " x i8], [" + length + " x i8]* " + name + ", i64 0, i64 0))");

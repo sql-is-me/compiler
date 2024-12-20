@@ -97,6 +97,10 @@ public class utils {
                         ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
                         Operands tempOp = calExp(posExp, isGlobalInit);
                         temp = createNewVarOp(varSymbol, tempOp, needNegative, needNot);
+                    } else if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
+                            || varSymbol.type.equals(VarTypes.ConstIntArray)
+                            || varSymbol.type.equals(VarTypes.ConstCharArray)) { // 传递指针，至pos为-1
+                        temp = createNewVarOp(varSymbol, new ConstOp(-1, false, false), needNegative, needNot);
                     } else { // 变量处理，pos返回 0 ConstOp即可
                         temp = createNewVarOp(varSymbol, new ConstOp(0, false, false), needNegative, needNot);
                     }
@@ -365,12 +369,18 @@ public class utils {
             throw new RuntimeException("未插入寄存器表");
         }
 
-        Pair ret = reg.getValueReg(posisReg, pos);
-        if ((Boolean) ret.a.equals(true)) { // 拿到的是一个常值
-            return new ConstOp((Integer) ret.b, varOp.needNegative, varOp.needNot);
-        } else { // 拿到了值寄存器
-            return new RegOp((Integer) ret.b, varOp.type, varOp.isArray, varOp.needNegative, varOp.needNot);
+        if (pos == -1) { // 传递数组指针作为参数
+            String sReg = reg.getArrPointer();
+            return new RegOp(Integer.valueOf(sReg), varOp.type, varOp.isArray, varOp.needNegative, varOp.needNot);
+        } else {
+            Pair ret = reg.getValueReg(posisReg, pos);
+            if ((Boolean) ret.a.equals(true)) { // 拿到的是一个常值
+                return new ConstOp((Integer) ret.b, varOp.needNegative, varOp.needNot);
+            } else { // 拿到了值寄存器
+                return new RegOp((Integer) ret.b, varOp.type, varOp.isArray, varOp.needNegative, varOp.needNot);
+            }
         }
+
     }
 
     /**

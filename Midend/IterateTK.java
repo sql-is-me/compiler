@@ -204,6 +204,12 @@ public class IterateTK {
         Token t = getNowToken();
 
         while (!t.str.equals(";") && !(t.str.equals(",") && level == 0)) {
+            if (t.str.equals("(")) {
+                level++;
+            } else if (t.str.equals(")")) {
+                level--;
+            }
+
             initExp.add(getPosToken(pos));
 
             pos++;
@@ -215,16 +221,15 @@ public class IterateTK {
 
     public static ArrayList<ArrayList<Token>> getArrInitExp() {
         ArrayList<ArrayList<Token>> initExps = new ArrayList<>();
-        Token t = getNowToken();
         boolean isInfunc = false;
         int level = 0;
 
-        while (!t.str.equals("}")) {
+        while (!getNowToken().str.equals("}")) {
             ArrayList<Token> initExp = new ArrayList<>();
 
-            while (!t.str.equals(",") || isInfunc) {
-                if (t.tk.equals("IDENFR") && !isInfunc) {
-                    Symbol s = utils.findSymbol(t.str);
+            while (!getNowToken().str.equals(",") && !isInfunc) {
+                if (getNowToken().tk.equals("IDENFR") && !isInfunc) {
+                    Symbol s = utils.findSymbol(getNowToken().str);
                     if (s instanceof FuncSymbol) {
                         isInfunc = true;
                         level = 0;
@@ -232,9 +237,9 @@ public class IterateTK {
                 }
 
                 if (isInfunc) {
-                    if (t.str.equals("(") && isInfunc) {
+                    if (getNowToken().str.equals("(") && isInfunc) {
                         level++;
-                    } else if (t.str.equals(")") && isInfunc) {
+                    } else if (getNowToken().str.equals(")") && isInfunc) {
                         level--;
                         if (level == 0) {
                             isInfunc = false;
@@ -242,12 +247,14 @@ public class IterateTK {
                     }
                 }
 
-                if (!isInfunc && (t.str.equals(",") || t.str.equals("}"))) {
+                if (!isInfunc && (getNowToken().str.equals(",") || getNowToken().str.equals("}"))) {
                     break;
                 }
-                initExp.add(t);
+                initExp.add(getNowToken());
                 pos++;
-                t = getNowToken();
+            }
+            if (getNowToken().str.equals(",")) {
+                pos++;
             }
             initExps.add(initExp);
         }
@@ -427,7 +434,7 @@ public class IterateTK {
         Register reg = utils.addSymboltoRegMap(varSymbol);
 
         pos = varSymbol.offset;
-        if (!getNowToken().str.equals("[")) { // 非数组
+        if (!getPosToken(pos + 1).str.equals("[")) { // 非数组
             Operands operands;
             pos++;
 
@@ -443,7 +450,8 @@ public class IterateTK {
                 reg.storeReg(true, 0, operands);
             }
 
-        } else if (getNowToken().str.equals("[")) { // 数组
+        } else if (getPosToken(pos + 1).str.equals("[")) { // 数组
+            pos += 2;
             pos = (Integer) utils.GetExpofSizeorPos(pos).a;
 
             if (getNowToken().str.equals("=")) { // 有初始化
@@ -811,6 +819,23 @@ public class IterateTK {
                 } else if (t.tk.equals("CONTINUETK")) {
                     pos++;// ;
                     CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
+                } else if (t.tk.equals("RETURNTK")) {
+                    if (retType == 0) {
+                        CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
+                    } else {
+                        int begin = pos + 1; // retExp
+                        findEndofScope();
+                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos - 1);
+                        Operands operands = utils.calExp(retExp, false);
+
+                        operands = utils.JudgeOperandsType(operands, retType);
+
+                        if (operands instanceof ConstOp) {
+                            CodeGenerater.CreatReturnCode(retType, true, ((ConstOp) operands).value);
+                        } else {
+                            CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
+                        }
+                    }
                 } else if (t.tk.equals("RETURNTK")) {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void

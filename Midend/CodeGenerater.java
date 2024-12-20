@@ -122,16 +122,16 @@ public class CodeGenerater {
      */
     public static String CreatGloStr(String str, int length) {
         StringBuilder sb = new StringBuilder();
-
+        length++;
         String name = "@.str." + strNum++;
 
         sb.append(name + " = private unnamed_addr constant [");
 
         sb.append(length + " x i8] c\"");
 
-        sb.append(str + "\"");
+        sb.append(str + "\\00\"");
 
-        addCodeatLast(sb.toString());
+        addCodeatFirst(sb.toString());
         return name;
     }
 
@@ -247,11 +247,11 @@ public class CodeGenerater {
 
             if (i != params.size() - 1) {
                 sb.append(", ");
-            } else {
-                sb.append(")");
             }
         }
-
+        sb.append(")");
+        
+        addCodeatLast(sb.toString());
         return retRegNO;
     }
 
@@ -505,10 +505,9 @@ public class CodeGenerater {
 
             if (i < funcSymbol.paramTypes.size() - 1) {
                 sb.append(", ");
-            } else {
-                sb.append(") {");
             }
         }
+        sb.append(") {");
 
         addCodeatLast(sb.toString());
         utils.setNeedTabTrue();
@@ -569,7 +568,7 @@ public class CodeGenerater {
         } else {
             String name = CreatGloStr(str, length);
             sb.append("call void @putstr(i8* getelementptr inbounds ([" + length
-                    + " x i8], [" + length + " x i8]* " + name + ", i64 0, i64 0)");
+                    + " x i8], [" + length + " x i8]* " + name + ", i64 0, i64 0))");
         }
 
         addCodeatLast(sb.toString());

@@ -10,8 +10,10 @@ int add(int a, int b) {
 
 int main() {
     int a, b, c;
-    a = getint();
-    b = getint();
+    a = getchar();
+    printf("%c\n", a);
+    b = getchar();
+    printf("%c\n", b);
     c = -a + b + add(a, b);
     printf("%d\n", c);
     char d, e;

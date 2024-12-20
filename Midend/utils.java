@@ -41,13 +41,19 @@ public class utils {
 
         Boolean needNegative = false;
         Boolean needNot = false;
-        Character op = ' ';
+        Character op = '+';
 
         for (int i = 0; i < exp.size(); i++) {
             Token t = exp.get(i);
 
             if (t.tk.equals("INTCON") || t.tk.equals("CHRCON")) { // 常量处理
-                Operands temp = new ConstOp((int) t.str.charAt(0), needNegative, needNot);
+                Operands temp;
+                if (t.tk.equals("INTCON"))
+                    temp = new ConstOp(Integer.parseInt(t.str), needNegative, needNot);
+                else {
+                    temp = new ConstOp((int) t.str.charAt(1), needNegative, needNot);
+                }
+
                 operands.addLast(temp);
 
                 op = ' ';
@@ -66,13 +72,13 @@ public class utils {
                     op = t.str.charAt(0);
                     ops.addLast(op);
                 }
-            } else if (t.tk.equals("IDENFR")) { // 变量处理
+            } else if (t.tk.equals("IDENFR") || t.tk.equals("GETINTTK") || t.tk.equals("GETCHARTK")) { // 变量处理
                 Symbol symbol = findSymbol(t.str);
 
                 if (symbol instanceof VarSymbol) {
                     VarSymbol varSymbol = (VarSymbol) symbol;
                     Operands temp;
-                    if (exp.get(i + 1).str.equals("[")) { // 数组位置处理
+                    if (i < exp.size() - 1 && exp.get(i + 1).str.equals("[")) { // 数组位置处理
                         i += 2;// [
 
                         int level = 1;
@@ -90,9 +96,9 @@ public class utils {
                         }
                         ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
                         Operands tempOp = calExp(posExp, isGlobalInit);
-                        temp = new VarOp(varSymbol, tempOp, needNegative, needNot);
-                    } else { // 变量处理，pos返回 -1 ConstOp即可
-                        temp = new VarOp(varSymbol, new ConstOp(-1, false, false), needNegative, needNot);
+                        temp = createNewVarOp(varSymbol, tempOp, needNegative, needNot);
+                    } else { // 变量处理，pos返回 0 ConstOp即可
+                        temp = createNewVarOp(varSymbol, new ConstOp(0, false, false), needNegative, needNot);
                     }
 
                     operands.addLast(temp);
@@ -121,7 +127,13 @@ public class utils {
                         paramsOps.add(paramOp);
                     }
 
-                    Operands temp = new FuncOp(funcSymbol, paramsOps, needNegative, needNot);
+                    Integer type = 0;
+                    if (funcSymbol.returnType.equals(FuncTypes.IntFunc)) {
+                        type = 32;
+                    } else {
+                        type = 8;
+                    }
+                    Operands temp = new FuncOp(funcSymbol, type, paramsOps, needNegative, needNot);
                     operands.addLast(temp);
                 }
 
@@ -365,12 +377,20 @@ public class utils {
      */
     public static Operands handleFuncOpInExp(FuncOp funcOp) {
         Integer retReg = CodeGenerater.CreatCallFunc(funcOp.funcSymbol, funcOp.params);
+
+        cleanAllReg();
         if (funcOp.funcSymbol.returnType.equals(FuncTypes.IntFunc)) {
             return new RegOp(retReg, 32, false, funcOp.needNegative, funcOp.needNot);
         } else if (funcOp.funcSymbol.returnType.equals(FuncTypes.CharFunc)) {
             return new RegOp(retReg, 8, false, funcOp.needNegative, funcOp.needNot);
         } else { // void
             return null;
+        }
+    }
+
+    public static void cleanAllReg() {
+        for (Register reg : IterateTK.cur_symTab.regMap.values()) {
+            reg.initAllConstandValueReg();
         }
     }
 
@@ -430,7 +450,7 @@ public class utils {
         int begin = 0, count = 0;
 
         for (int i = 0; i < subexp.size() && count < paramNum - 1; i++) { // 前面paramNum-1个参数
-            if (subexp.get(i).tk.equals(",")) {
+            if (subexp.get(i).str.equals(",")) {
                 count++;
                 params.add(GetSubExpfromIndex(begin, i - 1, subexp));
                 begin = i + 1;
@@ -727,5 +747,23 @@ public class utils {
         }
 
         return left;
+    }
+
+    public static Operands createNewVarOp(VarSymbol varSymbol, Operands pos, boolean needNegative, boolean needNot) {
+        Integer type = 0;
+        Boolean isArray = false;
+        if (varSymbol.type.equals(VarTypes.Int) || varSymbol.type.equals(VarTypes.ConstInt)) {
+            type = 32;
+        } else if (varSymbol.type.equals(VarTypes.Char) || varSymbol.type.equals(VarTypes.ConstChar)) {
+            type = 8;
+        } else if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.ConstIntArray)) {
+            type = 32;
+            isArray = true;
+        } else if (varSymbol.type.equals(VarTypes.CharArray) || varSymbol.type.equals(VarTypes.ConstCharArray)) {
+            type = 8;
+            isArray = true;
+        }
+
+        return new VarOp(varSymbol, type, isArray, pos, needNegative, needNot);
     }
 }

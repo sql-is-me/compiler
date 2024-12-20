@@ -141,7 +141,7 @@ public class IterateTK {
 
             if (getNowToken().str.equals("=")) {
                 pos++;
-                ArrayList<Token> initExp = getVarInitExp(pos);
+                ArrayList<Token> initExp = getVarInitExp();
                 ConstOp constOp = (ConstOp) utils.calExp(initExp, true);
                 value = constOp.value;
             } else { // ;
@@ -172,14 +172,14 @@ public class IterateTK {
 
                 if (getNowToken().str.equals("{")) { // 数组初始化
                     pos++;
-                    ArrayList<ArrayList<Token>> initExps = getArrInitExp(pos);
+                    ArrayList<ArrayList<Token>> initExps = getArrInitExp();
                     int i = 0;
                     for (ArrayList<Token> initExp : initExps) {
                         ConstOp constOp = (ConstOp) utils.calExp(initExp, true);
                         values.set(i, constOp.value);
                         i++;
                     }
-                } else { // 字符串常量
+                } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
                     for (int i = 0; i < strConst.length(); i++) {
                         values.set(i, (int) strConst.charAt(i));
@@ -198,23 +198,24 @@ public class IterateTK {
         }
     }
 
-    public static ArrayList<Token> getVarInitExp(Integer pos) {
+    public static ArrayList<Token> getVarInitExp() { // FIXME 多参数的情况下需要确定 ，
         ArrayList<Token> initExp = new ArrayList<>();
-        Token t = getPosToken(pos);
+        int level = 0;
+        Token t = getNowToken();
 
-        while (!t.str.equals(";")) {
+        while (!t.str.equals(";") && !(t.str.equals(",") && level == 0)) {
             initExp.add(getPosToken(pos));
 
             pos++;
-            t = getPosToken(pos);
+            t = getNowToken();
         }
 
         return initExp;
     }
 
-    public static ArrayList<ArrayList<Token>> getArrInitExp(Integer pos) {
+    public static ArrayList<ArrayList<Token>> getArrInitExp() {
         ArrayList<ArrayList<Token>> initExps = new ArrayList<>();
-        Token t = getPosToken(pos);
+        Token t = getNowToken();
         boolean isInfunc = false;
         int level = 0;
 
@@ -246,10 +247,11 @@ public class IterateTK {
                 }
                 initExp.add(t);
                 pos++;
-                t = getPosToken(pos);
+                t = getNowToken();
             }
             initExps.add(initExp);
         }
+        pos++; // }
         return initExps;
     }
 
@@ -259,7 +261,11 @@ public class IterateTK {
 
         utils.getRegNum(); // 跳一个寄存器
         initFParams(funcSymbol.paramNumber); // 初始化分配
-        pos = funcSymbol.offset + 1; // 跳到{ 的下一个Token
+        if (funcSymbol.name.equals("main")) {
+            pos += 5; // 跳到{ 的下一个Token;
+        } else {
+            pos = funcSymbol.offset + 1; // 跳到{ 的下一个Token
+        }
 
         int retType;
         if (funcSymbol.returnType == FuncTypes.CharFunc) {
@@ -273,7 +279,6 @@ public class IterateTK {
         FuncBody(retType);
 
         CodeGenerater.CreatFuncEndCode();
-        stepOutfromChildSymTab();
     }
 
     public static void initFParams(int funcParamsCount) {
@@ -289,7 +294,7 @@ public class IterateTK {
                 if (reg.isArray) {
                     reg.initStoreArrReg(i.toString());
                 } else {
-                    reg.storeReg(true, 0, false, i);
+                    reg.storeReg(true, 0, new RegOp(i, reg.type, false, false, false));
                 }
             }
 
@@ -321,12 +326,22 @@ public class IterateTK {
                     t = getNowToken();
                     VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
+                    while (getNowToken().str.equals(",")) {
+                        pos++;
+                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        declareLocalVarandArr(varSymbol);
+                    }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("CONSTTK")) { // 常量声明
                     pos += 2; // identifier
                     t = getNowToken();
                     VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
+                    while (getNowToken().str.equals(",")) {
+                        pos++;
+                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        declareLocalVarandArr(varSymbol);
+                    }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("PRINTFTK")) {
                     pos += 2; // ( strConst
@@ -341,28 +356,32 @@ public class IterateTK {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
                     } else {
-
                         int begin = pos + 1; // retExp
                         findEndofScope();
-                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos);
+                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos - 1);
                         Operands operands = utils.calExp(retExp, false);
 
                         operands = utils.JudgeOperandsType(operands, retType);
 
                         if (operands instanceof ConstOp) {
-                            CodeGenerater.CreatReturnCode(retType, false, ((ConstOp) operands).value);
+                            CodeGenerater.CreatReturnCode(retType, true, ((ConstOp) operands).value);
                         } else {
                             CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
                         }
                     }
                 } else { // LVal '=' Exp ';' && [Exp] ';'
+                    int begin = pos;
                     int assignPos = 0;
                     ArrayList<Token> exp = new ArrayList<>();
-                    while (!t.str.equals(";")) {
+                    while (true) {
                         t = getNowToken();
 
+                        if (t.str.equals(";")) {
+                            break;
+                        }
+
                         if (t.str.equals("=")) {
-                            assignPos = pos;
+                            assignPos = pos - begin;
                         }
                         exp.add(t);
                         pos++;
@@ -371,8 +390,8 @@ public class IterateTK {
                     if (assignPos == 0) { // 单Exp
                         utils.calExp(exp, false); // 计算即可，不需要做额外处理
                     } else {
-                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos, exp);
-                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos, exp.size(), exp);
+                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos - 1, exp);
+                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos + 1, exp.size() - 1, exp);
                         Operands operands = utils.calExp(Exp, false);
 
                         VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
@@ -382,33 +401,18 @@ public class IterateTK {
                             ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
                             Operands posOp = utils.calExp(posExp, false);
 
-                            int posV, vORvReg;
-                            boolean posisConst = false, valueIsConst = false;
+                            int posV;
+                            boolean posisConst = false;
                             if (posOp instanceof ConstOp) {
                                 posisConst = true;
                                 posV = ((ConstOp) posOp).value;
                             } else {
                                 posV = ((RegOp) posOp).regNo;
                             }
-                            if (operands instanceof ConstOp) {
-                                valueIsConst = true;
-                                vORvReg = ((ConstOp) operands).value;
-                            } else {
-                                vORvReg = ((RegOp) operands).regNo;
-                            }
 
-                            reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+                            reg.storeReg(posisConst, posV, operands);
                         } else { // 变量赋值
-                            int vORvReg;
-                            boolean valueIsConst = false;
-                            if (operands instanceof ConstOp) {
-                                valueIsConst = true;
-                                vORvReg = ((ConstOp) operands).value;
-                            } else {
-                                vORvReg = ((RegOp) operands).regNo;
-                            }
-
-                            reg.storeReg(true, 0, valueIsConst, vORvReg);
+                            reg.storeReg(true, 0, operands);
                         }
                     }
                 }
@@ -426,30 +430,17 @@ public class IterateTK {
 
             if (getNowToken().str.equals("=")) {// 有初始赋值
                 pos++;
-                ArrayList<Token> initExp = getVarInitExp(pos);
+                ArrayList<Token> initExp = getVarInitExp();
                 operands = utils.calExp(initExp, false);
-            } else { // ; 无初始赋值
+            } else { // ; 无初始赋值 or,需要再次进行
                 operands = null;
             }
 
             if (operands != null) { // 有初始赋值
-                boolean isConst;
-                int valueORvReg;
-
-                if (operands instanceof ConstOp) {
-                    valueORvReg = ((ConstOp) operands).value;
-                    isConst = true;
-                } else {
-                    operands = utils.JudgeOperandsType(operands, reg.type);
-
-                    valueORvReg = ((RegOp) operands).regNo;
-                    isConst = false;
-                }
-
-                reg.storeReg(true, 0, isConst, valueORvReg);
+                reg.storeReg(true, 0, operands);
             }
 
-        } else { // 数组
+        } else if (getNowToken().str.equals("[")) { // 数组
             pos = (Integer) utils.GetExpofSizeorPos(pos).a;
 
             if (getNowToken().str.equals("=")) { // 有初始化
@@ -457,30 +448,19 @@ public class IterateTK {
 
                 if (getNowToken().str.equals("{")) { // 数组初始化
                     pos++;
-                    ArrayList<ArrayList<Token>> initExps = getArrInitExp(pos);
+                    ArrayList<ArrayList<Token>> initExps = getArrInitExp();
                     int i = 0;
                     for (ArrayList<Token> initExp : initExps) {
-                        Operands operands = utils.calExp(initExp, true);
-                        if (operands instanceof RegOp) {
-                            if (varSymbol.type.equals(VarTypes.IntArray)
-                                    || varSymbol.type.equals(VarTypes.ConstIntArray)) { // 类型判断
-                                operands = utils.JudgeOperandsType(operands, 32);
-                            } else if (varSymbol.type.equals(VarTypes.CharArray)
-                                    || varSymbol.type.equals(VarTypes.ConstCharArray)) {
-                                operands = utils.JudgeOperandsType(operands, 8);
-                            }
+                        Operands operands = utils.calExp(initExp, false);
 
-                            reg.storeReg(true, i, false, ((RegOp) operands).regNo);
-                        } else {
-                            reg.storeReg(true, i, true, ((ConstOp) operands).value);
-                        }
+                        reg.storeReg(true, i, operands);
 
                         i++;
                     }
-                } else { // 字符串常量
+                } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
                     for (int i = 0; i < strConst.length(); i++) {
-                        reg.storeReg(true, i, true, (int) strConst.charAt(i));
+                        reg.storeReg(true, i, new ConstOp((int) strConst.charAt(i), false, false));
                     }
                 }
             } else {
@@ -496,7 +476,7 @@ public class IterateTK {
         int begin = pos + 2; // , Exp
         findEndofScope();
 
-        ArrayList<Token> printfExp = utils.GetExpfromIndex(begin, pos - 1);
+        ArrayList<Token> printfExp = utils.GetExpfromIndex(begin, pos - 2);
         ArrayList<Operands> paramsOperands = calPrintfExp(printfExp);
 
         StringBuilder sb = new StringBuilder();
@@ -504,11 +484,16 @@ public class IterateTK {
         int count = 0;
         int type;
 
-        for (int i = 0; i < str.length(); i++) {
+        for (int i = 1; i < str.length() - 1; i++) {
             char currentChar = str.charAt(i);
 
             if (escaping) { // 转义中
-                sb.append(currentChar);
+                if (currentChar == 'n') {
+                    sb.append("\n");
+                } else {
+                    sb.append(currentChar);
+                }
+
                 escaping = false;
             } else if (currentChar == '\\') { // 转义字符
                 escaping = true;
@@ -522,9 +507,12 @@ public class IterateTK {
                     }
                     i++;
 
-                    CodeGenerater.CreatPrintfStringCode(sb.toString());
+                    if (sb.length() != 0) {
+                        CodeGenerater.CreatPrintfStringCode(sb.toString());
+                        sb = new StringBuilder();
+                    }
 
-                    Operands tempOp = utils.JudgeOperandsType(paramsOperands.get(count), type); // 类型转换
+                    Operands tempOp = utils.JudgeOperandsType(paramsOperands.get(count), 32); // 类型转换
                     CodeGenerater.CreatPrintfOperandsCode(type, tempOp);
                     count++;
                 } else {
@@ -534,8 +522,9 @@ public class IterateTK {
                 sb.append(currentChar);
             }
         }
-
-        CodeGenerater.CreatPrintfStringCode(sb.toString());
+        if (sb.length() != 0) {
+            CodeGenerater.CreatPrintfStringCode(sb.toString());
+        }
     }
 
     public static ArrayList<Operands> calPrintfExp(ArrayList<Token> exp) {
@@ -544,13 +533,12 @@ public class IterateTK {
         int level = 0;
 
         for (int i = 0; i < exp.size(); i++) {
-            Token t = exp.get(i);
             int begin = i;
 
-            while ((!t.str.equals(",") || level > 0)) {
-                if (t.tk.equals("(")) {
+            while ((!exp.get(i).str.equals(",") || level > 0)) {
+                if (exp.get(i).tk.equals("(")) {
                     level++;
-                } else if (t.tk.equals(")")) {
+                } else if (exp.get(i).tk.equals(")")) {
                     level--;
                 }
                 i++;
@@ -614,7 +602,7 @@ public class IterateTK {
             CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop());
             pos += 2;// } else {
             stepIntoChildSymTab();
-            FuncBody(-1);
+            StmtinForandIf(retType, singleLine);
             stepOutfromChildSymTab();
         }
 
@@ -642,33 +630,18 @@ public class IterateTK {
                 ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
                 Operands posOp = utils.calExp(posExp, false);
 
-                int posV, vORvReg;
-                boolean posisConst = false, valueIsConst = false;
+                int posV;
+                boolean posisConst = false;
                 if (posOp instanceof ConstOp) {
                     posisConst = true;
                     posV = ((ConstOp) posOp).value;
                 } else {
                     posV = ((RegOp) posOp).regNo;
                 }
-                if (operands instanceof ConstOp) {
-                    valueIsConst = true;
-                    vORvReg = ((ConstOp) operands).value;
-                } else {
-                    vORvReg = ((RegOp) operands).regNo;
-                }
 
-                reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+                reg.storeReg(posisConst, posV, operands);
             } else { // 变量赋值
-                int vORvReg;
-                boolean valueIsConst = false;
-                if (operands instanceof ConstOp) {
-                    valueIsConst = true;
-                    vORvReg = ((ConstOp) operands).value;
-                } else {
-                    vORvReg = ((RegOp) operands).regNo;
-                }
-
-                reg.storeReg(true, 0, valueIsConst, vORvReg);
+                reg.storeReg(true, 0, operands);
             }
         }
         pos++;
@@ -752,33 +725,18 @@ public class IterateTK {
                 ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
                 Operands posOp = utils.calExp(posExp, false);
 
-                int posV, vORvReg;
-                boolean posisConst = false, valueIsConst = false;
+                int posV;
+                boolean posisConst = false;
                 if (posOp instanceof ConstOp) {
                     posisConst = true;
                     posV = ((ConstOp) posOp).value;
                 } else {
                     posV = ((RegOp) posOp).regNo;
                 }
-                if (operands instanceof ConstOp) {
-                    valueIsConst = true;
-                    vORvReg = ((ConstOp) operands).value;
-                } else {
-                    vORvReg = ((RegOp) operands).regNo;
-                }
 
-                reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+                reg.storeReg(posisConst, posV, operands);
             } else { // 变量赋值
-                int vORvReg;
-                boolean valueIsConst = false;
-                if (operands instanceof ConstOp) {
-                    valueIsConst = true;
-                    vORvReg = ((ConstOp) operands).value;
-                } else {
-                    vORvReg = ((RegOp) operands).regNo;
-                }
-
-                reg.storeReg(true, 0, valueIsConst, vORvReg);
+                reg.storeReg(true, 0, operands);
             }
         }
 
@@ -812,12 +770,22 @@ public class IterateTK {
                     t = getNowToken();
                     VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
+                    while (getNowToken().str.equals(",")) {
+                        pos++;
+                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        declareLocalVarandArr(varSymbol);
+                    }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("CONSTTK")) { // 常量声明
                     pos += 2; // identifier
                     t = getNowToken();
                     VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
+                    while (getNowToken().str.equals(",")) {
+                        pos++;
+                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        declareLocalVarandArr(varSymbol);
+                    }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("PRINTFTK")) {
                     pos += 2; // ( strConst
@@ -838,28 +806,32 @@ public class IterateTK {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
                     } else {
-
                         int begin = pos + 1; // retExp
                         findEndofScope();
-                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos);
+                        ArrayList<Token> retExp = utils.GetExpfromIndex(begin, pos - 1);
                         Operands operands = utils.calExp(retExp, false);
 
                         operands = utils.JudgeOperandsType(operands, retType);
 
                         if (operands instanceof ConstOp) {
-                            CodeGenerater.CreatReturnCode(retType, false, ((ConstOp) operands).value);
+                            CodeGenerater.CreatReturnCode(retType, true, ((ConstOp) operands).value);
                         } else {
                             CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
                         }
                     }
                 } else { // LVal '=' Exp ';' && [Exp] ';'
+                    int begin = pos;
                     int assignPos = 0;
                     ArrayList<Token> exp = new ArrayList<>();
-                    while (!t.str.equals(";")) {
+                    while (true) {
                         t = getNowToken();
 
+                        if (t.str.equals(";")) {
+                            break;
+                        }
+
                         if (t.str.equals("=")) {
-                            assignPos = pos;
+                            assignPos = pos - begin;
                         }
                         exp.add(t);
                         pos++;
@@ -868,8 +840,8 @@ public class IterateTK {
                     if (assignPos == 0) { // 单Exp
                         utils.calExp(exp, false); // 计算即可，不需要做额外处理
                     } else {
-                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos, exp);
-                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos, exp.size(), exp);
+                        ArrayList<Token> LVal = utils.GetSubExpfromIndex(0, assignPos - 1, exp);
+                        ArrayList<Token> Exp = utils.GetSubExpfromIndex(assignPos + 1, exp.size() - 1, exp);
                         Operands operands = utils.calExp(Exp, false);
 
                         VarSymbol varSymbol = (VarSymbol) utils.findSymbol(LVal.get(0).str);
@@ -879,33 +851,18 @@ public class IterateTK {
                             ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
                             Operands posOp = utils.calExp(posExp, false);
 
-                            int posV, vORvReg;
-                            boolean posisConst = false, valueIsConst = false;
+                            int posV;
+                            boolean posisConst = false;
                             if (posOp instanceof ConstOp) {
                                 posisConst = true;
                                 posV = ((ConstOp) posOp).value;
                             } else {
                                 posV = ((RegOp) posOp).regNo;
                             }
-                            if (operands instanceof ConstOp) {
-                                valueIsConst = true;
-                                vORvReg = ((ConstOp) operands).value;
-                            } else {
-                                vORvReg = ((RegOp) operands).regNo;
-                            }
 
-                            reg.storeReg(posisConst, posV, valueIsConst, vORvReg);
+                            reg.storeReg(posisConst, posV, operands);
                         } else { // 变量赋值
-                            int vORvReg;
-                            boolean valueIsConst = false;
-                            if (operands instanceof ConstOp) {
-                                valueIsConst = true;
-                                vORvReg = ((ConstOp) operands).value;
-                            } else {
-                                vORvReg = ((RegOp) operands).regNo;
-                            }
-
-                            reg.storeReg(true, 0, valueIsConst, vORvReg);
+                            reg.storeReg(true, 0, operands);
                         }
                     }
                 }

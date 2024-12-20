@@ -105,13 +105,19 @@ public class Tools {
 
         Boolean needNegative = false;
         int temp = 0;
-        Character op = ' ';
+        Character op = '+';
 
         for (int i = 0; i < exp.size(); i++) {
             Token t = exp.get(i);
 
-            if (t.tk.equals("INTCON")) {
-                temp = NegativeTool(needNegative, Integer.valueOf(t.str));
+            if (t.tk.equals("INTCON") || t.tk.equals("CHRCON")) {
+                Integer v = 0;
+                if (t.tk.equals("INTCON")) {
+                    v = Integer.valueOf(t.str);
+                } else {
+                    v = (int) t.str.charAt(1);
+                }
+                temp = NegativeTool(needNegative, v);
                 nums.addLast(temp);
 
                 op = ' ';

@@ -5,5 +5,10 @@
 *.zip
 *.c
 *.ll
+*.bat
+*.bc
+*.exe
+libsysy.c
+libsysy.h
 
 !testfile.txt

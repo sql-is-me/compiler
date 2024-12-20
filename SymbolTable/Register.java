@@ -6,6 +6,9 @@ import java.util.List;
 
 import Frontend.Pair;
 import Midend.CodeGenerater;
+import Midend.Operands.ConstOp;
+import Midend.Operands.Operands;
+import Midend.Operands.RegOp;
 
 public class Register {
     public String pointerReg; // 数组指针寄存器
@@ -19,9 +22,11 @@ public class Register {
     public int size; // 数组长
 
     public Register(VarSymbol varSymbol, boolean isArray, int type) {
-        if (size != -1) { // 定长数组
-            if (size == 0) { // 变量初始化List为1即可
-                size = 1;
+        if (varSymbol.size != -1) { // 定长数组
+            if (varSymbol.size == 0) { // 变量初始化List为1即可
+                this.size = 1;
+            } else {
+                this.size = varSymbol.size;
             }
 
             this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
@@ -35,7 +40,6 @@ public class Register {
         this.stackReg = "-1";
 
         this.type = type;
-        this.size = varSymbol.size;
         this.isArray = isArray;
         this.isGlobal = varSymbol.isGlobal;
 
@@ -117,7 +121,19 @@ public class Register {
      * @param vORvReg
      * @param isArray
      */
-    public void storeReg(boolean posisConst, int pos, boolean isConst, int vORvReg) {
+    public void storeReg(boolean posisConst, int pos, Operands vOperand) {
+        Boolean isConst;
+        int vORvReg;
+        vOperand = Midend.utils.JudgeOperandsType(vOperand, type);
+
+        if (vOperand instanceof ConstOp) {
+            isConst = true;
+            vORvReg = ((ConstOp) vOperand).value;
+        } else {
+            isConst = false;
+            vORvReg = ((RegOp) vOperand).regNo;
+        }
+
         if (posisConst) {
             if (isConst) {
                 constValue.set(pos, vORvReg);

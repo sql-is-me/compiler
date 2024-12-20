@@ -6,6 +6,7 @@ import java.util.List;
 
 import Frontend.Pair;
 import Midend.CodeGenerater;
+import Midend.IterateTK;
 import Midend.Operands.ConstOp;
 import Midend.Operands.Operands;
 import Midend.Operands.RegOp;
@@ -43,17 +44,27 @@ public class Register {
         this.isArray = isArray;
         this.isGlobal = varSymbol.isGlobal;
 
-        if (isArray) { // 直接调用alloc分配指针寄存器
-            if (size == -1) {
-                this.pointerReg = CodeGenerater.CreatAllocCode(size, type, true).toString();
-            } else {
-                this.pointerReg = CodeGenerater.CreatAllocCode(size, type, false).toString();
-                this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg).toString();
+        if (IterateTK.cur_symTab.equals(IterateTK.global_symTab)) { // 全局变量，直接命名名字即可
+            if (isArray)
+                pointerReg = varSymbol.name;
+            else {
+                stackReg = varSymbol.name;
             }
-        } else {
-            Integer sReg = CodeGenerater.CreatAllocCode(0, type, false);
-            stackReg = sReg.toString();
+        } else { // 局部变量
+            if (isArray) { // 直接调用alloc分配指针寄存器
+                if (size == -1) {
+                    this.pointerReg = CodeGenerater.CreatAllocCode(size, type, true).toString();
+                } else {
+                    this.pointerReg = CodeGenerater.CreatAllocCode(size, type, false).toString();
+                    this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg)
+                            .toString();
+                }
+            } else {
+                Integer sReg = CodeGenerater.CreatAllocCode(0, type, false);
+                stackReg = sReg.toString();
+            }
         }
+
     }
 
     /* —————————————————————————————————————————————————————————————————————————— */
@@ -104,6 +115,11 @@ public class Register {
         constValue.set(pos, Integer.MIN_VALUE);
     }
 
+    public void initAllValueReg(int pos) {
+        initConstValue(pos);
+        initValueReg(pos);
+    }
+
     public boolean haveValueReg(int pos) {
         return valueReg.get(pos) != -1;
     }
@@ -139,13 +155,16 @@ public class Register {
                 constValue.set(pos, vORvReg);
                 initValueReg(pos);
             } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
-                initConstValue(pos);
+                initAllValueReg(pos);
             }
         } else { // pos的值是一个寄存器
             initAllConstandValueReg(); // 不知道存哪，所以所有的都初始化
         }
 
         if (isArray) {
+            if (stackReg == "-1") { // 以防全局数组未分配对应栈寄存器，先分配
+                this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg).toString();
+            }
             Integer sReg = CodeGenerater.CreatGetElementPtrCode_sReg(type, !posisConst, pos, stackReg);
             CodeGenerater.CreatStoreCode(type, isConst, vORvReg, isGlobal, sReg.toString());
         } else { // 存值寄存器（非数组）

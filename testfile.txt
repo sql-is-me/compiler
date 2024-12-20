@@ -1,25 +1,11 @@
-char int2char(int x) {
-    return x + '0';
-}
-int char2int(char y) {
-    return y - '0';
-}
-int add(int a, int b) {
-    return (a + b);
+int a[3 + 3] = {1, 2, 3, 4, 5, 6};
+int foo(int x, int y[]) {
+    return x + y[2];
 }
 
 int main() {
-    int a, b, c;
-    a = getchar();
-    printf("%c\n", a);
-    b = getchar();
-    printf("%c\n", b);
-    c = -a + b + add(a, b);
-    printf("%d\n", c);
-    char d, e;
-    d = getchar();
-    a = char2int(d);
-    e = int2char(a);
-    printf("%c-%d-%c\n", d, a, e);
+    int c[3] = {1, 2, 3};
+    int x = foo(a[4], a);
+    printf("%d - %d\n", x, foo(c[0], c));
     return 0;
 }

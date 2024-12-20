@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import Frontend.ErrorLog;
 import Frontend.Lexer.Lexer.Token;
+import Frontend.Syntax.Children.Tools;
 
 import java.util.Map;
 import SymbolTable.FuncSymbol.FuncTypes;
@@ -50,12 +51,14 @@ public class utils {
         SymTab child = new SymTab(++level, curSymTab);
         utils.curSymTab.childSymTabs.add(child);
         utils.curSymTab = child;
+        setInGlobal();
     }
 
     /**
      * 跳出当前子表
      */
     public static void jumpOutSymTab() {
+        setInGlobal();
         curSymTab = curSymTab.lastSymTab;
         level--;
     }
@@ -819,17 +822,13 @@ public class utils {
             ErrorLog.makelog_error(printfToken.line, 'l');
             return;
         }
+    }
 
-        // for (int i = 0; i < needParamsTypes.size(); i++) {
-        // if (needParamsTypes.get(i).equals(paramsTypes.get(i))) {
-        // continue;
-        // } else if (needParamsTypes.get(i).equals(VarTypes.Int) &&
-        // paramsTypes.get(i).equals(VarTypes.Char)) {
-        // continue;
-        // } else {
-        // ErrorLog.makelog_error(printfToken.line, 'l');
-        // return;
-        // }
-        // }
+    public static void setInGlobal() {
+        if (!curSymTab.equals(globalSymTab)) {
+            Tools.inGlobal = false;
+        } else {
+            Tools.inGlobal = true;
+        }
     }
 }

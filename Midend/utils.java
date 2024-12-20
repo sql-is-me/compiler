@@ -84,7 +84,7 @@ public class utils {
                         int level = 1;
                         int begin = i;
                         while (level != 0) {
-                            if (exp.get(i).tk.equals("[")) {
+                            if (exp.get(i).str.equals("[")) {
                                 level++;
                             } else if (exp.get(i).str.equals("]")) {
                                 level--;
@@ -108,7 +108,7 @@ public class utils {
                     i += 2; // indentifier (
                     int begin = i;
                     for (int level = 1; i < exp.size(); i++) {
-                        if (exp.get(i).tk.equals("(")) {
+                        if (exp.get(i).str.equals("(")) {
                             level++;
                         } else if (exp.get(i).str.equals(")")) {
                             level--;
@@ -218,6 +218,10 @@ public class utils {
             }
             op = ops2.removeFirst();
             left = readyforTransExpCode(left, right, op);
+        }
+
+        if (left == null) { // 调用一返回值未void的函数
+            return null;
         }
 
         if (left.needNegative) {// 处理负号
@@ -404,9 +408,9 @@ public class utils {
         int i = begin;
         int level = 1;
         while (level != 0) {
-            if (IterateTK.token.get(i).tk.equals("["))
+            if (IterateTK.token.get(i).str.equals("["))
                 level++;
-            else if (IterateTK.token.get(i).tk.equals("]")) {
+            else if (IterateTK.token.get(i).str.equals("]")) {
                 level--;
             }
             i++;
@@ -579,9 +583,9 @@ public class utils {
             pos += 2; // { 的下一位
             int level = 1;
             while (pos < IterateTK.token.size()) {
-                if (IterateTK.token.get(pos).tk.equals("{")) {
+                if (IterateTK.token.get(pos).str.equals("{")) {
                     level++;
-                } else if (IterateTK.token.get(pos).tk.equals("}")) {
+                } else if (IterateTK.token.get(pos).str.equals("}")) {
                     level--;
                     if (level == 0) {
                         if (IterateTK.getPosToken(pos + 1).tk.equals("ELSETK")) {

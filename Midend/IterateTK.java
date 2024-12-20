@@ -232,9 +232,9 @@ public class IterateTK {
                 }
 
                 if (isInfunc) {
-                    if (t.tk.equals("(") && isInfunc) {
+                    if (t.str.equals("(") && isInfunc) {
                         level++;
-                    } else if (t.tk.equals(")") && isInfunc) {
+                    } else if (t.str.equals(")") && isInfunc) {
                         level--;
                         if (level == 0) {
                             isInfunc = false;
@@ -262,7 +262,10 @@ public class IterateTK {
         utils.getRegNum(); // 跳一个寄存器
         initFParams(funcSymbol.paramNumber); // 初始化分配
         if (funcSymbol.name.equals("main")) {
-            pos += 5; // 跳到{ 的下一个Token;
+            while (!getNowToken().tk.equals("MAINTK")) {
+                pos++;
+            }
+            pos += 4; // 跳到{ 的下一个Token;
         } else {
             pos = funcSymbol.offset + 1; // 跳到{ 的下一个Token
         }
@@ -535,13 +538,18 @@ public class IterateTK {
         for (int i = 0; i < exp.size(); i++) {
             int begin = i;
 
-            while ((!exp.get(i).str.equals(",") || level > 0)) {
-                if (exp.get(i).tk.equals("(")) {
+            while (true) {
+                if (exp.get(i).str.equals("(")) {
                     level++;
-                } else if (exp.get(i).tk.equals(")")) {
+                } else if (exp.get(i).str.equals(")")) {
                     level--;
                 }
-                i++;
+
+                if (exp.get(i).str.equals(",") && level == 0) {
+                    break;
+                } else {
+                    i++;
+                }
 
                 if (i == exp.size()) {
                     break;
@@ -580,6 +588,7 @@ public class IterateTK {
                     break;
                 }
             }
+            pos++;
         }
         boolean haveElse = utils.JudgeElseBlock(pos);
 

@@ -210,9 +210,14 @@ public class CodeGenerater {
      */
     public static Integer CreatCallFunc(FuncSymbol funcSymbol, ArrayList<Operands> params) {
         StringBuilder sb = new StringBuilder();
-        Integer retRegNO = utils.getRegNum();
+        Integer retRegNO = -1; // void不需要返回
 
-        sb.append("%" + retRegNO + " = call ");
+        if (funcSymbol.returnType != FuncTypes.VoidFunc) {
+            retRegNO = utils.getRegNum();
+            sb.append("%" + retRegNO + " = ");
+        }
+
+        sb.append("call ");
         if (funcSymbol.returnType == FuncTypes.IntFunc) {
             sb.append("i32 ");
         } else if (funcSymbol.returnType == FuncTypes.CharFunc) {
@@ -250,7 +255,7 @@ public class CodeGenerater {
             }
         }
         sb.append(")");
-        
+
         addCodeatLast(sb.toString());
         return retRegNO;
     }

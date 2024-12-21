@@ -1,93 +1,76 @@
+const int a = 1, b = 2;
+const int c = 3;
+int d, e = 1 + 2;
+int f;
 
-void de()
-{
-	return;
+
+int double2(int x1) {
+    if (!x1) {
+        return 2*x1;
+    }
+    else {
+        return (2*-x1);
+    }
+    return 0;
 }
 
-int keke(int i,int j)
-{
-	i=i+j;
-	return 0;
+int add(int x1, int x2) {
+    int sum = 0;
+    sum = x1 + x2;
+    return sum;
 }
 
-int jian()
-{
-	int x,y,z;
-	x=getint();
-	y=getint();
-	z=x-y;
-	return z;
+int sub(int x1, int x2) {
+    int sum = 0;
+    sum = x1 - x2;
+    if (sum >= 0) {
+        return sum;
+    }
+    if (sum <= 0) {
+        return 0;
+    }
+    return 0;
 }
 
-int main()
-{
-	int a,b,c,d, e,f,g=+1,h,j,k,l,o=-1;
-	int i=2,n,m,flag=0;
-	n=getint();
-	for(;i<n;)
-	{
-		m=n%i;
-		if(m==0)
-		{
-			flag=1;
-			printf("0\n");
-			
-		
-		}
-		i=i+1;
-	
-	}
+void print_none() {
+    return;
+}
 
-	c=jian();
-	printf("%d\n",c);
-	d=c+1;
-	e=c*2;
-	if(e<5)
-	{
-	
-		f=c%2;
-	}
-	else f=c/2;
-	
-	if(f!=!3)
-	g=g+1;
-	
-	o=i+(j+1);
+int main() {
+    {
+        int x = 0;
+        int flag;
+        int temp;
+        int x1, x2;
+        for(;x < 4;) {
+            if (x != 4) {
+                x = x + 1;
+            } else {
+                break;
+            }
+	    flag = getint();
+            if (flag == 0) {
+		x1 = getint();
+                temp = double2(x1) % 1;
+                printf("%d ", temp);
+                temp = double2(x1) / +1;
+                printf("%d\n", temp);
+                continue;
+            }
+            if (flag > 0) {
+		x1 = getint();
+		x2 = getint();
+                printf("%d\n", add(x1, x2));
+                continue;
+            }
+            if (flag < 0) {
+		x1 = getint();
+		x2 = getint();
+                printf("%d\n", sub(x1, x2));
+                continue;
+            }
 
-	{}
-	;	
-	for(;0;)
-	{
-		continue;
-	}
-	for(;1;)
-	{
-		break;
-	}
-	if(c==d)
-	{
-		if(d>=e)
-		{
-			if(e<=f)
-			{
-				if(f!=g)
-				{
-					if(c>1)
-					{
-						a=1;
-					}
-						
-					
-				}
-			
-			}
-		}
-	}
-	keke(a,b);
-	
-	printf("%d\n%d\n%d\n%d\n",d,e,f,g);
-	printf("19182620\n");
-	printf("19182620\n");
-	printf("19182620\n");
-	return 0;
+        }
+    }
+    return 0;
 }

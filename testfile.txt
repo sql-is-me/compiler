@@ -1,76 +1,50 @@
-const int a = 1, b = 2;
-const int c = 3;
-int d, e = 1 + 2;
-int f;
-
-
-int double2(int x1) {
-    if (!x1) {
-        return 2*x1;
-    }
-    else {
-        return (2*-x1);
-    }
-    return 0;
-}
-
-int add(int x1, int x2) {
-    int sum = 0;
-    sum = x1 + x2;
-    return sum;
-}
-
-int sub(int x1, int x2) {
-    int sum = 0;
-    sum = x1 - x2;
-    if (sum >= 0) {
-        return sum;
-    }
-    if (sum <= 0) {
-        return 0;
-    }
-    return 0;
-}
-
-void print_none() {
+const int q=5;
+void dd()
+{
+    printf("this is d\n");
     return;
 }
+void ee()
+{
 
-int main() {
+}
+int aa()
+{
+   int m=2;
+   m=m+1;
+   return m;
+}
+int bb(int j)
+{
+  j=j+1;
+  return j;
+}
+int cc(int k,int l)
+{
+   k=k+l;
+   return k;
+}
+int main()
+{
+    int a,b,c,e;
+    int j=3,k=2,l=4,z=0,x=1;
+    e=getint();
+    a=aa()+1;
+    b=bb(j)+1;
+    c=cc(k,l)-2;
+    if(!z)
     {
-        int x = 0;
-        int flag;
-        int temp;
-        int x1, x2;
-        for(;x < 4;) {
-            if (x != 4) {
-                x = x + 1;
-            } else {
-                break;
-            }
-	    flag = getint();
-            if (flag == 0) {
-		x1 = getint();
-                temp = double2(x1) % 1;
-                printf("%d ", temp);
-                temp = double2(x1) / +1;
-                printf("%d\n", temp);
-                continue;
-            }
-            if (flag > 0) {
-		x1 = getint();
-		x2 = getint();
-                printf("%d\n", add(x1, x2));
-                continue;
-            }
-            if (flag < 0) {
-		x1 = getint();
-		x2 = getint();
-                printf("%d\n", sub(x1, x2));
-                continue;
-            }
-
-        }
+        x=2;
     }
+    dd();
+    ee();
+    printf("%d\n",a);
+    printf("%d\n",b);
+    printf("%d\n",c);
+    printf("%d\n",e);
+    printf("%d\n",x);
     return 0;
 }
+
+
+

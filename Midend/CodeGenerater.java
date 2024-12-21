@@ -730,14 +730,18 @@ public class CodeGenerater {
         if (haveCond) {
             starter = "cond." + forTag;
             forCondLabels.push("cond." + forTag);
+        } else {
+            starter = "then." + forTag;
+        }
+        sb.append("br label %" + starter);
+        addCodeatLast(sb.toString());
+        sb = new StringBuilder();
 
-            sb.append("br label %" + starter);
-            addCodeatLast(sb.toString());
-            sb = new StringBuilder();
-
+        if (haveCond) { // 如果有条件的话，先输出条件标签
             sb.append(starter + ":");
             addLabelCode(sb.toString());
         }
+
         if (haveChange) {
             forChangeLabels.push("change." + forTag);
         }

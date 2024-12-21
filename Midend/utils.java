@@ -631,18 +631,8 @@ public class utils {
 
             if (i != andExps.size() - 1) {
                 CodeGenerater.CreatShortJumpCode_Or((String) p.b);
+                utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
             }
-            // } else { // 最后一个，确定全false跳转位置，并再次生成跳转指令
-            // if (isIf) {
-            // if (haveElse) {
-            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.elseLabels.peek());
-            // } else {
-            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.ifEndLabels.peek());
-            // }
-            // } else {
-            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.forEndLabels.peek());
-            // }
-            // }
         }
     }
 

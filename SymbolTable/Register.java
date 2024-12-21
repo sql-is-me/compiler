@@ -63,7 +63,22 @@ public class Register {
                 stackReg = sReg.toString();
             }
         }
+    }
 
+    public Register(Register register) {
+        this.pointerReg = register.pointerReg;
+        this.stackReg = register.stackReg;
+        if (register.valueReg != null) {
+            this.valueReg = new ArrayList<>(Collections.nCopies(size, -1));
+            this.constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+        } else {
+            this.valueReg = register.valueReg;
+            this.constValue = register.constValue;
+        }
+        this.type = register.type;
+        this.isGlobal = register.isGlobal;
+        this.isArray = register.isGlobal;
+        this.size = register.size;
     }
 
     /* —————————————————————————————————————————————————————————————————————————— */
@@ -179,7 +194,7 @@ public class Register {
                 this.stackReg = CodeGenerater.CreatGetElementPtrCode_pReg(size, type, isGlobal, pointerReg).toString();
             }
             Integer sReg = CodeGenerater.CreatGetElementPtrCode_sReg(type, !posisConst, pos, stackReg);
-            CodeGenerater.CreatStoreCode(type, isConst, vORvReg, isGlobal, sReg.toString());
+            CodeGenerater.CreatStoreCode(type, isConst, vORvReg, false, sReg.toString()); // 数组指针赋值，故false
         } else { // 存值寄存器（非数组）
             CodeGenerater.CreatStoreCode(type, isConst, vORvReg, isGlobal, stackReg);
         }

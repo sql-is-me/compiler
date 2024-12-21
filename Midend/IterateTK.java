@@ -54,10 +54,29 @@ public class IterateTK {
         childSymTabNOs.push(0);
         cur_symTab.regMap = new HashMap<>(cur_symTab.lastSymTab.regMap);
         utils.initAllRegister();
+        // cur_symTab.regMap = createNewMap(cur_symTab.lastSymTab.regMap);
+    }
+
+    public static HashMap<VarSymbol, Register> createNewMap(HashMap<VarSymbol, Register> original) {
+        // 创建一个新的 HashMap
+        HashMap<VarSymbol, Register> copy = new HashMap<>();
+
+        // 遍历原 HashMap，手动复制每个键值对
+        for (Map.Entry<VarSymbol, Register> entry : original.entrySet()) {
+            VarSymbol key = entry.getKey();
+            Register value = entry.getValue();
+
+            // 假设 CustomObject 提供了 clone() 方法
+            Register deepCopiedValue = new Register(value); // 深拷贝值
+            copy.put(key, deepCopiedValue);
+        }
+
+        return copy;
     }
 
     public static void stepOutfromChildSymTab() {
         cur_symTab = cur_symTab.lastSymTab;
+        utils.initAllRegister();
         childSymTabNOs.pop();
     }
 
@@ -286,8 +305,10 @@ public class IterateTK {
             retType = 0;
         }
 
-        FuncBody(retType);
-
+        boolean haveReturn = FuncBody(retType);
+        if (!haveReturn) {
+            CodeGenerater.CreatReturnCode(retType, true, 0);
+        }
         CodeGenerater.CreatFuncEndCode();
     }
 
@@ -315,7 +336,8 @@ public class IterateTK {
         }
     }
 
-    public static void FuncBody(int retType) {
+    public static Boolean FuncBody(int retType) {
+        boolean haveReturn = false;
         for (int level = 1;; pos++) {
             if (token.get(pos).str.equals("{")) {
                 level++;
@@ -428,6 +450,7 @@ public class IterateTK {
                 }
             }
         }
+        return haveReturn;
     }
 
     public static void declareLocalVarandArr(VarSymbol varSymbol) {
@@ -603,10 +626,11 @@ public class IterateTK {
         stepIntoChildSymTab();
         pos++;
 
-        CodeGenerater.CreatIfFirstLabelCode(haveElse);
+        CodeGenerater.CreatIfFirstLabelCode(haveElse);// step自带初始化
 
         utils.calOrExp(condExp, haveElse, true);
         CodeGenerater.CreatLabelTagCode(CodeGenerater.ifThenLabels.pop());
+        utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
         boolean singleLine = false;
         if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
@@ -623,8 +647,9 @@ public class IterateTK {
         }
 
         if (haveElse) {
-            CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop());
             pos += 2;// else
+            stepIntoChildSymTab();
+            CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop()); // 自带初始化
 
             if (!IterateTK.getPosToken(pos).str.equals("{")) { // else无{，仅有单行
                 singleLine = true;
@@ -633,7 +658,6 @@ public class IterateTK {
                 pos++;
             }
 
-            stepIntoChildSymTab();
             needBr = StmtinForandIf(retType, singleLine);
 
             if (!needBr.JudgeNeedBr()) {
@@ -641,7 +665,7 @@ public class IterateTK {
             }
         }
 
-        CodeGenerater.CreatLabelTagCode(CodeGenerater.ifEndLabels.pop());
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.ifEndLabels.pop()); // step自带退出
     }
 
     public static void ProcessFor(int retType) {
@@ -722,10 +746,12 @@ public class IterateTK {
         CodeGenerater.CreatForFirstLabelCode(haveCond, haveChange);
         if (haveCond) {
             utils.calOrExp(condExp, false, false);
+            utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
         }
 
         String forThenLabel = CodeGenerater.forThenLabels.pop();
         CodeGenerater.CreatLabelTagCode(forThenLabel);
+        utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
         boolean singleLine = false;
         if (!getNowToken().str.equals("{")) {
@@ -742,6 +768,7 @@ public class IterateTK {
             }
 
             CodeGenerater.CreatLabelTagCode(CodeGenerater.forChangeLabels.pop());
+            utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
             int p = 0;
             for (int i = 0; i < changeExp.size(); i++) {
@@ -791,7 +818,7 @@ public class IterateTK {
             }
         }
 
-        CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());// step自带退出
     }
 
     public static NeedBr StmtinForandIf(int retType, boolean singleLine) {
@@ -810,7 +837,6 @@ public class IterateTK {
             } else {
                 Token t = getNowToken();
                 if (t.str.equals(";")) {// 遇见分号跳过
-                    continue;
                 } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) { // 变量声明
                     pos++; // identifier
                     t = getNowToken();
@@ -903,7 +929,7 @@ public class IterateTK {
                         Register reg = cur_symTab.regMap.get(varSymbol);
 
                         if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
-                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size() - 2, LVal);
                             Operands posOp = utils.calExp(posExp, false);
 
                             int posV;
@@ -924,7 +950,6 @@ public class IterateTK {
 
                 if (singleLine) {
                     stepOutfromChildSymTab();
-                    findEndofScope();
                     return new NeedBr(haveBreak, haveReturn, haveContinue);
                 }
             }

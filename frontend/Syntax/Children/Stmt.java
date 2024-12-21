@@ -94,7 +94,9 @@ public class Stmt {
                 }
 
                 if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                    utils.createSymTab(utils.curSymTab);
                     Stmt.StmtAnalysis(true);
+                    utils.jumpOutSymTab();
                 } else {
                     Stmt.StmtAnalysis(false);
                 }
@@ -102,7 +104,9 @@ public class Stmt {
                 if (Tools.LookNextTK().tk.equals("ELSETK")) {
                     CompUnit.count++; // else
                     if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                        utils.createSymTab(utils.curSymTab);
                         Stmt.StmtAnalysis(true);
+                        utils.jumpOutSymTab();
                     } else {
                         Stmt.StmtAnalysis(false);
                     }
@@ -126,7 +130,9 @@ public class Stmt {
 
             utils.Inloop();
             if (!Tools.LookNextTK().tk.equals("LBRACE")) {
+                utils.createSymTab(utils.curSymTab);
                 Stmt.StmtAnalysis(true);
+                utils.jumpOutSymTab();
             } else {
                 Stmt.StmtAnalysis(false);
             }

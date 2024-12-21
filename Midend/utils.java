@@ -586,7 +586,7 @@ public class utils {
     public static boolean JudgeElseBlock(int pos) {
         if (!IterateTK.getPosToken(pos + 1).str.equals("{")) { // if无{，仅有单行
             pos = findEndofScope(pos);
-            if (!IterateTK.getPosToken(pos).tk.equals("ELSETK")) {
+            if (IterateTK.getPosToken(pos + 1).tk.equals("ELSETK")) {
                 return true;
             }
             return false;
@@ -813,5 +813,57 @@ public class utils {
         }
 
         return new VarOp(varSymbol, type, isArray, pos, needNegative, needNot);
+    }
+
+    /**
+     * 看栈头的condLabel是否是当前for循环的，是则返回true
+     * 
+     * @return
+     */
+    public static boolean JudgeForChangeExist() {
+        if (CodeGenerater.forChangeLabels.size() != 0) {
+            String forEndLabel = CodeGenerater.forEndLabels.peek();
+            String tempArr[] = forEndLabel.split("\\.");
+            String lastPart = tempArr[tempArr.length - 1];
+            int forNo = Integer.parseInt(lastPart);
+
+            String forChangeLabel = CodeGenerater.forChangeLabels.peek();
+            String tempArr2[] = forChangeLabel.split("\\.");
+            String lastPart2 = tempArr2[tempArr2.length - 1];
+            int forNo2 = Integer.parseInt(lastPart2);
+
+            if (forNo == forNo2) {
+                return true;
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 看栈头的condLabel是否是当前for循环的，是则返回true
+     *
+     * @return
+     */
+    public static boolean JudgeForCondExist() {
+        if (CodeGenerater.forCondLabels.size() != 0) {
+            String forEndLabel = CodeGenerater.forEndLabels.peek();
+            String tempArr[] = forEndLabel.split("\\.");
+            String lastPart = tempArr[tempArr.length - 1];
+            int forNo = Integer.parseInt(lastPart);
+
+            String forCondLabel = CodeGenerater.forCondLabels.peek();
+            String tempArr2[] = forCondLabel.split("\\.");
+            String lastPart2 = tempArr2[tempArr2.length - 1];
+            int forNo2 = Integer.parseInt(lastPart2);
+
+            if (forNo == forNo2) {
+                return true;
+            }
+            return false;
+        } else {
+            return false;
+        }
     }
 }

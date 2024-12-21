@@ -623,7 +623,7 @@ public class IterateTK {
             CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop());
             pos += 2;// else
 
-            if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
+            if (!IterateTK.getPosToken(pos).str.equals("{")) { // else无{，仅有单行
                 singleLine = true;
             } else {
                 singleLine = false;
@@ -778,6 +778,7 @@ public class IterateTK {
         }
 
         CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());
+        utils.getRegNum();// FIXME: why?
     }
 
     public static void StmtinForandIf(int retType, boolean singleLine) {
@@ -831,7 +832,13 @@ public class IterateTK {
                     CodeGenerater.CreatbrCode(CodeGenerater.forEndLabels.peek());
                 } else if (t.tk.equals("CONTINUETK")) {
                     pos++;// ;
-                    CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
+                    if (utils.JudgeForChangeExist()) {
+                        CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
+                    } else if (utils.JudgeForCondExist()) {
+                        CodeGenerater.CreatbrCode(CodeGenerater.forCondLabels.peek());
+                    } else {
+                        CodeGenerater.CreatbrCode(CodeGenerater.forThenLabels.peek());
+                    }
                 } else if (t.tk.equals("RETURNTK")) {
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
@@ -915,8 +922,8 @@ public class IterateTK {
                 }
 
                 if (singleLine) {
+                    stepOutfromChildSymTab();
                     findEndofScope();
-                    pos++; // ;
                     return;
                 }
             }

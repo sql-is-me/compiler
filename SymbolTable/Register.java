@@ -162,6 +162,9 @@ public class Register {
 
         if (posisConst) {
             if (isConst) {
+                if (type == 8) {
+                    vORvReg = vORvReg & 0xff;
+                }
                 constValue.set(pos, vORvReg);
                 initValueReg(pos);
             } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可

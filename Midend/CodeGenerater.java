@@ -490,6 +490,7 @@ public class CodeGenerater {
 
         sb.append(", 0");
 
+        addCodeatLast(sb.toString());
         return retRegNO;
     }
 
@@ -654,15 +655,15 @@ public class CodeGenerater {
         }
 
         if (leftisConst) {
-            sb.append("i32 " + left + ", ");
-        } else {
             sb.append("i32 %" + left + ", ");
+        } else {
+            sb.append("i32 " + left + ", ");
         }
 
         if (rightisConst) {
-            sb.append(right);
-        } else {
             sb.append("%" + right);
+        } else {
+            sb.append(right);
         }
 
         addCodeatLast(sb.toString());
@@ -686,14 +687,14 @@ public class CodeGenerater {
         if (trueDest == null) {
             trueDest = getLabelNow();
 
-            sb.append(trueDest + ", label %" + falseDest + '\n');
+            sb.append(trueDest + ", label %" + falseDest);
             addCodeatLast(sb.toString());
 
             sb = new StringBuilder();
             sb.append(trueDest + ":");
             addLabelCode(sb.toString());
         } else {
-            sb.append(trueDest + ", label %" + falseDest + '\n');
+            sb.append(trueDest + ", label %" + falseDest);
             addCodeatLast(sb.toString());
         }
 
@@ -703,19 +704,14 @@ public class CodeGenerater {
     public static void CreatShortJumpCode_Or(String falseDest) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(falseDest + ":");
+        sb.append("\n" + falseDest + ":");
         addLabelCode(sb.toString());
-
-        if (falseDest != null) { // 跳转到else或者end
-            sb = new StringBuilder();
-            sb.append("br label %" + falseDest);
-            addCodeatLast(sb.toString());
-        }
     }
 
     public static void CreatLabelTagCode(String label) {
         StringBuilder sb = new StringBuilder();
 
+        addCodeatLast(""); // 自带换行
         sb.append(label + ":");
         addLabelCode(sb.toString());
     }
@@ -724,7 +720,7 @@ public class CodeGenerater {
         StringBuilder sb = new StringBuilder();
 
         sb.append("br label %" + label);
-        addLabelCode(sb.toString());
+        addCodeatLast(sb.toString());
     }
 
     public static void CreatForFirstLabelCode(Boolean haveCond, Boolean haveChange) {

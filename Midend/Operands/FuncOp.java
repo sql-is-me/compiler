@@ -3,7 +3,6 @@ package Midend.Operands;
 import java.util.ArrayList;
 
 import SymbolTable.FuncSymbol;
-import SymbolTable.FuncSymbol.FuncTypes;
 
 public class FuncOp extends Operands {
     public FuncSymbol funcSymbol;

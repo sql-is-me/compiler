@@ -1,7 +1,6 @@
 package Midend.Operands;
 
 import SymbolTable.VarSymbol;
-import SymbolTable.VarSymbol.VarTypes;
 
 public class VarOp extends Operands {
     public VarSymbol varSymbol;

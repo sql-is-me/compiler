@@ -198,7 +198,7 @@ public class IterateTK {
         }
     }
 
-    public static ArrayList<Token> getVarInitExp() { // FIXME 多参数的情况下需要确定 ，
+    public static ArrayList<Token> getVarInitExp() {
         ArrayList<Token> initExp = new ArrayList<>();
         int level = 0;
         Token t = getNowToken();
@@ -600,6 +600,8 @@ public class IterateTK {
         }
         boolean haveElse = utils.JudgeElseBlock(pos);
 
+        CodeGenerater.CreatIfFirstLabelCode(haveElse);
+
         utils.calOrExp(condExp, haveElse, true);
         CodeGenerater.CreatLabelTagCode(CodeGenerater.ifThenLabels.pop());
 
@@ -609,18 +611,29 @@ public class IterateTK {
         if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
             singleLine = true;
         } else {
+            singleLine = false;
             pos++;
         }
 
-        StmtinForandIf(retType, singleLine);
-        stepOutfromChildSymTab();
+        StmtinForandIf(retType, singleLine); // 自带step out
+
+        CodeGenerater.CreatbrCode(CodeGenerater.ifEndLabels.peek());
 
         if (haveElse) {
             CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop());
-            pos += 2;// } else {
+            pos += 2;// else
+
+            if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
+                singleLine = true;
+            } else {
+                singleLine = false;
+                pos++;
+            }
+
             stepIntoChildSymTab();
             StmtinForandIf(retType, singleLine);
-            stepOutfromChildSymTab();
+
+            CodeGenerater.CreatbrCode(CodeGenerater.ifEndLabels.peek());
         }
 
         CodeGenerater.CreatLabelTagCode(CodeGenerater.ifEndLabels.pop());
@@ -775,7 +788,6 @@ public class IterateTK {
                 stepOutfromChildSymTab();
                 level--;
                 if (level == 0) {
-                    pos++;// }
                     break;
                 }
             } else {

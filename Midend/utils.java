@@ -561,12 +561,13 @@ public class utils {
 
     public static ArrayList<ArrayList<Token>> Expsplits(ArrayList<Token> exps, String op) {
         ArrayList<ArrayList<Token>> ret = new ArrayList<>();
-        int begin;
+        int begin = 0;
 
         for (int i = 0; i < exps.size(); i++) {
-            begin = i;
+
             if (exps.get(i).str.equals(op)) {
                 ret.add(GetSubExpfromIndex(begin, i - 1, exps));
+                begin = i + 1;
             }
 
             if (i == exps.size() - 1) {
@@ -622,24 +623,30 @@ public class utils {
         Pair p = null;
 
         for (int i = 0; i < andExps.size(); i++) {
-            p = calAndExp(andExps.get(i), isIf);
+            if (i == andExps.size() - 1) {
+                p = calAndExp(andExps.get(i), isIf, true, haveElse);
+            } else {
+                p = calAndExp(andExps.get(i), isIf, false, haveElse);
+            }
+
             if (i != andExps.size() - 1) {
                 CodeGenerater.CreatShortJumpCode_Or((String) p.b);
-            } else { // 最后一个，确定全false跳转位置，并再次生成跳转指令
-                if (isIf) {
-                    if (haveElse) {
-                        CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.elseLabels.peek());
-                    } else {
-                        CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.ifEndLabels.peek());
-                    }
-                } else {
-                    CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.forEndLabels.peek());
-                }
             }
+            // } else { // 最后一个，确定全false跳转位置，并再次生成跳转指令
+            // if (isIf) {
+            // if (haveElse) {
+            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.elseLabels.peek());
+            // } else {
+            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.ifEndLabels.peek());
+            // }
+            // } else {
+            // CodeGenerater.CreatShortJumpCode_Or(CodeGenerater.forEndLabels.peek());
+            // }
+            // }
         }
     }
 
-    public static Pair calAndExp(ArrayList<Token> andExp, Boolean isIf) {
+    public static Pair calAndExp(ArrayList<Token> andExp, Boolean isIf, Boolean thelast, Boolean haveElse) {
         ArrayList<ArrayList<Token>> eqExps = Expsplits(andExp, "&&");
         String falseDest = null;
         Pair p = null;
@@ -651,11 +658,27 @@ public class utils {
             if (i != eqExps.size() - 1) {
                 p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, falseDest);
             } else { // 最后一个，此时or的第一个可以确定是true，故确定跳转位置
-                if (isIf)
-                    p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.ifThenLabels.peek(), falseDest);
-                else {
-                    p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.forThenLabels.peek(), falseDest);
+                if (thelast) {
+                    if (isIf) {
+                        if (haveElse) {
+                            p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.ifThenLabels.peek(),
+                                    CodeGenerater.elseLabels.peek());
+                        } else {
+                            p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.ifThenLabels.peek(),
+                                    CodeGenerater.ifEndLabels.peek());
+                        }
+                    } else {
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.forThenLabels.peek(),
+                                CodeGenerater.forEndLabels.peek());
+                    }
+                } else {
+                    if (isIf)
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.ifThenLabels.peek(), falseDest);
+                    else {
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.forThenLabels.peek(), falseDest);
+                    }
                 }
+
             }
 
             falseDest = (String) p.b;
@@ -692,7 +715,7 @@ public class utils {
         }
 
         regNo = CodeGenerater.CreatcalCondExp(leftIsReg, leftRegNo, rightIsReg, rightRegNo, relOp);
-        left = new RegOp(regNo, 32, false, false, false);
+        left = new RegOp(regNo, 1, false, false, false);
         return left;
     }
 
@@ -700,13 +723,14 @@ public class utils {
         ArrayList<ArrayList<Token>> relExps = new ArrayList<>();
         Deque<String> ops = new ArrayDeque<>();
         Deque<Operands> operands = new ArrayDeque<>();
-        int begin;
+        int begin = 0;
 
         for (int i = 0; i < eqExp.size(); i++) {
-            begin = i;
+
             if (eqExp.get(i).str.equals("==") || eqExp.get(i).str.equals("!=")) {
                 ops.addLast(eqExp.get(i).str);
                 relExps.add(GetSubExpfromIndex(begin, i - 1, eqExp));
+                begin = i + 1;
             }
 
             if (i == eqExp.size() - 1) {
@@ -718,10 +742,10 @@ public class utils {
             operands.addLast(calRelExp(relExp));
         }
 
-        Operands left = operands.getFirst();
+        Operands left = operands.pollFirst();
         while (!ops.isEmpty()) {
-            Operands right = operands.getFirst();
-            String op = ops.getFirst();
+            Operands right = operands.pollFirst();
+            String op = ops.pollFirst();
 
             left = callMidCodeGen(left, right, op);
         }
@@ -733,14 +757,15 @@ public class utils {
         ArrayList<ArrayList<Token>> commonExps = new ArrayList<>();
         Deque<String> ops = new ArrayDeque<>();
         Deque<Operands> operands = new ArrayDeque<>();
-        int begin;
+        int begin = 0;
 
         for (int i = 0; i < relExp.size(); i++) {
-            begin = i;
+
             if (relExp.get(i).str.equals("<") || relExp.get(i).str.equals(">")
                     || relExp.get(i).str.equals("<=") || relExp.get(i).str.equals(">=")) {
                 ops.addLast(relExp.get(i).str);
                 commonExps.add(GetSubExpfromIndex(begin, i - 1, relExp));
+                begin = i + 1;
             }
 
             if (i == relExp.size() - 1) {
@@ -752,10 +777,10 @@ public class utils {
             operands.addLast(calExp(commonExp, false));
         }
 
-        Operands left = operands.getFirst();
+        Operands left = operands.pollFirst();
         while (!ops.isEmpty()) {
-            Operands right = operands.getFirst();
-            String op = ops.getFirst();
+            Operands right = operands.pollFirst();
+            String op = ops.pollFirst();
 
             left = callMidCodeGen(left, right, op);
         }

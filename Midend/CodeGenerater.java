@@ -190,14 +190,16 @@ public class CodeGenerater {
         return retRegNO;
     }
 
-    public static Integer CreatNotCode(Integer vReg) { // FIXME 逻辑非
+    public static Integer CreatNotCode(Integer vReg) {
         StringBuilder sb = new StringBuilder();
         Integer tempRegNO = utils.getRegNum();
         Integer retRegNO = utils.getRegNum();
 
-        sb.append("%" + tempRegNO + " = icmp ne i32 %" + vReg + ", 0");
-        sb.append("% " + retRegNO + " = xor i1 %" + tempRegNO + ", 1");
+        sb.append("%" + tempRegNO + " = icmp eq i32 %" + vReg + ", 0");
+        addCodeatLast(sb.toString());
 
+        sb = new StringBuilder();
+        sb.append("%" + retRegNO + " = zext i1 %" + tempRegNO + " to i32");
         addCodeatLast(sb.toString());
         return retRegNO;
     }
@@ -468,11 +470,11 @@ public class CodeGenerater {
         if (operands.type == 8) { // char to int
             sb.append("%" + retRegNO + " = zext i8 %" + ((RegOp) operands).regNo + " to i32");
             addCodeatLast(sb.toString());
-            return new RegOp(retRegNO, 32, operands.isArray, operands.needNegative, operands.needNot);
+            return new RegOp(retRegNO, 32, operands.isArray, new Stack<>());
         } else { // int to char
             sb.append("%" + retRegNO + " = trunc i32 %" + ((RegOp) operands).regNo + " to i8");
             addCodeatLast(sb.toString());
-            return new RegOp(retRegNO, 8, operands.isArray, operands.needNegative, operands.needNot);
+            return new RegOp(retRegNO, 8, operands.isArray, new Stack<>());
         }
     }
 
@@ -584,7 +586,7 @@ public class CodeGenerater {
         int length = str.length();
 
         if (length == 1) { // 防止在添加了\0前仅有一个字符
-            CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), false, false));
+            CreatPrintfOperandsCode(8, new ConstOp(str.charAt(0), new Stack<>()));
             return;
         } else {
             length++;

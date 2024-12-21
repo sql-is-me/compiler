@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Stack;
 
 import Frontend.Pair;
 import Frontend.Lexer.Lexer.Token;
@@ -38,9 +39,7 @@ public class utils {
     public static Operands calExp(ArrayList<Token> exp, boolean isGlobalInit) {
         Deque<Operands> operands = new ArrayDeque<>();
         Deque<Character> ops = new ArrayDeque<>();
-
-        Boolean needNegative = false;
-        Boolean needNot = false;
+        Stack<Character> opStack = new Stack<>();
         Character op = '+';
 
         for (int i = 0; i < exp.size(); i++) {
@@ -49,25 +48,24 @@ public class utils {
             if (t.tk.equals("INTCON") || t.tk.equals("CHRCON")) { // 常量处理
                 Operands temp;
                 if (t.tk.equals("INTCON"))
-                    temp = new ConstOp(Integer.parseInt(t.str), needNegative, needNot);
+                    temp = new ConstOp(Integer.parseInt(t.str), opStack);
                 else {
-                    temp = new ConstOp((int) t.str.charAt(1), needNegative, needNot);
+                    temp = new ConstOp((int) t.str.charAt(1), opStack);
                 }
 
                 operands.addLast(temp);
 
                 op = ' ';
-                needNegative = false;
-                needNot = false;
+                opStack = new Stack<>();
             } else if (t.str.equals("+") || t.str.equals("-") || t.str.equals("*") || t.str.equals("/")
                     || t.str.equals("%") || t.str.equals("!")) { // 表达式符号处理
 
                 if (op != ' ' && t.str.equals("-")) { // 处理UnaryOP -
-                    needNegative = !needNegative;
+                    opStack.push('-');
                 } else if (op != ' ' && t.str.equals("+")) { // 处理UnaryOP +
                     continue;
                 } else if (op != ' ' && t.str.equals("!")) { // 处理UnaryOP +
-                    needNot = !needNot;
+                    opStack.push('!');
                 } else {
                     op = t.str.charAt(0);
                     ops.addLast(op);
@@ -96,13 +94,13 @@ public class utils {
                         }
                         ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
                         Operands tempOp = calExp(posExp, isGlobalInit);
-                        temp = createNewVarOp(varSymbol, tempOp, needNegative, needNot);
+                        temp = createNewVarOp(varSymbol, tempOp, new Stack<>());
                     } else if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
                             || varSymbol.type.equals(VarTypes.ConstIntArray)
                             || varSymbol.type.equals(VarTypes.ConstCharArray)) { // 传递指针，至pos为-1
-                        temp = createNewVarOp(varSymbol, new ConstOp(-1, false, false), needNegative, needNot);
+                        temp = createNewVarOp(varSymbol, new ConstOp(-1, new Stack<>()), opStack);
                     } else { // 变量处理，pos返回 0 ConstOp即可
-                        temp = createNewVarOp(varSymbol, new ConstOp(0, false, false), needNegative, needNot);
+                        temp = createNewVarOp(varSymbol, new ConstOp(0, new Stack<>()), opStack);
                     }
 
                     operands.addLast(temp);
@@ -137,13 +135,12 @@ public class utils {
                     } else {
                         type = 8;
                     }
-                    Operands temp = new FuncOp(funcSymbol, type, paramsOps, needNegative, needNot);
+                    Operands temp = new FuncOp(funcSymbol, type, paramsOps, opStack);
                     operands.addLast(temp);
                 }
 
                 op = ' ';
-                needNegative = false;
-                needNot = false;
+                opStack = new Stack<>();
             } else if (t.str.equals("(")) {
                 int begin = i + 1, j = i + 1;
                 int level = 1;
@@ -168,8 +165,7 @@ public class utils {
                 operands.addLast(temp);
 
                 op = ' ';
-                needNegative = false;
-                needNot = false;
+                opStack = new Stack<>();
             }
         }
 
@@ -228,107 +224,88 @@ public class utils {
             return null;
         }
 
-        if (left.needNegative) {// 处理负号
-            if (left instanceof RegOp) {
-                ((RegOp) left).regNo = CodeGenerater.CreatNegativeCode(((RegOp) left).regNo);
-                left.needNegative = false;
-            } else if (left instanceof ConstOp) {
-                ((ConstOp) left).value = -((ConstOp) left).value;
-                left.needNegative = false;
-            } else {
-                throw new RuntimeException("Unknow Operands when 处理负号");
-            }
+        if (left.opStack.size() != 0) { // 处理前缀符号
+            left = handleOpStack(left);
         }
 
         return left;
     }
 
-    public static Operands readyforTransExpCode(Operands left, Operands right, Character op) {
-        if (left instanceof ConstOp) {
-            Integer left_c;
-            if (left.needNegative) { // 处理负号
-                left_c = -((ConstOp) left).value;
-            } else {
-                left_c = ((ConstOp) left).value;
-            }
-
-            if (left.needNot) { // 处理!号
-                if (((ConstOp) left).value != 0) {
-                    left_c = 0;
+    public static Operands handleOpStack(Operands operands) {
+        if (operands instanceof ConstOp) {
+            while (operands.opStack.size() != 0) {
+                Character op = operands.opStack.pop();
+                if (op == '!') {
+                    if (((ConstOp) operands).value != 0) {
+                        ((ConstOp) operands).value = 0;
+                    } else {
+                        ((ConstOp) operands).value = 1;
+                    }
                 } else {
-                    left_c = 1;
+                    ((ConstOp) operands).value = -((ConstOp) operands).value;
                 }
             }
+            return operands;
+        } else {
+            Integer tRegNo = ((RegOp) operands).regNo;
+            while (operands.opStack.size() != 0) {
+                Character op = operands.opStack.pop();
+                if (op == '!') {
+                    tRegNo = CodeGenerater.CreatNotCode(tRegNo);
+                } else {
+                    tRegNo = CodeGenerater.CreatNegativeCode(tRegNo);
+                }
+            }
+            return new RegOp(tRegNo, 32, false, new Stack<>());
+        }
+    }
+
+    public static Operands readyforTransExpCode(Operands left, Operands right, Character op) {
+        if (left.opStack.size() != 0) { // 处理前缀符号
+            left = handleOpStack(left);
+        }
+        if (right.opStack.size() != 0) { // 处理前缀符号
+            right = handleOpStack(right);
+        }
+
+        if (left instanceof ConstOp) {
+            Integer left_c = ((ConstOp) left).value;
 
             if (right instanceof ConstOp) { // 双常值直接计算返回即可
-                Integer right_c;
-                if (right.needNegative) { // 处理负号
-                    right_c = ((ConstOp) right).value;
-                } else {
-                    right_c = ((ConstOp) right).value;
-                }
+                Integer right_c = ((ConstOp) right).value;
 
-                if (right.needNot) { // 处理!号
-                    if (((ConstOp) right).value != 0) {
-                        right_c = 0;
-                    } else {
-                        right_c = 1;
-                    }
-                }
-
-                return new ConstOp(ConstCal(left_c, right_c, op), false, false);
+                return new ConstOp(ConstCal(left_c, right_c, op), new Stack<>());
             } else if (right instanceof RegOp) { // 常值与RegOp计算，返回RegOp
                 RegOp rightRegOp = (RegOp) right;
-
-                if (rightRegOp.needNegative) { // 处理负号
-                    rightRegOp.regNo = CodeGenerater.CreatNegativeCode(rightRegOp.regNo);
-                    rightRegOp.needNegative = false;
-                } // FIXME 逻辑非
 
                 if (rightRegOp.type == 8) { // 类型转换i32
                     rightRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(rightRegOp);
                 }
 
                 Integer retReg = CodeGenerater.CreatCalExp(true, left_c, false, rightRegOp.regNo, op);
-                return new RegOp(retReg, rightRegOp.type, rightRegOp.isArray, rightRegOp.needNegative,
-                        rightRegOp.needNot);
+                return new RegOp(retReg, rightRegOp.type, rightRegOp.isArray, new Stack<>());
             }
         } else if (left instanceof RegOp) {
             RegOp leftRegOp = (RegOp) left;
-
-            if (leftRegOp.needNegative) { // 处理负号
-                leftRegOp.regNo = CodeGenerater.CreatNegativeCode(leftRegOp.regNo);
-                leftRegOp.needNegative = false;
-            }
 
             if (leftRegOp.type == 8) { // 类型转换i32
                 leftRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(leftRegOp);
             }
 
             if (right instanceof ConstOp) { // 常值与RegOp计算，返回RegOp
-                Integer right_c;
-                if (right.needNegative) { // 处理负号
-                    right_c = ((ConstOp) right).value;
-                } else {
-                    right_c = ((ConstOp) right).value;
-                }
+                Integer right_c = ((ConstOp) right).value;
 
                 Integer retReg = CodeGenerater.CreatCalExp(false, leftRegOp.regNo, true, right_c, op);
-                return new RegOp(retReg, leftRegOp.type, leftRegOp.isArray, leftRegOp.needNegative, leftRegOp.needNot);
+                return new RegOp(retReg, leftRegOp.type, leftRegOp.isArray, new Stack<>());
             } else if (right instanceof RegOp) { // RegOp与RegOp计算，返回RegOp
                 RegOp rightRegOp = (RegOp) right;
-
-                if (rightRegOp.needNegative) { // 处理负号
-                    rightRegOp.regNo = CodeGenerater.CreatNegativeCode(rightRegOp.regNo);
-                    rightRegOp.needNegative = false;
-                }
 
                 if (rightRegOp.type == 8) { // 类型转换i32
                     rightRegOp = (RegOp) CodeGenerater.CreatTransTypeCode(rightRegOp);
                 }
 
                 Integer retReg = CodeGenerater.CreatCalExp(false, leftRegOp.regNo, false, rightRegOp.regNo, op);
-                return new RegOp(retReg, 32, false, false, false);
+                return new RegOp(retReg, 32, false, new Stack<>());
             }
         }
         throw new RuntimeException("Invalid operator in readyforTransExpCode");
@@ -371,16 +348,15 @@ public class utils {
 
         if (pos == -1) { // 传递数组指针作为参数
             String sReg = reg.getArrPointer();
-            return new RegOp(Integer.valueOf(sReg), varOp.type, varOp.isArray, varOp.needNegative, varOp.needNot);
+            return new RegOp(Integer.valueOf(sReg), varOp.type, varOp.isArray, varOp.opStack);
         } else {
             Pair ret = reg.getValueReg(posisReg, pos);
             if ((Boolean) ret.a.equals(true)) { // 拿到的是一个常值
-                return new ConstOp((Integer) ret.b, varOp.needNegative, varOp.needNot);
+                return new ConstOp((Integer) ret.b, new Stack<>());
             } else { // 拿到了值寄存器
-                return new RegOp((Integer) ret.b, varOp.type, varOp.isArray, varOp.needNegative, varOp.needNot);
+                return new RegOp((Integer) ret.b, varOp.type, varOp.isArray, varOp.opStack);
             }
         }
-
     }
 
     /**
@@ -394,9 +370,9 @@ public class utils {
 
         cleanAllReg();
         if (funcOp.funcSymbol.returnType.equals(FuncTypes.IntFunc)) {
-            return new RegOp(retReg, 32, false, funcOp.needNegative, funcOp.needNot);
+            return new RegOp(retReg, 32, false, funcOp.opStack);
         } else if (funcOp.funcSymbol.returnType.equals(FuncTypes.CharFunc)) {
-            return new RegOp(retReg, 8, false, funcOp.needNegative, funcOp.needNot);
+            return new RegOp(retReg, 8, false, funcOp.opStack);
         } else { // void
             return null;
         }
@@ -463,8 +439,14 @@ public class utils {
         ArrayList<ArrayList<Token>> params = new ArrayList<>();
         int begin = 0, count = 0;
 
-        for (int i = 0; i < subexp.size() && count < paramNum - 1; i++) { // 前面paramNum-1个参数
-            if (subexp.get(i).str.equals(",")) {
+        for (int i = 0, level = 0; i < subexp.size() && count < paramNum - 1; i++) { // 前面paramNum-1个参数
+            if (subexp.get(i).str.equals("(")) {
+                level++;
+            } else if (subexp.get(i).str.equals(")")) {
+                level--;
+            }
+
+            if (subexp.get(i).str.equals(",") && level == 0) {
                 count++;
                 params.add(GetSubExpfromIndex(begin, i - 1, subexp));
                 begin = i + 1;
@@ -714,7 +696,7 @@ public class utils {
         }
 
         regNo = CodeGenerater.CreatcalCondExp(leftIsReg, leftRegNo, rightIsReg, rightRegNo, relOp);
-        left = new RegOp(regNo, 1, false, false, false);
+        left = new RegOp(regNo, 1, false, new Stack<>());
         return left;
     }
 
@@ -787,7 +769,7 @@ public class utils {
         return left;
     }
 
-    public static Operands createNewVarOp(VarSymbol varSymbol, Operands pos, boolean needNegative, boolean needNot) {
+    public static Operands createNewVarOp(VarSymbol varSymbol, Operands pos, Stack<Character> opStack) {
         Integer type = 0;
         Boolean isArray = false;
         if (varSymbol.type.equals(VarTypes.Int) || varSymbol.type.equals(VarTypes.ConstInt)) {
@@ -802,7 +784,7 @@ public class utils {
             isArray = true;
         }
 
-        return new VarOp(varSymbol, type, isArray, pos, needNegative, needNot);
+        return new VarOp(varSymbol, type, isArray, pos, opStack);
     }
 
     /**

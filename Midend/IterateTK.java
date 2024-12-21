@@ -325,7 +325,7 @@ public class IterateTK {
                 if (reg.isArray) {
                     reg.initStoreArrReg(i.toString());
                 } else {
-                    reg.storeReg(true, 0, new RegOp(i, reg.type, false, false, false));
+                    reg.storeReg(true, 0, new RegOp(i, reg.type, false, new Stack<>()));
                 }
             }
 
@@ -494,7 +494,7 @@ public class IterateTK {
                 } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
                     for (int i = 0; i < strConst.length(); i++) {
-                        reg.storeReg(true, i, new ConstOp((int) strConst.charAt(i), false, false));
+                        reg.storeReg(true, i, new ConstOp((int) strConst.charAt(i), new Stack<>()));
                     }
                 }
             } else {
@@ -804,6 +804,10 @@ public class IterateTK {
             } else { // 变量赋值
                 reg.storeReg(true, 0, operands);
             }
+        }
+
+        if (haveChange && needBr.JudgeNeedBr()) { // 防止出现有change块而无跳转的问题
+            CodeGenerater.CreatbrCode(forThenLabel);
         }
 
         if (haveCond) { // 跳转

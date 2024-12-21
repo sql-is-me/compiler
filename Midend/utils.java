@@ -656,7 +656,16 @@ public class utils {
             int i1Reg = CodeGenerater.CreatTransi32toi1Code(temp);
 
             if (i != eqExps.size() - 1) {
-                p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, falseDest);
+                if (thelast) {
+                    if (haveElse) {
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.elseLabels.peek());
+                    } else {
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.ifEndLabels.peek());
+                    }
+                } else {
+                    p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, falseDest);
+                }
+
             } else { // 最后一个，此时or的第一个可以确定是true，故确定跳转位置
                 if (thelast) {
                     if (isIf) {

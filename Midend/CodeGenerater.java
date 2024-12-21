@@ -732,7 +732,7 @@ public class CodeGenerater {
             forCondLabels.push("cond." + forTag);
 
             sb.append("br label %" + starter);
-            addCodeatLast(starter);
+            addCodeatLast(sb.toString());
             sb = new StringBuilder();
 
             sb.append(starter + ":");

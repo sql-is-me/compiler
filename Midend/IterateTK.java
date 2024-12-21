@@ -679,7 +679,6 @@ public class IterateTK {
         stepIntoChildSymTab();
 
         Boolean haveCond = false;
-        Boolean haveChange = false;
         ArrayList<Token> condExp = new ArrayList<>();
         if (!getNowToken().str.equals(";")) { // 第二个参数
             haveCond = true;
@@ -692,8 +691,10 @@ public class IterateTK {
         }
         pos++;
 
+        Boolean haveChange = false;
         ArrayList<Token> changeExp = new ArrayList<>();
         if (!getNowToken().str.equals(")")) { // 第3个参数
+            haveChange = true;
             int begin = pos;
             int level = 1;
 
@@ -708,6 +709,7 @@ public class IterateTK {
                         break;
                     }
                 }
+                pos++;
             }
         }
         pos++;
@@ -735,10 +737,9 @@ public class IterateTK {
 
             int p = 0;
             for (int i = 0; i < changeExp.size(); i++) {
-                if (!changeExp.get(i).str.equals("=")) {
-                    i++;
-                } else {
+                if (changeExp.get(i).str.equals("=")) {
                     p = i;
+                    break;
                 }
             }
 

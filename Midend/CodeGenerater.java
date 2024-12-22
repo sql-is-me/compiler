@@ -18,7 +18,22 @@ public class CodeGenerater {
     /** llcode代码 */
     public static ArrayList<String> llcode = new ArrayList<String>();
 
+    public static ArrayList<String> llSaver;
+    public static Stack<ArrayList<String>> returnStack = new Stack<>();
+    public static int regSaver;
+
     public static Boolean needTab = false;
+
+    public static void saveLLCode() {
+        llSaver = new ArrayList<String>(llcode);
+        returnStack.push(llSaver);
+        regSaver = utils.regNum;
+    }
+
+    public static void recallLLCode() {
+        llcode = returnStack.pop();
+        utils.regNum = regSaver;
+    }
 
     /**
      * 新加入一行代码
@@ -637,7 +652,7 @@ public class CodeGenerater {
     }
 
     public static Integer CreatcalCondExp(boolean leftisConst, Integer left, boolean rightisConst, Integer right,
-            String op) {// %cmp = icmp eq i32 %a, %b ne
+            String op) {
         StringBuilder sb = new StringBuilder();
         int retReg = utils.getRegNum();
         sb.append("%" + retReg + " = icmp ");

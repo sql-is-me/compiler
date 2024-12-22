@@ -50,13 +50,13 @@ public class utils {
                 if (t.tk.equals("INTCON"))
                     temp = new ConstOp(Integer.parseInt(t.str), opStack);
                 else {
-                    temp = new ConstOp((int) t.str.charAt(1), opStack);
+                    String str = utils.convertEscapeChars(t.str);
+                    temp = new ConstOp((int) str.charAt(1), opStack);
                 }
 
                 operands.addLast(temp);
 
                 op = ' ';
-                opStack = new Stack<>();
             } else if (t.str.equals("+") || t.str.equals("-") || t.str.equals("*") || t.str.equals("/")
                     || t.str.equals("%") || t.str.equals("!")) { // 表达式符号处理
 
@@ -95,23 +95,17 @@ public class utils {
                         ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
                         Operands tempOp = calExp(posExp, isGlobalInit);
 
-                        boolean canGetConstValue = false; // 如果他pos是一个常数，并且对应位置有值的话，直接返回
                         if (tempOp instanceof ConstOp && IterateTK.cur_symTab.regMap.containsKey(varSymbol)) {
                             int constPos = ((ConstOp) tempOp).value;
                             Register reg = IterateTK.cur_symTab.regMap.get(varSymbol);
                             if (reg.size != -1 && reg.constValue.get(constPos) != Integer.MIN_VALUE) {
                                 temp = new ConstOp(reg.constValue.get(constPos), opStack);
-                                canGetConstValue = true;
                             } else {
                                 temp = createNewVarOp(varSymbol, tempOp, opStack);// 原部分
                             }
                         } else {
                             temp = createNewVarOp(varSymbol, tempOp, opStack);
                         }
-
-                        // if (!canGetConstValue) {
-                        // temp = createNewVarOp(varSymbol, tempOp, opStack);
-                        // }
                     } else if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
                             || varSymbol.type.equals(VarTypes.ConstIntArray)
                             || varSymbol.type.equals(VarTypes.ConstCharArray)) { // 传递指针，至pos为-1
@@ -120,7 +114,7 @@ public class utils {
                         if (IterateTK.cur_symTab.regMap.get(varSymbol).size != -1
                                 && IterateTK.cur_symTab.regMap.get(varSymbol).constValue.get(0) != Integer.MIN_VALUE) {
                             temp = new ConstOp(IterateTK.cur_symTab.regMap.get(varSymbol).constValue.get(0),
-                                    new Stack<>());
+                                    opStack);
                         } else {
                             temp = createNewVarOp(varSymbol, new ConstOp(0, new Stack<>()), opStack);
                         }
@@ -163,7 +157,6 @@ public class utils {
                 }
 
                 op = ' ';
-                opStack = new Stack<>();
             } else if (t.str.equals("(")) {
                 int begin = i + 1, j = i + 1;
                 int level = 1;
@@ -185,16 +178,15 @@ public class utils {
                 i = j;
 
                 Operands temp = calExp(subExp, isGlobalInit);
+                temp = handleOpStack(temp);
+                temp.opStack = opStack;
                 operands.addLast(temp);
 
                 op = ' ';
-                opStack = new Stack<>();
             }
         }
 
-        return
-
-        processCal(operands, ops, isGlobalInit);
+        return processCal(operands, ops, isGlobalInit);
     }
 
     public static Operands processCal(Deque<Operands> operands, Deque<Character> ops, boolean isGlobalInit) {
@@ -272,6 +264,10 @@ public class utils {
             }
             return operands;
         } else {
+            if (operands.type == 8) {
+                operands = CodeGenerater.CreatTransTypeCode(operands);
+            }
+
             Integer tRegNo = ((RegOp) operands).regNo;
             while (operands.opStack.size() != 0) {
                 Character op = operands.opStack.pop();
@@ -574,6 +570,20 @@ public class utils {
         }
     }
 
+    public static String convertEscapeChars(String input) {
+        // 替换常见的转义字符
+        input = input.replace("\\a", "\u0007") // Bell (响铃)
+                .replace("\\b", "\b") // Backspace
+                .replace("\\t", "\t") // Horizontal Tab
+                .replace("\\n", "\n") // Newline
+                .replace("\\r", "\r") // Carriage Return
+                .replace("\\f", "\f") // Formfeed
+                .replace("\\\"", "\"") // Double quote
+                .replace("\\'", "'") // Single quote
+                .replace("\\\\", "\\"); // Backslash
+        return input;
+    }
+
     /* ————————————————————————————————————————————————————————————————————— */
 
     public static ArrayList<ArrayList<Token>> Expsplits(ArrayList<Token> exps, String op) {
@@ -710,6 +720,13 @@ public class utils {
         int leftRegNo;
         int rightRegNo;
 
+        if (left.type == 8) {
+            left = CodeGenerater.CreatTransTypeCode(left);
+        }
+        if (right.type == 8) {
+            right = CodeGenerater.CreatTransTypeCode(right);
+        }
+
         if (left instanceof RegOp) {
             leftIsReg = true;
             leftRegNo = ((RegOp) left).regNo;
@@ -721,13 +738,6 @@ public class utils {
             rightRegNo = ((RegOp) right).regNo;
         } else {
             rightRegNo = ((ConstOp) right).value;
-        }
-
-        if (left.type == 8) {
-            left = CodeGenerater.CreatTransTypeCode(left);
-        }
-        if (right.type == 8) {
-            right = CodeGenerater.CreatTransTypeCode(right);
         }
 
         regNo = CodeGenerater.CreatcalCondExp(leftIsReg, leftRegNo, rightIsReg, rightRegNo, relOp);

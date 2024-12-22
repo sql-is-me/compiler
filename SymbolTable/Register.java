@@ -185,18 +185,22 @@ public class Register {
             vORvReg = ((RegOp) vOperand).regNo;
         }
 
-        if (posisConst) {
-            if (isConst) {
-                if (type == 8) {
-                    vORvReg = vORvReg & 0xff;
+        if (size == -1) { // 参数数组完全不知道多长以及存哪，所以直接初始化即可
+            initAllConstandValueReg();
+        } else {
+            if (posisConst) {
+                if (isConst) {
+                    if (type == 8) {
+                        vORvReg = vORvReg & 0xff;
+                    }
+                    constValue.set(pos, vORvReg);
+                    initValueReg(pos);
+                } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
+                    initAllValueReg(pos);
                 }
-                constValue.set(pos, vORvReg);
-                initValueReg(pos);
-            } else { // 存了一个寄存器值，那就直接初始化等待下次调用时分配即可
-                initAllValueReg(pos);
+            } else { // pos的值是一个寄存器
+                initAllConstandValueReg(); // 不知道存哪，所以所有的都初始化
             }
-        } else { // pos的值是一个寄存器
-            initAllConstandValueReg(); // 不知道存哪，所以所有的都初始化
         }
 
         if (isArray) {

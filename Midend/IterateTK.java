@@ -201,6 +201,7 @@ public class IterateTK {
                     }
                 } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
+                    strConst = utils.convertEscapeChars(strConst);
                     for (int i = 1; i < strConst.length() - 1; i++) {
                         values.set(i - 1, (int) strConst.charAt(i));
                     }
@@ -310,8 +311,13 @@ public class IterateTK {
             retType = 0;
         }
 
-        boolean haveReturn = FuncBody(retType);
-        if (!haveReturn) {
+        NeedBr funcRet = FuncBody(retType);
+
+        if (funcRet.haveReturn) {
+            CodeGenerater.recallLLCode();
+        }
+
+        if (!funcRet.haveReturn) {
             CodeGenerater.CreatReturnCode(retType, true, 0);
         }
         CodeGenerater.CreatFuncEndCode();
@@ -341,8 +347,8 @@ public class IterateTK {
         }
     }
 
-    public static Boolean FuncBody(int retType) {
-        boolean haveReturn = false;
+    public static NeedBr FuncBody(int retType) {
+        NeedBr needBr = new NeedBr(false, false, false);
         for (int level = 1;; pos++) {
             if (token.get(pos).str.equals("{")) {
                 level++;
@@ -406,6 +412,11 @@ public class IterateTK {
                             CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
                         }
                     }
+
+                    if (!needBr.haveReturn) {
+                        CodeGenerater.saveLLCode();
+                    }
+                    needBr.haveReturn = true;
                 } else { // LVal '=' Exp ';' && [Exp] ';'
                     int begin = pos;
                     int assignPos = 0;
@@ -456,7 +467,7 @@ public class IterateTK {
                 }
             }
         }
-        return haveReturn;
+        return needBr;
     }
 
     public static void declareLocalVarandArr(VarSymbol varSymbol) {
@@ -511,7 +522,6 @@ public class IterateTK {
 
     public static void processPrintf() {
         Token t = getNowToken();
-        String str = t.str;
 
         int begin = pos + 2; // , Exp
         findEndofScope();
@@ -520,25 +530,14 @@ public class IterateTK {
         ArrayList<Operands> paramsOperands = calPrintfExp(printfExp);
 
         StringBuilder sb = new StringBuilder();
-        boolean escaping = false;
         int count = 0;
         int type;
 
-        for (int i = 1; i < str.length() - 1; i++) {
-            char currentChar = str.charAt(i);
-
-            if (escaping) { // 转义中
-                if (currentChar == 'n') {
-                    sb.append("\n");
-                } else {
-                    sb.append(currentChar);
-                }
-
-                escaping = false;
-            } else if (currentChar == '\\') { // 转义字符
-                escaping = true;
-            } else if (currentChar == '%' && i < str.length() - 1) {
-                char nextChar = str.charAt(i + 1);
+        String strConst = utils.convertEscapeChars(t.str);
+        for (int i = 1; i < strConst.length() - 1; i++) {
+            char currentChar = strConst.charAt(i);
+            if (currentChar == '%' && i < strConst.length() - 1) {
+                char nextChar = strConst.charAt(i + 1);
                 if (nextChar == 'd' || nextChar == 'c') {
                     if (nextChar == 'c') {
                         type = 8;
@@ -648,6 +647,10 @@ public class IterateTK {
 
         NeedBr needBr = StmtinForandIf(retType, singleLine); // 自带step out
 
+        if (needBr.JudgeNeedBr()) {
+            CodeGenerater.recallLLCode();
+        }
+
         if (!needBr.JudgeNeedBr()) {
             CodeGenerater.CreatbrCode(CodeGenerater.ifEndLabels.peek());
         }
@@ -665,6 +668,9 @@ public class IterateTK {
             }
 
             needBr = StmtinForandIf(retType, singleLine);
+            if (needBr.JudgeNeedBr()) {
+                CodeGenerater.recallLLCode();
+            }
 
             if (!needBr.JudgeNeedBr()) {
                 CodeGenerater.CreatbrCode(CodeGenerater.ifEndLabels.peek());
@@ -768,6 +774,10 @@ public class IterateTK {
 
         NeedBr needBr = StmtinForandIf(retType, singleLine);
 
+        if (needBr.JudgeNeedBr()) {
+            CodeGenerater.recallLLCode();
+        }
+
         if (haveChange) { // 有第三个参数
             if (!needBr.JudgeNeedBr()) {
                 CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
@@ -813,7 +823,11 @@ public class IterateTK {
             }
         }
 
-        if (haveChange && needBr.JudgeNeedBr()) { // 防止出现有change块而无跳转的问题
+        if (needBr.haveContinue && !needBr.haveReturn && !needBr.haveBreak) {
+            if (haveCond && haveChange) {// 防止出现有change块有cond块但出现continue时无法跳转回cond的情况
+                CodeGenerater.CreatbrCode(CodeGenerater.forCondLabels.peek());
+            }
+        } else if (haveChange && needBr.JudgeNeedBr()) { // 防止出现有change块而无跳转的问题
             CodeGenerater.CreatbrCode(CodeGenerater.forThenLabels.peek());
         }
 
@@ -834,7 +848,7 @@ public class IterateTK {
     }
 
     public static NeedBr StmtinForandIf(int retType, boolean singleLine) {
-        boolean haveBreak = false, haveReturn = false, haveContinue = false;
+        NeedBr needBr = new NeedBr(false, false, false);
 
         for (int level = 1;; pos++) {
             if (token.get(pos).str.equals("{")) {
@@ -881,11 +895,14 @@ public class IterateTK {
                     pos += 2; // for (
                     ProcessFor(retType);
                 } else if (t.tk.equals("BREAKTK")) {
-                    haveBreak = true;
                     pos++;// ;
                     CodeGenerater.CreatbrCode(CodeGenerater.forEndLabels.peek());
+
+                    if (!needBr.JudgeNeedBr()) {
+                        CodeGenerater.saveLLCode();
+                    }
+                    needBr.haveBreak = true;
                 } else if (t.tk.equals("CONTINUETK")) {
-                    haveContinue = true;
                     pos++;// ;
                     if (utils.JudgeForChangeExist()) {
                         CodeGenerater.CreatbrCode(CodeGenerater.forChangeLabels.peek());
@@ -894,8 +911,12 @@ public class IterateTK {
                     } else {
                         CodeGenerater.CreatbrCode(CodeGenerater.forThenLabels.peek());
                     }
+
+                    if (!needBr.JudgeNeedBr()) {
+                        CodeGenerater.saveLLCode();
+                    }
+                    needBr.haveContinue = true;
                 } else if (t.tk.equals("RETURNTK")) {
-                    haveReturn = true;
                     if (retType == 0) {
                         CodeGenerater.CreatReturnCode(retType, false, 0);// ret void
                     } else {
@@ -912,6 +933,11 @@ public class IterateTK {
                             CodeGenerater.CreatReturnCode(retType, false, ((RegOp) operands).regNo);
                         }
                     }
+
+                    if (!needBr.JudgeNeedBr()) {
+                        CodeGenerater.saveLLCode();
+                    }
+                    needBr.haveReturn = true;
                 } else { // LVal '=' Exp ';' && [Exp] ';'
                     int begin = pos;
                     int assignPos = 0;
@@ -962,10 +988,10 @@ public class IterateTK {
 
                 if (singleLine) {
                     stepOutfromChildSymTab();
-                    return new NeedBr(haveBreak, haveReturn, haveContinue);
+                    return needBr;
                 }
             }
         }
-        return new NeedBr(haveBreak, haveReturn, haveContinue);
+        return needBr;
     }
 }

@@ -53,7 +53,7 @@ public class IterateTK {
         childSymTabNOs.push(childSymTabNo + 1);
         childSymTabNOs.push(0);
         cur_symTab.regMap = new HashMap<>(cur_symTab.lastSymTab.regMap);
-        utils.initAllRegister();
+        utils.initAllRegister_Strong();
         // cur_symTab.regMap = createNewMap(cur_symTab.lastSymTab.regMap);
     }
 
@@ -150,7 +150,7 @@ public class IterateTK {
     }
 
     public static void GloVarandArr(VarSymbol varSymbol) {
-        utils.addSymboltoRegMap(varSymbol);
+        Register reg = utils.addSymboltoRegMap(varSymbol);
 
         pos = varSymbol.offset;
 
@@ -175,6 +175,7 @@ public class IterateTK {
                 type = 8;
             }
             CodeGenerater.declareGloVar(varSymbol.name, type, value);
+            reg.constValue.set(0, value);
 
         } else { // 数组
             ArrayList<Integer> values = new ArrayList<>(Collections.nCopies(varSymbol.size, 0));
@@ -200,8 +201,8 @@ public class IterateTK {
                     }
                 } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
-                    for (int i = 0; i < strConst.length(); i++) {
-                        values.set(i, (int) strConst.charAt(i));
+                    for (int i = 1; i < strConst.length() - 1; i++) {
+                        values.set(i - 1, (int) strConst.charAt(i));
                     }
                 }
             } else {
@@ -213,6 +214,10 @@ public class IterateTK {
                 CodeGenerater.declareGloArr(varSymbol.name, 32, varSymbol.size, values, needInitializer);
             } else {
                 CodeGenerater.declareGloArr(varSymbol.name, 8, varSymbol.size, values, needInitializer);
+            }
+
+            for (int i = 0; i < varSymbol.size; i++) {
+                reg.constValue.set(i, values.get(i));
             }
         }
     }
@@ -430,7 +435,8 @@ public class IterateTK {
                         Register reg = cur_symTab.regMap.get(varSymbol);
 
                         if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
-                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                            ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size() - 2, LVal);
+                            ;
                             Operands posOp = utils.calExp(posExp, false);
 
                             int posV;
@@ -493,8 +499,8 @@ public class IterateTK {
                     }
                 } else if (getNowToken().tk.equals("STRCON")) { // 字符串常量
                     String strConst = getNowToken().str;
-                    for (int i = 0; i < strConst.length(); i++) {
-                        reg.storeReg(true, i, new ConstOp((int) strConst.charAt(i), new Stack<>()));
+                    for (int i = 1; i < strConst.length() - 1; i++) {
+                        reg.storeReg(true, i - 1, new ConstOp((int) strConst.charAt(i), new Stack<>()));
                     }
                 }
             } else {
@@ -686,7 +692,8 @@ public class IterateTK {
             Register reg = cur_symTab.regMap.get(varSymbol);
 
             if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
-                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size() - 2, LVal);
+                ;
                 Operands posOp = utils.calExp(posExp, false);
 
                 int posV;
@@ -749,8 +756,7 @@ public class IterateTK {
             utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
         }
 
-        String forThenLabel = CodeGenerater.forThenLabels.pop();
-        CodeGenerater.CreatLabelTagCode(forThenLabel);
+        CodeGenerater.CreatLabelTagCode(CodeGenerater.forThenLabels.peek());
         utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
         boolean singleLine = false;
@@ -788,7 +794,8 @@ public class IterateTK {
             Register reg = cur_symTab.regMap.get(varSymbol);
 
             if (LVal.size() != 1) { // 对数组的某一个地方进行赋值
-                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size(), LVal);
+                ArrayList<Token> posExp = utils.GetSubExpfromIndex(2, LVal.size() - 2, LVal);
+                ;
                 Operands posOp = utils.calExp(posExp, false);
 
                 int posV;
@@ -807,7 +814,7 @@ public class IterateTK {
         }
 
         if (haveChange && needBr.JudgeNeedBr()) { // 防止出现有change块而无跳转的问题
-            CodeGenerater.CreatbrCode(forThenLabel);
+            CodeGenerater.CreatbrCode(CodeGenerater.forThenLabels.peek());
         }
 
         if (haveCond) { // 跳转
@@ -818,10 +825,11 @@ public class IterateTK {
             }
         } else {
             if (!needBr.JudgeNeedBr()) {
-                CodeGenerater.CreatbrCode(forThenLabel);
+                CodeGenerater.CreatbrCode(CodeGenerater.forThenLabels.peek());
             }
         }
 
+        CodeGenerater.forThenLabels.pop();
         CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());// step自带退出
     }
 

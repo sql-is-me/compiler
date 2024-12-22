@@ -454,7 +454,7 @@ public class CodeGenerater {
         }
 
         if (posisReg) {
-            sb.append(" %" + pos);
+            sb.append("%" + pos);
         } else {
             sb.append(pos);
         }

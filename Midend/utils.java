@@ -94,13 +94,36 @@ public class utils {
                         }
                         ArrayList<Token> posExp = GetSubExpfromIndex(begin, i - 1, exp);
                         Operands tempOp = calExp(posExp, isGlobalInit);
-                        temp = createNewVarOp(varSymbol, tempOp, new Stack<>());
+
+                        boolean canGetConstValue = false; // 如果他pos是一个常数，并且对应位置有值的话，直接返回
+                        if (tempOp instanceof ConstOp && IterateTK.cur_symTab.regMap.containsKey(varSymbol)) {
+                            int constPos = ((ConstOp) tempOp).value;
+                            Register reg = IterateTK.cur_symTab.regMap.get(varSymbol);
+                            if (reg.size != -1 && reg.constValue.get(constPos) != Integer.MIN_VALUE) {
+                                temp = new ConstOp(reg.constValue.get(constPos), opStack);
+                                canGetConstValue = true;
+                            } else {
+                                temp = createNewVarOp(varSymbol, tempOp, opStack);// 原部分
+                            }
+                        } else {
+                            temp = createNewVarOp(varSymbol, tempOp, opStack);
+                        }
+
+                        // if (!canGetConstValue) {
+                        // temp = createNewVarOp(varSymbol, tempOp, opStack);
+                        // }
                     } else if (varSymbol.type.equals(VarTypes.IntArray) || varSymbol.type.equals(VarTypes.CharArray)
                             || varSymbol.type.equals(VarTypes.ConstIntArray)
                             || varSymbol.type.equals(VarTypes.ConstCharArray)) { // 传递指针，至pos为-1
                         temp = createNewVarOp(varSymbol, new ConstOp(-1, new Stack<>()), opStack);
                     } else { // 变量处理，pos返回 0 ConstOp即可
-                        temp = createNewVarOp(varSymbol, new ConstOp(0, new Stack<>()), opStack);
+                        if (IterateTK.cur_symTab.regMap.get(varSymbol).size != -1
+                                && IterateTK.cur_symTab.regMap.get(varSymbol).constValue.get(0) != Integer.MIN_VALUE) {
+                            temp = new ConstOp(IterateTK.cur_symTab.regMap.get(varSymbol).constValue.get(0),
+                                    new Stack<>());
+                        } else {
+                            temp = createNewVarOp(varSymbol, new ConstOp(0, new Stack<>()), opStack);
+                        }
                     }
 
                     operands.addLast(temp);
@@ -169,7 +192,9 @@ public class utils {
             }
         }
 
-        return processCal(operands, ops, isGlobalInit);
+        return
+
+        processCal(operands, ops, isGlobalInit);
     }
 
     public static Operands processCal(Deque<Operands> operands, Deque<Character> ops, boolean isGlobalInit) {
@@ -340,6 +365,7 @@ public class utils {
             pos = ((ConstOp) varOp.pos).value;
         } else {
             pos = ((RegOp) varOp.pos).regNo;
+            posisReg = true;
         }
         Register reg = IterateTK.cur_symTab.regMap.get(varOp.varSymbol);
         if (reg == null) {
@@ -539,6 +565,15 @@ public class utils {
         }
     }
 
+    public static void initAllRegister_Strong() {
+        for (Map.Entry<VarSymbol, Register> entry : IterateTK.cur_symTab.regMap.entrySet()) {
+            entry.getValue().initAllConstandValueReg();
+            if (entry.getValue().isArray && entry.getValue().size != -1) {
+                entry.getValue().stackReg = "-1";
+            }
+        }
+    }
+
     /* ————————————————————————————————————————————————————————————————————— */
 
     public static ArrayList<ArrayList<Token>> Expsplits(ArrayList<Token> exps, String op) {
@@ -629,15 +664,18 @@ public class utils {
 
             if (i != eqExps.size() - 1) {
                 if (thelast) {
-                    if (haveElse) {
-                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.elseLabels.peek());
+                    if (isIf) {
+                        if (haveElse) {
+                            p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.elseLabels.peek());
+                        } else {
+                            p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.ifEndLabels.peek());
+                        }
                     } else {
-                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.ifEndLabels.peek());
+                        p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, CodeGenerater.forEndLabels.peek());
                     }
                 } else {
                     p = CodeGenerater.CreatShortJumpCode_And(i1Reg, null, falseDest);
                 }
-
             } else { // 最后一个，此时or的第一个可以确定是true，故确定跳转位置
                 if (thelast) {
                     if (isIf) {
@@ -659,12 +697,9 @@ public class utils {
                         p = CodeGenerater.CreatShortJumpCode_And(i1Reg, CodeGenerater.forThenLabels.peek(), falseDest);
                     }
                 }
-
             }
-
             falseDest = (String) p.b;
         }
-
         return p;
     }
 

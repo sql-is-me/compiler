@@ -426,29 +426,29 @@ public class CodeGenerater {
         if (!isGlobalArray) { // 非全局数组
             if (size == 0) { // 函数调用时，不需要size
                 if (type == 32) {
-                    sb.append("i32, i32* %" + pointerReg + ", i32 ");
+                    sb.append("i32, i32* %" + pointerReg + ", i32 0"); // FIXME
                 } else {
-                    sb.append("i8, i8* %" + pointerReg + ", i8 ");
+                    sb.append("i8, i8* %" + pointerReg + ", i32 0"); // FIXME
                 }
             } else {
                 if (type == 32) {
                     sb.append("[" + size + " x i32], [" + size + " x i32]* %" + pointerReg + ", i32 0, i32 0");
                 } else {
-                    sb.append("[" + size + " x i8], [" + size + " x i8]* %" + pointerReg + ", i8 0, i8 0");
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* %" + pointerReg + ", i32 0, i32 0");
                 }
             }
         } else {
             if (size == 0) { // 函数调用时，不需要size
                 if (type == 32) {
-                    sb.append("i32, i32* @" + pointerReg + ", i32 ");
+                    sb.append("i32, i32* @" + pointerReg + ", i32 0"); // FIXME
                 } else {
-                    sb.append("i8, i8* @" + pointerReg + ", i8 ");
+                    sb.append("i8, i8* @" + pointerReg + ", i32 0"); // FIXME
                 }
             } else {
                 if (type == 32) {
                     sb.append("[" + size + " x i32], [" + size + " x i32]* @" + pointerReg + ", i32 0, i32 0");
                 } else {
-                    sb.append("[" + size + " x i8], [" + size + " x i8]* @" + pointerReg + ", i8 0, i8 0");
+                    sb.append("[" + size + " x i8], [" + size + " x i8]* @" + pointerReg + ", i32 0, i32 0");
                 }
             }
         }
@@ -465,7 +465,7 @@ public class CodeGenerater {
         if (type == 32) {
             sb.append("i32, i32* %" + sReg + ", i32 ");
         } else {
-            sb.append("i8, i8* %" + sReg + ", i8 ");
+            sb.append("i8, i8* %" + sReg + ", i32 ");
         }
 
         if (posisReg) {

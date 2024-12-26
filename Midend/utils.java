@@ -23,12 +23,30 @@ import Midend.Operands.VarOp;
 
 public class utils {
 
-    public static Symbol findSymbol(String name) {
+    public static Symbol findDeclaringSymbol(String name) {
         SymTab symTab = IterateTK.cur_symTab;
 
         while (symTab != null) {
             if (symTab.curSymTab.containsKey(name)) {
                 return symTab.curSymTab.get(name);
+            }
+            symTab = symTab.lastSymTab;
+        }
+
+        throw new RuntimeException("Symbol " + name + " not found");
+    }
+
+    public static Symbol findSymbol(String name) {
+        SymTab symTab = IterateTK.cur_symTab;
+
+        while (symTab != null) {
+            if (symTab.curSymTab.containsKey(name)) {
+                Symbol symbol = symTab.curSymTab.get(name);
+                if (symbol instanceof VarSymbol && symTab.regMap.containsKey((VarSymbol) symbol)) {
+                    return symbol;
+                } else if (symbol instanceof FuncSymbol) {
+                    return symbol;
+                }
             }
             symTab = symTab.lastSymTab;
         }
@@ -57,6 +75,7 @@ public class utils {
                 operands.addLast(temp);
 
                 op = ' ';
+                opStack = new Stack<>();
             } else if (t.str.equals("+") || t.str.equals("-") || t.str.equals("*") || t.str.equals("/")
                     || t.str.equals("%") || t.str.equals("!")) { // 表达式符号处理
 
@@ -157,6 +176,7 @@ public class utils {
                 }
 
                 op = ' ';
+                opStack = new Stack<>();
             } else if (t.str.equals("(")) {
                 int begin = i + 1, j = i + 1;
                 int level = 1;
@@ -183,6 +203,7 @@ public class utils {
                 operands.addLast(temp);
 
                 op = ' ';
+                opStack = new Stack<>();
             }
         }
 
@@ -709,6 +730,7 @@ public class utils {
                 }
             }
             falseDest = (String) p.b;
+            utils.initAllRegister_Strong();
         }
         return p;
     }
@@ -800,7 +822,10 @@ public class utils {
         }
 
         for (ArrayList<Token> commonExp : commonExps) {
-            operands.addLast(calExp(commonExp, false));
+            Operands temp = calExp(commonExp, false);
+            if (temp.type == 8)
+                temp = CodeGenerater.CreatTransTypeCode(temp);
+            operands.addLast(temp);
         }
 
         Operands left = operands.pollFirst();

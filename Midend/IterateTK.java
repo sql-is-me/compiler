@@ -252,8 +252,8 @@ public class IterateTK {
         while (!getNowToken().str.equals("}")) {
             ArrayList<Token> initExp = new ArrayList<>();
 
-            while (!getNowToken().str.equals(",") && !isInfunc) {
-                if (getNowToken().tk.equals("IDENFR") && !isInfunc) {
+            while (!getNowToken().str.equals(",") || isInfunc) {
+                if (getNowToken().tk.equals("IDENFR")) {
                     Symbol s = utils.findSymbol(getNowToken().str);
                     if (s instanceof FuncSymbol) {
                         isInfunc = true;
@@ -367,22 +367,22 @@ public class IterateTK {
                 } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) { // 变量声明
                     pos++; // identifier
                     t = getNowToken();
-                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    VarSymbol varSymbol = (VarSymbol) utils.findDeclaringSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
                     while (getNowToken().str.equals(",")) {
                         pos++;
-                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        varSymbol = (VarSymbol) utils.findDeclaringSymbol(getNowToken().str);
                         declareLocalVarandArr(varSymbol);
                     }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("CONSTTK")) { // 常量声明
                     pos += 2; // identifier
                     t = getNowToken();
-                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    VarSymbol varSymbol = (VarSymbol) utils.findDeclaringSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
                     while (getNowToken().str.equals(",")) {
                         pos++;
-                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        varSymbol = (VarSymbol) utils.findDeclaringSymbol(getNowToken().str);
                         declareLocalVarandArr(varSymbol);
                     }
                     findEndofScope(); // 跳到句子尾部
@@ -633,9 +633,11 @@ public class IterateTK {
 
         CodeGenerater.CreatIfFirstLabelCode(haveElse);// step自带初始化
 
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
         utils.calOrExp(condExp, haveElse, true);
+
         CodeGenerater.CreatLabelTagCode(CodeGenerater.ifThenLabels.pop());
-        utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
         boolean singleLine = false;
         if (!IterateTK.getPosToken(pos).str.equals("{")) { // if无{，仅有单行
@@ -659,6 +661,7 @@ public class IterateTK {
             pos += 2;// else
             stepIntoChildSymTab();
             CodeGenerater.CreatLabelTagCode(CodeGenerater.elseLabels.pop()); // 自带初始化
+            utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
             if (!IterateTK.getPosToken(pos).str.equals("{")) { // else无{，仅有单行
                 singleLine = true;
@@ -668,6 +671,8 @@ public class IterateTK {
             }
 
             needBr = StmtinForandIf(retType, singleLine);
+            utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
+
             if (needBr.JudgeNeedBr()) {
                 CodeGenerater.recallLLCode();
             }
@@ -678,6 +683,7 @@ public class IterateTK {
         }
 
         CodeGenerater.CreatLabelTagCode(CodeGenerater.ifEndLabels.pop()); // step自带退出
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
     }
 
     public static void ProcessFor(int retType) {
@@ -757,13 +763,14 @@ public class IterateTK {
         pos++;
 
         CodeGenerater.CreatForFirstLabelCode(haveCond, haveChange);
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
+
         if (haveCond) {
             utils.calOrExp(condExp, false, false);
-            utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
         }
 
         CodeGenerater.CreatLabelTagCode(CodeGenerater.forThenLabels.peek());
-        utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
         boolean singleLine = false;
         if (!getNowToken().str.equals("{")) {
@@ -784,7 +791,7 @@ public class IterateTK {
             }
 
             CodeGenerater.CreatLabelTagCode(CodeGenerater.forChangeLabels.pop());
-            utils.initAllRegister(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
+            utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
 
             int p = 0;
             for (int i = 0; i < changeExp.size(); i++) {
@@ -845,6 +852,7 @@ public class IterateTK {
 
         CodeGenerater.forThenLabels.pop();
         CodeGenerater.CreatLabelTagCode(CodeGenerater.forEndLabels.pop());// step自带退出
+        utils.initAllRegister_Strong(); // 初始化所有寄存器，确保跳转的寄存器不会影响到其他部分
     }
 
     public static NeedBr StmtinForandIf(int retType, boolean singleLine) {
@@ -866,22 +874,22 @@ public class IterateTK {
                 } else if (t.tk.equals("INTTK") || t.tk.equals("CHARTK")) { // 变量声明
                     pos++; // identifier
                     t = getNowToken();
-                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    VarSymbol varSymbol = (VarSymbol) utils.findDeclaringSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
                     while (getNowToken().str.equals(",")) {
                         pos++;
-                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        varSymbol = (VarSymbol) utils.findDeclaringSymbol(getNowToken().str);
                         declareLocalVarandArr(varSymbol);
                     }
                     findEndofScope(); // 跳到句子尾部
                 } else if (t.tk.equals("CONSTTK")) { // 常量声明
                     pos += 2; // identifier
                     t = getNowToken();
-                    VarSymbol varSymbol = (VarSymbol) utils.findSymbol(t.str);
+                    VarSymbol varSymbol = (VarSymbol) utils.findDeclaringSymbol(t.str);
                     declareLocalVarandArr(varSymbol);
                     while (getNowToken().str.equals(",")) {
                         pos++;
-                        varSymbol = (VarSymbol) utils.findSymbol(getNowToken().str);
+                        varSymbol = (VarSymbol) utils.findDeclaringSymbol(getNowToken().str);
                         declareLocalVarandArr(varSymbol);
                     }
                     findEndofScope(); // 跳到句子尾部

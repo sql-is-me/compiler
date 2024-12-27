@@ -91,8 +91,9 @@ public class utils {
      * @param size  //数组长度
      * @param value //值
      */
-    public static void addVarSymbol(String name, VarTypes type, int size, Boolean isGlobal, int offset) {
-        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, isGlobal, offset);
+    public static void addVarSymbol(String name, VarTypes type, int size, Boolean isGlobal, Boolean isConst,
+            int offset) {
+        Symbol symbol = new VarSymbol(curSymTab.id, name, type, size, isGlobal, isConst, offset);
         curSymTab.curSymTab.put(name, symbol);
     }
 

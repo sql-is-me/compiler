@@ -161,6 +161,11 @@ public class Stmt {
 
             if (!Tools.LookNextTK().tk.equals("SEMICN")) { // ;
                 Token tempToken = Tools.GetNowTK();
+                if (ErrorLog.GetErrorLog().get(ErrorLog.GetErrorLog().size() - 1).errortype == 'f'
+                        && ErrorLog.GetErrorLog().get(ErrorLog.GetErrorLog().size() - 1).line == tempToken.line) {
+                    ErrorLog.GetErrorLog().remove(ErrorLog.GetErrorLog().size() - 1); // 如果是f类错误，即voidreturn无;，删除
+                }
+
                 ErrorLog.makelog_error(tempToken.line, 'i');
             } else {
                 CompUnit.count++; // ;

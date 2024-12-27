@@ -19,6 +19,7 @@ public class Register {
 
     public int type; // 32 8
     public Boolean isGlobal;
+    public Boolean isConst;
     public Boolean isArray;
     public int size; // 数组长
 
@@ -44,6 +45,7 @@ public class Register {
         this.type = type;
         this.isArray = isArray;
         this.isGlobal = varSymbol.isGlobal;
+        this.isConst = varSymbol.isConst;
 
         if (IterateTK.cur_symTab.equals(IterateTK.global_symTab)) { // 全局变量，直接命名名字即可
             if (isArray)
@@ -137,8 +139,10 @@ public class Register {
             valueReg = new ArrayList<>();
             constValue = new ArrayList<>();
         } else {
-            valueReg = new ArrayList<>(Collections.nCopies(size, -1));
-            constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+            if (!isConst) { // 非常量才需要初始化
+                valueReg = new ArrayList<>(Collections.nCopies(size, -1));
+                constValue = new ArrayList<>(Collections.nCopies(size, Integer.MIN_VALUE));
+            }
         }
     }
 

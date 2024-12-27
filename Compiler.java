@@ -3,6 +3,8 @@ import Frontend.Lexer.*;
 import Frontend.Syntax.*;
 import Midend.IterateTK;
 import SymbolTable.Symbol;
+import SymbolTable.WriteSymbolAns;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -14,13 +16,13 @@ public class Compiler {
 
         try (BufferedReader filebr = new BufferedReader(new FileReader(fString))) {
             Lexer.lexer(filebr);
-            // WriteLexerAns.WriteAnswer(Lexer.tokens);
+            WriteLexerAns.WriteAnswer(Lexer.tokens);
 
             Syntax.SyntaxAnalysis();
-            // WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
+            WriteSyntaxAns.WriteAnswer(Syntax.getParser(), Syntax.getNodes());
 
             Symbol.VisitAllSymbolTable();
-            // WriteSymbolAns.WriteAnwser();
+            WriteSymbolAns.WriteAnwser();
 
             if (!ErrorLog.WriteErrorLogs()) {// 输出错误日志
                 IterateTK.StartGenerateMidCode();

@@ -55,8 +55,10 @@ public class Tools {
             if (vp.isArray) {// 处理ConstExp
                 if (vp.sizeExp == null) { // 函数传递的参数
                     size = -1;
+                } else if (vp.isArray) { // 放在代码生成进行计算
+                    size = -2;
                 } else {
-                    size = calConstExp(vp.sizeExp);
+                    size = 0;
                 }
 
             }
@@ -64,29 +66,29 @@ public class Tools {
             if (isConst) {
                 if (btype.equals("Int")) {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstIntArray, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstIntArray, size, inGlobal, isConst, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstInt, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstInt, size, inGlobal, isConst, vp.offset);
                     }
                 } else {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstCharArray, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstCharArray, size, inGlobal, isConst, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.ConstChar, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.ConstChar, size, inGlobal, isConst, vp.offset);
                     }
                 }
             } else {
                 if (btype.equals("Int")) {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.IntArray, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.IntArray, size, inGlobal, isConst, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.Int, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.Int, size, inGlobal, isConst, vp.offset);
                     }
                 } else {
                     if (vp.isArray) {
-                        utils.addVarSymbol(vp.name, VarTypes.CharArray, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.CharArray, size, inGlobal, isConst, vp.offset);
                     } else {
-                        utils.addVarSymbol(vp.name, VarTypes.Char, size, inGlobal, vp.offset);
+                        utils.addVarSymbol(vp.name, VarTypes.Char, size, inGlobal, isConst, vp.offset);
                     }
                 }
             }
@@ -99,7 +101,7 @@ public class Tools {
         }
     }
 
-    public static int calConstExp(ArrayList<Token> exp) {
+    public static int calConstExp(ArrayList<Token> exp) { // 暂时废弃
         Deque<Integer> nums = new ArrayDeque<>();
         Deque<Character> ops = new ArrayDeque<>();
 

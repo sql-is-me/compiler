@@ -426,9 +426,9 @@ public class CodeGenerater {
         if (!isGlobalArray) { // 非全局数组
             if (size == 0) { // 函数调用时，不需要size
                 if (type == 32) {
-                    sb.append("i32, i32* %" + pointerReg + ", i32 0"); // FIXME
+                    sb.append("i32, i32* %" + pointerReg + ", i32 0"); // FIXME : be carefore
                 } else {
-                    sb.append("i8, i8* %" + pointerReg + ", i32 0"); // FIXME
+                    sb.append("i8, i8* %" + pointerReg + ", i32 0");
                 }
             } else {
                 if (type == 32) {
@@ -440,9 +440,9 @@ public class CodeGenerater {
         } else {
             if (size == 0) { // 函数调用时，不需要size
                 if (type == 32) {
-                    sb.append("i32, i32* @" + pointerReg + ", i32 0"); // FIXME
+                    sb.append("i32, i32* @" + pointerReg + ", i32 0");
                 } else {
-                    sb.append("i8, i8* @" + pointerReg + ", i32 0"); // FIXME
+                    sb.append("i8, i8* @" + pointerReg + ", i32 0");
                 }
             } else {
                 if (type == 32) {

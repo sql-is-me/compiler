@@ -599,9 +599,11 @@ public class utils {
                 .replace("\\n", "\n") // Newline
                 .replace("\\r", "\r") // Carriage Return
                 .replace("\\f", "\f") // Formfeed
+                .replace("\\v", "\u000B") // Vertical Tab
                 .replace("\\\"", "\"") // Double quote
-                .replace("\\'", "'") // Single quote
-                .replace("\\\\", "\\"); // Backslash
+                .replace("\\'", "\'") // Single quote
+                .replace("\\\\", "\\") // Backslash
+                .replace("\\0", "\0"); // Backslash
         return input;
     }
 

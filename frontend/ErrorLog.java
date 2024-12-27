@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class ErrorLog {
-    private int line;
-    private char errortype;
+    public int line;
+    public char errortype;
 
     ErrorLog(int LineNum, char ErrorType) {
         this.line = LineNum;
@@ -22,20 +22,20 @@ public class ErrorLog {
 
     private static String errorfile = "error.txt";
 
-    private static List<ErrorLog> errorlog = new ArrayList<>();
+    private static List<ErrorLog> errorLog = new ArrayList<>();
 
     public static void makelog_error(int LineNum, char ErrorType) {
         ErrorLog log = new ErrorLog(LineNum, ErrorType);
-        errorlog.add(log);
+        errorLog.add(log);
     }
 
     public static Boolean WriteErrorLogs() {
-        if (errorlog.size() == 0)
+        if (errorLog.size() == 0)
             return false;
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(errorfile))) {
-            errorlog.sort((e1, e2) -> Integer.compare(e1.line, e2.line));
-            for (ErrorLog error : errorlog) {
+            errorLog.sort((e1, e2) -> Integer.compare(e1.line, e2.line));
+            for (ErrorLog error : errorLog) {
                 bw.write(error.toString());
             }
         } catch (IOException e) {
@@ -46,10 +46,21 @@ public class ErrorLog {
     }
 
     public static List<ErrorLog> GetErrorLog() {
-        return errorlog;
+        return errorLog;
     }
 
     public static void SetErrorLog(List<ErrorLog> oldErrorLog) {
-        errorlog = oldErrorLog;
+        errorLog = oldErrorLog;
+    }
+
+    public static boolean isLastLineEqual(int linenum) {
+        if (errorLog.isEmpty()) {
+            return false;
+        }
+        if (linenum == errorLog.get(errorLog.size() - 1).line) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

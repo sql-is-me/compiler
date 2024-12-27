@@ -150,11 +150,12 @@ public class IterateTK {
     }
 
     public static void GloVarandArr(VarSymbol varSymbol) {
-        Register reg = utils.addSymboltoRegMap(varSymbol);
-
+        Register reg;
         pos = varSymbol.offset;
 
         if (varSymbol.size == 0) { // 非数组
+            reg = utils.addSymboltoRegMap(varSymbol);
+
             int value;
             pos++;
 
@@ -178,14 +179,14 @@ public class IterateTK {
             reg.constValue.set(0, value);
 
         } else { // 数组
+            pos += 2; // [
+            calArrInitSize(varSymbol, true);
+            pos++; // ]
+
+            reg = utils.addSymboltoRegMap(varSymbol); // 延后创建寄存器
+
             ArrayList<Integer> values = new ArrayList<>(Collections.nCopies(varSymbol.size, 0));
             boolean needInitializer = false;
-            pos++;
-
-            while (!getNowToken().str.equals("]")) { // 跳到数组大小定义结束
-                pos++;
-            }
-            pos++; // ]
 
             if (getNowToken().str.equals("=")) {
                 pos++;
@@ -221,6 +222,27 @@ public class IterateTK {
                 reg.constValue.set(i, values.get(i));
             }
         }
+    }
+
+    public static void calArrInitSize(VarSymbol varSymbol, boolean isGlobalInit) {
+        ArrayList<Token> sizeExp = new ArrayList<>();
+        int level = 1;
+        while (true) { // 跳到数组大小定义结束
+            if (getNowToken().str.equals("]")) {
+                level--;
+                if (level == 0) {
+                    break;
+                }
+            } else if (getNowToken().str.equals("[")) {
+                level++;
+            }
+
+            sizeExp.add(getPosToken(pos));
+            pos++;
+        }
+        ConstOp sizeOp = (ConstOp) utils.calExp(sizeExp, isGlobalInit);
+
+        varSymbol.size = sizeOp.value;
     }
 
     public static ArrayList<Token> getVarInitExp() {
@@ -471,10 +493,12 @@ public class IterateTK {
     }
 
     public static void declareLocalVarandArr(VarSymbol varSymbol) {
-        Register reg = utils.addSymboltoRegMap(varSymbol);
+        Register reg;
 
         pos = varSymbol.offset;
         if (!getPosToken(pos + 1).str.equals("[")) { // 非数组
+            reg = utils.addSymboltoRegMap(varSymbol);
+
             Operands operands;
             pos++;
 
@@ -492,7 +516,10 @@ public class IterateTK {
 
         } else if (getPosToken(pos + 1).str.equals("[")) { // 数组
             pos += 2;
-            pos = (Integer) utils.GetExpofSizeorPos(pos).a;
+            calArrInitSize(varSymbol, false);
+            pos++;
+
+            reg = utils.addSymboltoRegMap(varSymbol); // 延后创建表
 
             if (getNowToken().str.equals("=")) { // 有初始化
                 pos++;

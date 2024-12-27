@@ -134,6 +134,10 @@ public class Lexer {
         pos++;
 
         while (pos < length && line.charAt(pos) != '\"') {
+            if (line.charAt(pos) == '\\') {
+                temp.append(line.charAt(pos)); // 转义字符
+                pos++;// 进行转义
+            }
             temp.append(line.charAt(pos));
             pos++;
         }
